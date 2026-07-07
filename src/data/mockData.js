@@ -1,0 +1,468 @@
+// ─── StadiumIQ 2026 — Comprehensive Mock Data ────────────────────────────────
+// All data is realistic for a FIFA World Cup 2026 match-day scenario
+
+// ═══════════════════════════════════════════════════════════════
+// 1. VENUES
+// ═══════════════════════════════════════════════════════════════
+export const VENUES = {
+  metlife: {
+    id: 'metlife',
+    name: 'MetLife Stadium',
+    shortName: 'MetLife',
+    city: 'East Rutherford, NJ',
+    country: 'USA',
+    capacity: 82500,
+    coordinates: { lat: 40.8135, lng: -74.0745 },
+    timezone: 'America/New_York',
+    surface: 'FieldTurf Revolution 360',
+    roof: 'Open',
+    sections: 36,
+    gates: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'],
+    concourses: 4,
+    medicalPosts: 18,
+    securityCheckpoints: 24,
+    parkingLots: 12,
+    image: 'metlife',
+    tier: 'Tier 1 — Grand Final Venue',
+    openedYear: 2010,
+    address: '1 MetLife Stadium Dr, East Rutherford, NJ 07073',
+  },
+  sofi: {
+    id: 'sofi',
+    name: 'SoFi Stadium',
+    shortName: 'SoFi',
+    city: 'Inglewood, CA',
+    country: 'USA',
+    capacity: 70240,
+    coordinates: { lat: 33.9535, lng: -118.3392 },
+    timezone: 'America/Los_Angeles',
+    surface: 'Shaw Sports Turf',
+    roof: 'Translucent Canopy',
+    sections: 28,
+    gates: ['A', 'B', 'C', 'D', 'E', 'F'],
+    concourses: 3,
+    medicalPosts: 14,
+    securityCheckpoints: 20,
+    parkingLots: 10,
+    image: 'sofi',
+    tier: 'Tier 1 — Semi-Final Venue',
+    openedYear: 2020,
+    address: '1001 Stadium Dr, Inglewood, CA 90301',
+  },
+  att: {
+    id: 'att',
+    name: 'AT&T Stadium',
+    shortName: 'AT&T',
+    city: 'Arlington, TX',
+    country: 'USA',
+    capacity: 80000,
+    coordinates: { lat: 32.7480, lng: -97.0930 },
+    timezone: 'America/Chicago',
+    surface: 'FieldTurf Vista',
+    roof: 'Retractable',
+    sections: 32,
+    gates: ['A', 'B', 'C', 'D', 'E', 'F', 'G'],
+    concourses: 3,
+    medicalPosts: 16,
+    securityCheckpoints: 22,
+    parkingLots: 11,
+    image: 'att',
+    tier: 'Tier 1 — Quarter-Final Venue',
+    openedYear: 2009,
+    address: '1 AT&T Way, Arlington, TX 76011',
+  },
+};
+
+// ═══════════════════════════════════════════════════════════════
+// 2. MATCH SCHEDULE
+// ═══════════════════════════════════════════════════════════════
+export const MATCH_SCHEDULE = [
+  {
+    id: 'match-001',
+    venueId: 'metlife',
+    homeTeam: { name: 'Brazil',    code: 'BRA', flag: '🇧🇷', color: '#009C3B' },
+    awayTeam: { name: 'Argentina', code: 'ARG', flag: '🇦🇷', color: '#74ACDF' },
+    group: 'Group C',
+    round: 'Group Stage',
+    date: '2026-06-18',
+    kickoffTime: '20:00',
+    kickoffUTC: '2026-06-19T00:00:00Z',
+    gates: { vip: 'Gate A', generalN: 'Gate C', generalS: 'Gate E', media: 'Gate B', accessibility: 'Gate D' },
+    expectedAttendance: 81200,
+    ticketsSold: 82500,
+    status: 'scheduled',
+    refAssigned: 'Clément Turpin (France)',
+    broadcastLanguages: ['English', 'Spanish', 'Portuguese', 'French'],
+    securityLevel: 'Alpha — Maximum',
+  },
+  {
+    id: 'match-002',
+    venueId: 'sofi',
+    homeTeam: { name: 'France',  code: 'FRA', flag: '🇫🇷', color: '#002395' },
+    awayTeam: { name: 'Germany', code: 'GER', flag: '🇩🇪', color: '#000000' },
+    group: 'Group A',
+    round: 'Group Stage',
+    date: '2026-06-19',
+    kickoffTime: '17:00',
+    kickoffUTC: '2026-06-20T00:00:00Z',
+    gates: { vip: 'Gate A', generalN: 'Gate C', generalS: 'Gate E', media: 'Gate B', accessibility: 'Gate D' },
+    expectedAttendance: 69800,
+    ticketsSold: 70240,
+    status: 'scheduled',
+    refAssigned: 'Szymon Marciniak (Poland)',
+    broadcastLanguages: ['English', 'French', 'German', 'Arabic'],
+    securityLevel: 'Bravo — High',
+  },
+  {
+    id: 'match-003',
+    venueId: 'att',
+    homeTeam: { name: 'USA',    code: 'USA', flag: '🇺🇸', color: '#B22234' },
+    awayTeam: { name: 'Mexico', code: 'MEX', flag: '🇲🇽', color: '#006847' },
+    group: 'Group B',
+    round: 'Group Stage',
+    date: '2026-06-20',
+    kickoffTime: '19:00',
+    kickoffUTC: '2026-06-21T00:00:00Z',
+    gates: { vip: 'Gate A', generalN: 'Gate D', generalS: 'Gate F', media: 'Gate B', accessibility: 'Gate C' },
+    expectedAttendance: 79400,
+    ticketsSold: 80000,
+    status: 'scheduled',
+    refAssigned: 'Daniele Orsato (Italy)',
+    broadcastLanguages: ['English', 'Spanish', 'Portuguese'],
+    securityLevel: 'Alpha — Maximum',
+  },
+];
+
+// ═══════════════════════════════════════════════════════════════
+// 3. STAFF MEMBERS (50 total)
+// ═══════════════════════════════════════════════════════════════
+const STAFF_ROLES = ['Security', 'Medical', 'Operations', 'Volunteer', 'Steward', 'Concessions'];
+const STAFF_ZONES = ['Zone A', 'Zone B', 'Zone C', 'Zone D', 'Zone E', 'Zone F', 'Zone G', 'Zone H', 'VIP Area', 'Media Zone', 'Command Center', 'Concourse 1', 'Concourse 2', 'Concourse 3', 'Gate Entry'];
+const STAFF_STATUSES = ['active', 'break', 'responding', 'offline'];
+
+const STAFF_DATA_RAW = [
+  // Security — 15 members
+  { id: 's001', name: 'Marcus Johnson',   role: 'Security',    badge: 'SEC-001', shift: 'Main',   certifications: ['Crowd Management', 'First Aid', 'Firearms Licensed'] },
+  { id: 's002', name: 'Aaliya Ramirez',   role: 'Security',    badge: 'SEC-002', shift: 'Main',   certifications: ['Crowd Management', 'De-escalation'] },
+  { id: 's003', name: 'Derek Chen',       role: 'Security',    badge: 'SEC-003', shift: 'Main',   certifications: ['Crowd Management', 'K9 Handler'] },
+  { id: 's004', name: 'Fatima Al-Amin',   role: 'Security',    badge: 'SEC-004', shift: 'Relief', certifications: ['Crowd Management', 'CCTV Monitoring'] },
+  { id: 's005', name: 'Tyler Brooks',     role: 'Security',    badge: 'SEC-005', shift: 'Main',   certifications: ['Crowd Management', 'First Aid'] },
+  { id: 's006', name: 'Priya Nair',       role: 'Security',    badge: 'SEC-006', shift: 'Main',   certifications: ['Crowd Management', 'Conflict Resolution'] },
+  { id: 's007', name: 'James Okafor',     role: 'Security',    badge: 'SEC-007', shift: 'Main',   certifications: ['Crowd Management', 'First Aid', 'Search & Rescue'] },
+  { id: 's008', name: 'Sofia Kowalski',   role: 'Security',    badge: 'SEC-008', shift: 'Relief', certifications: ['Crowd Management', 'CCTV Monitoring'] },
+  { id: 's009', name: 'Mateo Herrera',    role: 'Security',    badge: 'SEC-009', shift: 'Main',   certifications: ['Crowd Management', 'Bilingual EN/ES'] },
+  { id: 's010', name: 'Hannah Williams',  role: 'Security',    badge: 'SEC-010', shift: 'Main',   certifications: ['Crowd Management', 'De-escalation'] },
+  { id: 's011', name: 'Kwame Mensah',     role: 'Security',    badge: 'SEC-011', shift: 'Main',   certifications: ['Crowd Management', 'First Aid'] },
+  { id: 's012', name: 'Elena Vasquez',    role: 'Security',    badge: 'SEC-012', shift: 'Relief', certifications: ['Crowd Management'] },
+  { id: 's013', name: 'Noah Thompson',    role: 'Security',    badge: 'SEC-013', shift: 'Main',   certifications: ['Crowd Management', 'K9 Handler'] },
+  { id: 's014', name: 'Amara Diallo',     role: 'Security',    badge: 'SEC-014', shift: 'Main',   certifications: ['Crowd Management', 'Multilingual FR/AR'] },
+  { id: 's015', name: 'Ryan O\'Brien',    role: 'Security',    badge: 'SEC-015', shift: 'Main',   certifications: ['Crowd Management', 'First Aid'] },
+
+  // Medical — 8 members
+  { id: 's016', name: 'Dr. Sarah Kim',    role: 'Medical',     badge: 'MED-001', shift: 'Main',   certifications: ['MD — Emergency Medicine', 'ATLS', 'Mass Casualty Response'] },
+  { id: 's017', name: 'EMT Carlos Reyes', role: 'Medical',     badge: 'MED-002', shift: 'Main',   certifications: ['Paramedic', 'ACLS', 'Pediatric Emergency'] },
+  { id: 's018', name: 'Nurse Aisha Patel',role: 'Medical',     badge: 'MED-003', shift: 'Main',   certifications: ['RN — Trauma', 'ACLS', 'PALS'] },
+  { id: 's019', name: 'EMT Jordan Lee',   role: 'Medical',     badge: 'MED-004', shift: 'Relief', certifications: ['Paramedic', 'ACLS'] },
+  { id: 's020', name: 'Dr. Luis Santos',  role: 'Medical',     badge: 'MED-005', shift: 'Main',   certifications: ['MD — Sports Medicine', 'ATLS'] },
+  { id: 's021', name: 'EMT Rina Suzuki',  role: 'Medical',     badge: 'MED-006', shift: 'Main',   certifications: ['Paramedic', 'ACLS', 'Multilingual EN/JA'] },
+  { id: 's022', name: 'Nurse Ben Adeyemi',role: 'Medical',     badge: 'MED-007', shift: 'Main',   certifications: ['RN — Cardiac', 'ACLS'] },
+  { id: 's023', name: 'EMT Claire Dubois',role: 'Medical',     badge: 'MED-008', shift: 'Relief', certifications: ['Paramedic', 'Multilingual EN/FR'] },
+
+  // Operations — 12 members
+  { id: 's024', name: 'Victor Chang',      role: 'Operations',  badge: 'OPS-001', shift: 'Main',   certifications: ['Stadium Operations Level 3', 'Incident Command'] },
+  { id: 's025', name: 'Diane Moreau',      role: 'Operations',  badge: 'OPS-002', shift: 'Main',   certifications: ['Stadium Operations Level 2', 'Communications'] },
+  { id: 's026', name: 'Sam Okonkwo',       role: 'Operations',  badge: 'OPS-003', shift: 'Main',   certifications: ['Stadium Operations Level 2', 'AV Systems'] },
+  { id: 's027', name: 'Leila Mansour',     role: 'Operations',  badge: 'OPS-004', shift: 'Main',   certifications: ['Stadium Operations Level 3', 'HVAC Systems'] },
+  { id: 's028', name: 'Tom Eriksson',      role: 'Operations',  badge: 'OPS-005', shift: 'Main',   certifications: ['Stadium Operations Level 2', 'IT Systems'] },
+  { id: 's029', name: 'Michelle Park',     role: 'Operations',  badge: 'OPS-006', shift: 'Relief', certifications: ['Stadium Operations Level 1', 'Comms'] },
+  { id: 's030', name: 'Arjun Singh',       role: 'Operations',  badge: 'OPS-007', shift: 'Main',   certifications: ['Stadium Operations Level 2', 'Electrical'] },
+  { id: 's031', name: 'Camille Fontaine',  role: 'Operations',  badge: 'OPS-008', shift: 'Main',   certifications: ['Stadium Operations Level 2', 'Field Mgmt'] },
+  { id: 's032', name: 'Isaiah Turner',     role: 'Operations',  badge: 'OPS-009', shift: 'Main',   certifications: ['Stadium Operations Level 1'] },
+  { id: 's033', name: 'Nadia Petrov',      role: 'Operations',  badge: 'OPS-010', shift: 'Relief', certifications: ['Stadium Operations Level 2', 'Multilingual EN/RU'] },
+  { id: 's034', name: 'Dae-Jung Yoon',     role: 'Operations',  badge: 'OPS-011', shift: 'Main',   certifications: ['Stadium Operations Level 1', 'IT Systems'] },
+  { id: 's035', name: 'Amelia Torres',     role: 'Operations',  badge: 'OPS-012', shift: 'Main',   certifications: ['Stadium Operations Level 2', 'Concessions Mgmt'] },
+
+  // Volunteers — 10 members
+  { id: 's036', name: 'Jake Harrison',     role: 'Volunteer',   badge: 'VOL-001', shift: 'Morning', certifications: ['FIFA Volunteer Training', 'First Aid'] },
+  { id: 's037', name: 'Mei Lin Wu',        role: 'Volunteer',   badge: 'VOL-002', shift: 'Main',    certifications: ['FIFA Volunteer Training', 'Multilingual EN/ZH'] },
+  { id: 's038', name: 'Omar Abdullah',     role: 'Volunteer',   badge: 'VOL-003', shift: 'Main',    certifications: ['FIFA Volunteer Training', 'Multilingual EN/AR'] },
+  { id: 's039', name: 'Isabela Rocha',     role: 'Volunteer',   badge: 'VOL-004', shift: 'Main',    certifications: ['FIFA Volunteer Training', 'Multilingual EN/PT'] },
+  { id: 's040', name: 'Finn Larsson',      role: 'Volunteer',   badge: 'VOL-005', shift: 'Main',    certifications: ['FIFA Volunteer Training', 'Accessibility Support'] },
+  { id: 's041', name: 'Zara Ahmed',        role: 'Volunteer',   badge: 'VOL-006', shift: 'Main',    certifications: ['FIFA Volunteer Training', 'Multilingual EN/UR'] },
+  { id: 's042', name: 'Lucas Moretti',     role: 'Volunteer',   badge: 'VOL-007', shift: 'Main',    certifications: ['FIFA Volunteer Training', 'Multilingual EN/IT'] },
+  { id: 's043', name: 'Yuna Park',         role: 'Volunteer',   badge: 'VOL-008', shift: 'Morning', certifications: ['FIFA Volunteer Training', 'Multilingual EN/KO'] },
+  { id: 's044', name: 'Ethan Goldberg',    role: 'Volunteer',   badge: 'VOL-009', shift: 'Main',    certifications: ['FIFA Volunteer Training', 'Special Needs Support'] },
+  { id: 's045', name: 'Fatou Diop',        role: 'Volunteer',   badge: 'VOL-010', shift: 'Main',    certifications: ['FIFA Volunteer Training', 'Multilingual EN/FR/WO'] },
+
+  // Stewards & Concessions — 5 members each
+  { id: 's046', name: 'Chris O\'Neal',     role: 'Steward',     badge: 'STW-001', shift: 'Main',    certifications: ['Crowd Safety Level 2', 'First Aid'] },
+  { id: 's047', name: 'Brianna Scott',     role: 'Steward',     badge: 'STW-002', shift: 'Main',    certifications: ['Crowd Safety Level 1'] },
+  { id: 's048', name: 'Pedro Alvarez',     role: 'Steward',     badge: 'STW-003', shift: 'Main',    certifications: ['Crowd Safety Level 2', 'Multilingual EN/ES'] },
+  { id: 's049', name: 'Hana Kimura',       role: 'Steward',     badge: 'STW-004', shift: 'Main',    certifications: ['Crowd Safety Level 1'] },
+  { id: 's050', name: 'Andre Beaumont',    role: 'Concessions', badge: 'CON-001', shift: 'Main',    certifications: ['Food Safety Manager', 'Crowd Safety Level 1'] },
+];
+
+// Assign random zones and statuses to each staff member
+const statusWeights = ['active', 'active', 'active', 'active', 'break', 'responding', 'offline'];
+const rand = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
+export const STAFF_MEMBERS = STAFF_DATA_RAW.map((s, i) => ({
+  ...s,
+  zone: STAFF_ZONES[i % STAFF_ZONES.length],
+  status: statusWeights[i % statusWeights.length],
+  phone: `+1 (${Math.floor(Math.random() * 900 + 100)}) ${Math.floor(Math.random() * 900 + 100)}-${Math.floor(Math.random() * 9000 + 1000)}`,
+  lastUpdate: new Date(Date.now() - Math.random() * 3600000).toISOString(),
+  tasksCompleted: Math.floor(Math.random() * 12),
+  responseTime: `${(Math.random() * 3 + 0.5).toFixed(1)} min avg`,
+  hoursWorked: parseFloat((Math.random() * 6 + 2).toFixed(1)),
+}));
+
+// ═══════════════════════════════════════════════════════════════
+// 4. CROWD DENSITY MAP (Zones A–H + Special)
+// ═══════════════════════════════════════════════════════════════
+export const INITIAL_CROWD_DENSITY = {
+  A: { density: 82, label: 'North Upper',    capacity: 9800,  current: 8036  },
+  B: { density: 91, label: 'North Lower',    capacity: 11200, current: 10192 },
+  C: { density: 76, label: 'East Upper',     capacity: 8400,  current: 6384  },
+  D: { density: 88, label: 'East Lower',     capacity: 9600,  current: 8448  },
+  E: { density: 94, label: 'South Upper',    capacity: 9800,  current: 9212  },
+  F: { density: 89, label: 'South Lower',    capacity: 11200, current: 9968  },
+  G: { density: 71, label: 'West Upper',     capacity: 8400,  current: 5964  },
+  H: { density: 85, label: 'West Lower',     capacity: 9600,  current: 8160  },
+  VIP: { density: 78, label: 'VIP Suites',  capacity: 2500,  current: 1950  },
+  MEDIA: { density: 62, label: 'Media Zone', capacity: 500,   current: 310   },
+};
+
+// ═══════════════════════════════════════════════════════════════
+// 5. ACTIVE ALERTS (initial set)
+// ═══════════════════════════════════════════════════════════════
+export const INITIAL_ALERTS = [
+  {
+    id: 'alert-001',
+    type: 'crowd_surge',
+    zone: 'Zone E',
+    severity: 'critical',
+    message: 'Crowd density in Zone E (South Upper) has exceeded 94% threshold. Risk of crush injury.',
+    timestamp: new Date(Date.now() - 4 * 60000).toISOString(),
+    resolved: false,
+    assignedTo: 's001',
+    responseTime: null,
+    suggestedAction: 'Deploy 3 stewards to Zone E. Open overflow access to Zone G via Concourse 2.',
+  },
+  {
+    id: 'alert-002',
+    type: 'medical',
+    zone: 'Section 14, Row G',
+    severity: 'high',
+    message: 'Medical assistance requested — spectator collapsed, suspected heat exhaustion.',
+    timestamp: new Date(Date.now() - 9 * 60000).toISOString(),
+    resolved: false,
+    assignedTo: 's016',
+    responseTime: '2.3 min',
+    suggestedAction: 'Medical team en route. Ensure clear path via Gate D corridor.',
+  },
+  {
+    id: 'alert-003',
+    type: 'concession_queue',
+    zone: 'Concourse 2 — Stand B3',
+    severity: 'medium',
+    message: 'Concession queue length: 68 persons. Estimated wait: 18 minutes. Fan satisfaction risk.',
+    timestamp: new Date(Date.now() - 14 * 60000).toISOString(),
+    resolved: false,
+    assignedTo: 's035',
+    responseTime: null,
+    suggestedAction: 'Open additional till. Redirect fans via PA announcement to Stand B4 (3 min wait).',
+  },
+  {
+    id: 'alert-004',
+    type: 'security',
+    zone: 'Gate C — Entry',
+    severity: 'high',
+    message: 'Counterfeit ticket detected at Gate C scanner. Patron detained for verification.',
+    timestamp: new Date(Date.now() - 22 * 60000).toISOString(),
+    resolved: false,
+    assignedTo: 's003',
+    responseTime: '1.1 min',
+    suggestedAction: 'Maintain patron in holding area. Notify law enforcement. Review adjacent scans.',
+  },
+  {
+    id: 'alert-005',
+    type: 'infrastructure',
+    zone: 'Concourse 3 — Restroom Block R7',
+    severity: 'low',
+    message: 'Restroom facilities at R7 reporting 80% capacity. Cleaning crew deployment recommended.',
+    timestamp: new Date(Date.now() - 31 * 60000).toISOString(),
+    resolved: true,
+    assignedTo: 's032',
+    responseTime: '4.7 min',
+    suggestedAction: 'Cleaning crew dispatched. Estimated resolution: 8 minutes.',
+  },
+];
+
+// ═══════════════════════════════════════════════════════════════
+// 6. SUSTAINABILITY METRICS
+// ═══════════════════════════════════════════════════════════════
+export const SUSTAINABILITY_METRICS = {
+  energyUsed:     { value: 4218, unit: 'kWh',  target: 5000,  label: 'Energy Consumed' },
+  solarGenerated: { value: 1840, unit: 'kWh',  target: 2000,  label: 'Solar Generated' },
+  waterSaved:     { value: 38400, unit: 'L',   target: 40000, label: 'Water Saved' },
+  wasteRecycled:  { value: 74.2, unit: '%',    target: 80,    label: 'Waste Diverted' },
+  carbonOffset:   { value: 2.1,  unit: 'tCO₂e', target: 3.0, label: 'Carbon Offset' },
+  ledCoverage:    { value: 100,  unit: '%',    target: 100,   label: 'LED Lighting Coverage' },
+  evChargers:     { value: 48,   unit: 'active', target: 60,  label: 'EV Charger Sessions' },
+  renewableShare: { value: 43.6, unit: '%',    target: 50,    label: 'Renewable Energy Share' },
+};
+
+// ═══════════════════════════════════════════════════════════════
+// 7. WEATHER DATA
+// ═══════════════════════════════════════════════════════════════
+export const WEATHER_DATA = {
+  temp:      { value: 24, unit: '°C', feelsLike: 26 },
+  humidity:  { value: 58, unit: '%' },
+  windSpeed: { value: 14, unit: 'km/h', direction: 'SW' },
+  condition: 'Partly Cloudy',
+  uvIndex:   4,
+  visibility: { value: 16, unit: 'km' },
+  dewPoint:  { value: 15, unit: '°C' },
+  pressure:  { value: 1013, unit: 'hPa' },
+  forecast: [
+    { hour: '18:00', temp: 24, icon: '⛅', condition: 'Partly Cloudy' },
+    { hour: '19:00', temp: 23, icon: '🌤️', condition: 'Mostly Clear' },
+    { hour: '20:00', temp: 22, icon: '🌙', condition: 'Clear' },
+    { hour: '21:00', temp: 21, icon: '🌙', condition: 'Clear' },
+    { hour: '22:00', temp: 20, icon: '🌙', condition: 'Clear' },
+    { hour: '23:00', temp: 19, icon: '🌙', condition: 'Clear' },
+  ],
+  heatIndex: 'Moderate',
+  rainProbability: 8,
+};
+
+// ═══════════════════════════════════════════════════════════════
+// 8. 24-HOUR CROWD FLOW DATA (hourly occupancy %)
+// ═══════════════════════════════════════════════════════════════
+export const CROWD_FLOW_24H = [
+  { hour: '00:00', occupancy: 0,  entry: 0,    exit: 120,  net: -120,  events: 'Post-match dispersal complete' },
+  { hour: '01:00', occupancy: 0,  entry: 0,    exit: 0,    net: 0,     events: 'Venue secured' },
+  { hour: '02:00', occupancy: 0,  entry: 0,    exit: 0,    net: 0,     events: 'Maintenance crew active' },
+  { hour: '03:00', occupancy: 0,  entry: 0,    exit: 0,    net: 0,     events: 'Field crew working' },
+  { hour: '04:00', occupancy: 0,  entry: 0,    exit: 0,    net: 0,     events: 'Pre-event setup begins' },
+  { hour: '05:00', occupancy: 1,  entry: 80,   exit: 0,    net: 80,    events: 'Vendors & staff arrival' },
+  { hour: '06:00', occupancy: 2,  entry: 320,  exit: 0,    net: 320,   events: 'Broadcast crew setup' },
+  { hour: '07:00', occupancy: 3,  entry: 540,  exit: 20,   net: 520,   events: 'Security briefing' },
+  { hour: '08:00', occupancy: 4,  entry: 680,  exit: 30,   net: 650,   events: 'Concessions open' },
+  { hour: '09:00', occupancy: 5,  entry: 820,  exit: 40,   net: 780,   events: 'Media accreditation opens' },
+  { hour: '10:00', occupancy: 6,  entry: 1100, exit: 60,   net: 1040,  events: 'VIP gates open' },
+  { hour: '11:00', occupancy: 8,  entry: 1640, exit: 80,   net: 1560,  events: 'Team arrivals' },
+  { hour: '12:00', occupancy: 12, entry: 3200, exit: 120,  net: 3080,  events: 'Public gates open' },
+  { hour: '13:00', occupancy: 22, entry: 7800, exit: 200,  net: 7600,  events: 'Peak early arrival' },
+  { hour: '14:00', occupancy: 35, entry: 9400, exit: 300,  net: 9100,  events: 'Fan zones at capacity' },
+  { hour: '15:00', occupancy: 48, entry: 9800, exit: 400,  net: 9400,  events: 'Parking lots 60% full' },
+  { hour: '16:00', occupancy: 61, entry: 9200, exit: 500,  net: 8700,  events: 'Transport peak begins' },
+  { hour: '17:00', occupancy: 73, entry: 8600, exit: 600,  net: 8000,  events: 'Gates 70% throughput' },
+  { hour: '18:00', occupancy: 82, entry: 6400, exit: 800,  net: 5600,  events: 'Stadium 82% occupied' },
+  { hour: '19:00', occupancy: 91, entry: 5200, exit: 1200, net: 4000,  events: 'Kickoff minus 60 min' },
+  { hour: '20:00', occupancy: 97, entry: 2100, exit: 400,  net: 1700,  events: 'KICKOFF — Brazil vs Argentina' },
+  { hour: '21:00', occupancy: 98, entry: 400,  exit: 200,  net: 200,   events: 'Halftime (45\')' },
+  { hour: '22:00', occupancy: 97, entry: 300,  exit: 800,  net: -500,  events: 'Full time — early exiters' },
+  { hour: '23:00', occupancy: 41, entry: 100,  exit: 27400,net: -27300, events: 'Post-match dispersal' },
+];
+
+// ═══════════════════════════════════════════════════════════════
+// 9. 30-DAY SUSTAINABILITY DATA POINTS
+// ═══════════════════════════════════════════════════════════════
+export const SUSTAINABILITY_30_DAYS = Array.from({ length: 30 }, (_, i) => {
+  const date = new Date('2026-06-01');
+  date.setDate(date.getDate() + i);
+  const isMatchDay = [2, 5, 8, 11, 14, 17, 20, 23, 26, 29].includes(i);
+  const load = isMatchDay ? 1 : 0.18 + Math.random() * 0.15;
+
+  return {
+    date: date.toISOString().split('T')[0],
+    dayLabel: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+    isMatchDay,
+    energyUsed:     Math.round(isMatchDay ? 3800 + Math.random() * 900 : 400 + Math.random() * 300),
+    solarGenerated: Math.round(1200 + Math.random() * 800),
+    waterUsed:      Math.round(isMatchDay ? 280000 + Math.random() * 60000 : 12000 + Math.random() * 8000),
+    waterSaved:     Math.round(isMatchDay ? 32000 + Math.random() * 12000 : 1400 + Math.random() * 800),
+    wasteGenerated: Math.round(isMatchDay ? 8200 + Math.random() * 2400 : 180 + Math.random() * 80),
+    wasteRecycled:  parseFloat((68 + Math.random() * 16).toFixed(1)),
+    carbonFootprint:parseFloat((isMatchDay ? 2.8 + Math.random() * 1.4 : 0.2 + Math.random() * 0.15).toFixed(2)),
+    carbonOffset:   parseFloat((isMatchDay ? 1.8 + Math.random() * 0.8 : 0.08 + Math.random() * 0.06).toFixed(2)),
+    evChargerSessions: isMatchDay ? Math.floor(30 + Math.random() * 30) : Math.floor(2 + Math.random() * 4),
+    renewableShare: parseFloat((35 + Math.random() * 20).toFixed(1)),
+    fanCount:       isMatchDay ? Math.floor(60000 + Math.random() * 20000) : 0,
+    greenScore:     Math.round(isMatchDay ? 68 + Math.random() * 18 : 72 + Math.random() * 14),
+  };
+});
+
+// ═══════════════════════════════════════════════════════════════
+// 10. FAN MESSAGES (20 multilingual)
+// ═══════════════════════════════════════════════════════════════
+export const FAN_MESSAGES = [
+  { id: 'fm-01', lang: 'en', text: 'Where are the nearest restrooms from Section 22?', intent: 'wayfinding' },
+  { id: 'fm-02', lang: 'es', text: '¿A qué hora abre el puesto de comida vegana en el Concourse 2?', intent: 'concessions' },
+  { id: 'fm-03', lang: 'pt', text: 'Minha filha perdeu a mochila azul perto da porta de entrada C. Alguém encontrou?', intent: 'lost_found' },
+  { id: 'fm-04', lang: 'fr', text: 'Est-ce qu\'il y a un espace pour les enfants en bas âge dans ce stade?', intent: 'accessibility' },
+  { id: 'fm-05', lang: 'ar', text: 'أين يمكنني الحصول على المساعدة لشخص كبير في السن في المقعد؟', intent: 'accessibility' },
+  { id: 'fm-06', lang: 'de', text: 'Können wir eine größere Gruppe von 15 Personen in der VIP-Lounge unterbringen?', intent: 'vip_services' },
+  { id: 'fm-07', lang: 'ja', text: 'スタジアムに日本語が話せるスタッフはいますか？', intent: 'staff_request' },
+  { id: 'fm-08', lang: 'zh', text: '我的座位号是3排F区22号，请问从入口C怎么走？', intent: 'wayfinding' },
+  { id: 'fm-09', lang: 'ko', text: '경기 후에 선수들 사인을 받을 수 있는 기회가 있나요?', intent: 'fan_experience' },
+  { id: 'fm-10', lang: 'it', text: 'C\'è un servizio di traduzione disponibile per i tifosi italiani?', intent: 'translation' },
+  { id: 'fm-11', lang: 'nl', text: 'Waar kan ik de officiële FIFA-merchandise kopen in het stadion?', intent: 'merchandise' },
+  { id: 'fm-12', lang: 'ru', text: 'Есть ли специальные места для болельщиков с ограниченными возможностями?', intent: 'accessibility' },
+  { id: 'fm-13', lang: 'tr', text: 'Stadyumda halal yiyecek seçenekleri var mı?', intent: 'concessions' },
+  { id: 'fm-14', lang: 'pl', text: 'Kiedy otwierają się bramy dla posiadaczy biletów VIP?', intent: 'access' },
+  { id: 'fm-15', lang: 'sv', text: 'Kan vi ta med barnvagn in på arenan?', intent: 'accessibility' },
+  { id: 'fm-16', lang: 'en', text: 'The queue at Gate B has been moving extremely slowly. Has there been an issue?', intent: 'operations_feedback' },
+  { id: 'fm-17', lang: 'hi', text: 'क्या स्टेडियम में कोई प्रार्थना कक्ष उपलब्ध है?', intent: 'accessibility' },
+  { id: 'fm-18', lang: 'ur', text: 'میں اپنی نشست G-12 سیکشن میں تبدیل کرنا چاہتا ہوں، کیا یہ ممکن ہے؟', intent: 'seating' },
+  { id: 'fm-19', lang: 'en', text: 'The air conditioning in the upper west stand seems to be broken. It\'s very hot up here!', intent: 'infrastructure_issue' },
+  { id: 'fm-20', lang: 'es', text: 'Necesito asistencia médica urgente para mi esposo en la sección norte, fila 8, asiento 24.', intent: 'medical_emergency' },
+];
+
+// ═══════════════════════════════════════════════════════════════
+// 11. INCIDENT TEMPLATES (for generateIncident())
+// ═══════════════════════════════════════════════════════════════
+export const INCIDENT_TEMPLATES = [
+  { type: 'crowd_surge',      severity: 'critical', zonePool: ['Zone A', 'Zone B', 'Zone E', 'Zone F'],      messageTemplate: (z) => `AI detected abnormal crowd compression in ${z}. Density exceeding 95%. Immediate steward deployment required.` },
+  { type: 'medical',          severity: 'high',     zonePool: ['Section 8', 'Section 12', 'Section 19', 'Section 24', 'Concourse 1', 'VIP Area'], messageTemplate: (z) => `Medical assistance request in ${z}. Fan reported symptoms consistent with heat exhaustion.` },
+  { type: 'security',         severity: 'high',     zonePool: ['Gate A', 'Gate C', 'Gate E', 'Perimeter North', 'Perimeter South'], messageTemplate: (z) => `Security alert at ${z}: suspicious item flagged by screening equipment. Area being cleared.` },
+  { type: 'concession_queue', severity: 'medium',   zonePool: ['Concourse 1', 'Concourse 2', 'Concourse 3'],   messageTemplate: (z) => `Queue overflow at ${z} food stand. 50+ fans waiting. Fan satisfaction impact risk.` },
+  { type: 'infrastructure',   severity: 'medium',   zonePool: ['Restroom Block R3', 'Exit Corridor E2', 'LED Board West', 'HVAC Unit 7'], messageTemplate: (z) => `Infrastructure alert: ${z} reporting operational fault. Maintenance team notified.` },
+  { type: 'access_control',   severity: 'low',      zonePool: ['Gate B', 'Gate D', 'Gate F', 'VIP Entrance'], messageTemplate: (z) => `Access control anomaly at ${z}: scanner offline. Manual verification in progress.` },
+  { type: 'ai_anomaly',       severity: 'medium',   zonePool: ['Zone C', 'Zone G', 'South Stand', 'North Stand'], messageTemplate: (z) => `AI behavioral analysis detected unusual movement pattern in ${z}. Predictive model flagging potential issue.` },
+  { type: 'weather',          severity: 'low',      zonePool: ['Entire Venue'],                                 messageTemplate: (z) => `Weather update: Wind speed increasing to 32 km/h. Upper deck fans advised to secure loose items.` },
+];
+
+// ═══════════════════════════════════════════════════════════════
+// 12. FAN SATISFACTION BREAKDOWN
+// ═══════════════════════════════════════════════════════════════
+export const FAN_SATISFACTION_BREAKDOWN = {
+  overall:        82,
+  entryExperience: 78,
+  concessions:    71,
+  wayfinding:     88,
+  seating:        85,
+  cleanliness:    90,
+  staffHelpfulness: 87,
+  connectivity:   74,
+  safetyFeel:     93,
+  entertainment:  89,
+};
+
+// ═══════════════════════════════════════════════════════════════
+// 13. LIVE TICKER ITEMS
+// ═══════════════════════════════════════════════════════════════
+export const LIVE_TICKER_ITEMS = [
+  '🏟️ MetLife Stadium — Brazil vs Argentina | Kickoff in 2:34:00',
+  '🎟️ 82,500 tickets sold — SOLD OUT',
+  '⚡ AI Alert: Gate D throughput at 104% — 3 additional stewards deployed',
+  '🌱 Solar generation today: 1,840 kWh — 92% of daily target',
+  '🍔 Fastest queue: Concourse 1 Stand A2 — est. 2 min wait',
+  '🚗 Parking Lots P3 & P5 FULL — P7 at 60% capacity',
+  '🌡️ Current temp: 24°C | Partly Cloudy | Wind: 14 km/h SW',
+  '📱 Download the FIFA 2026 App for live updates and AR wayfinding',
+  '♿ Accessibility shuttle running every 8 min from Gate D',
+  '🏥 Medical posts at Gates B, D, F — staffed 24/7',
+];

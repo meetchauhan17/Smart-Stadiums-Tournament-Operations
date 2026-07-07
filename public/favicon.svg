@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <!-- Neon green gradient for top pitch layer -->
+    <linearGradient id="neonGreen" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#00FF87"/>
+      <stop offset="100%" stop-color="#00FFA3"/>
+    </linearGradient>
+
+    <!-- Deep cyan/blue gradient for the holographic under-shadow -->
+    <linearGradient id="cyberCyan" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#00D4FF"/>
+      <stop offset="100%" stop-color="#0055FF"/>
+    </linearGradient>
+
+    <!-- Intense glow filter for the neon pitch border -->
+    <filter id="neonGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="2.2" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Cosmic Dark Background -->
+  <rect width="64" height="64" rx="16" fill="#060D1A"/>
+
+  <!-- Ultra-subtle outer container border -->
+  <rect x="1" y="1" width="62" height="62" rx="15" stroke="#00D4FF" stroke-width="1" stroke-opacity="0.08"/>
+
+  <!-- ── HOLOGRAPHIC 3D PITCH (Perfect Isometric Transform) ── -->
+  <!-- We use scale(1, 0.5) and rotate(45) to project 2D drawings into 3D isometric space -->
+
+  <!-- Bottom holographic projection layer (Cyan Offset Shadow) -->
+  <g transform="translate(32, 33.5) scale(1, 0.5) rotate(45) translate(-17, -17)" opacity="0.4">
+    <!-- Pitch boundary -->
+    <rect width="34" height="34" rx="4" stroke="url(#cyberCyan)" stroke-width="1.5" />
+    <!-- Goal lines and center circle -->
+    <line x1="0" y1="17" x2="34" y2="17" stroke="url(#cyberCyan)" stroke-width="0.8" />
+    <circle cx="17" cy="17" r="5" stroke="url(#cyberCyan)" stroke-width="0.8" />
+  </g>
+
+  <!-- Connecting vertical light beams between the 3D layers at the four corners -->
+  <g opacity="0.25">
+    <!-- Top-left connector -->
+    <line x1="32" y1="13" x2="32" y2="14.5" stroke="#00FFA3" stroke-width="1"/>
+    <!-- Bottom-right connector -->
+    <line x1="32" y1="43" x2="32" y2="44.5" stroke="#00FFA3" stroke-width="1"/>
+    <!-- Mid-left connector -->
+    <line x1="15" y1="28" x2="15" y2="29.5" stroke="#00FFA3" stroke-width="1"/>
+    <!-- Mid-right connector -->
+    <line x1="49" y1="28" x2="49" y2="29.5" stroke="#00FFA3" stroke-width="1"/>
+  </g>
+
+  <!-- Top glowing neon green pitch layer -->
+  <g transform="translate(32, 28) scale(1, 0.5) rotate(45) translate(-17, -17)">
+    <!-- Pitch grass texture fill (very translucent glowing grid) -->
+    <rect width="34" height="34" rx="4" fill="url(#neonGreen)" fill-opacity="0.04" />
+
+    <!-- Main pitch outline with glow -->
+    <rect width="34" height="34" rx="4" stroke="url(#neonGreen)" stroke-width="2.5" filter="url(#neonGlow)" />
+
+    <!-- Pitch lines (center line, center circle) -->
+    <line x1="0" y1="17" x2="34" y2="17" stroke="#00FF87" stroke-width="1.2" stroke-opacity="0.8" />
+    <circle cx="17" cy="17" r="5" stroke="#00FF87" stroke-width="1.2" stroke-opacity="0.8" />
+    <circle cx="17" cy="17" r="0.8" fill="#00FF87" />
+
+    <!-- Penalty Boxes -->
+    <!-- Left penalty box -->
+    <rect x="0" y="11" width="5.5" height="12" stroke="#00FF87" stroke-width="1" stroke-opacity="0.75" />
+    <!-- Right penalty box -->
+    <rect x="28.5" y="11" width="5.5" height="12" stroke="#00FF87" stroke-width="1" stroke-opacity="0.75" />
+  </g>
+
+  <!-- Active center data coordinate indicator (pulsing node in center of pitch) -->
+  <circle cx="32" cy="28" r="1.5" fill="#FFFFFF" filter="url(#neonGlow)"/>
+</svg>
