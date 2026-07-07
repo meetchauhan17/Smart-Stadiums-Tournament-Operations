@@ -1,5 +1,5 @@
 /**
- * LiveBadge — Pulsing status indicator
+ * LiveBadge — Pulsing status indicator (Flat Design)
  *
  * @prop {'live'|'offline'|'paused'|'alert'} status
  * @prop {string} label   - Override default label
@@ -9,41 +9,37 @@
 export default function LiveBadge({ status = 'live', label, size = 'md', className = '' }) {
   const config = {
     live: {
-      dot:   '#00FF87',
-      glow:  'rgba(0,255,135,0.5)',
-      text:  '#00FF87',
-      bg:    'rgba(0,255,135,0.08)',
-      border:'rgba(0,255,135,0.2)',
-      ping:  'rgba(0,255,135,0.4)',
+      dot:   '#10B981',
+      text:  '#10B981',
+      bg:    '#ECFDF5',
+      border:'#A7F3D0',
+      ping:  'rgba(16,185,129,0.3)',
       defaultLabel: 'LIVE',
       animate: true,
     },
     alert: {
       dot:   '#FF3366',
-      glow:  'rgba(255,51,102,0.5)',
       text:  '#FF3366',
-      bg:    'rgba(255,51,102,0.08)',
-      border:'rgba(255,51,102,0.2)',
-      ping:  'rgba(255,51,102,0.4)',
+      bg:    '#FFF5F5',
+      border:'#FECACA',
+      ping:  'rgba(255,51,102,0.3)',
       defaultLabel: 'ALERT',
       animate: true,
     },
     paused: {
-      dot:   '#FFB800',
-      glow:  'rgba(255,184,0,0.4)',
-      text:  '#FFB800',
-      bg:    'rgba(255,184,0,0.08)',
-      border:'rgba(255,184,0,0.2)',
-      ping:  'rgba(255,184,0,0.3)',
+      dot:   '#F59E0B',
+      text:  '#B45309',
+      bg:    '#FEF3C7',
+      border:'#FDE68A',
+      ping:  'rgba(245,158,11,0.2)',
       defaultLabel: 'PAUSED',
       animate: false,
     },
     offline: {
-      dot:   '#4A6580',
-      glow:  'none',
-      text:  '#4A6580',
-      bg:    'rgba(74,101,128,0.08)',
-      border:'rgba(74,101,128,0.15)',
+      dot:   '#6B7280',
+      text:  '#6B7280',
+      bg:    '#F3F4F6',
+      border:'#E5E7EB',
       ping:  'transparent',
       defaultLabel: 'OFFLINE',
       animate: false,
@@ -70,7 +66,7 @@ export default function LiveBadge({ status = 'live', label, size = 'md', classNa
       }}
     >
       {/* Dot with ping ring */}
-      <span className="relative flex shrink-0" style={{ width: sz.dot.split(' ')[0].replace('w-','') * 4 + 'px', height: sz.dot.split(' ')[1].replace('h-','') * 4 + 'px' }}>
+      <span className="relative flex shrink-0 w-2 h-2">
         {c.animate && (
           <span
             className="absolute inset-0 rounded-full animate-ping"
@@ -81,7 +77,6 @@ export default function LiveBadge({ status = 'live', label, size = 'md', classNa
           className={`relative inline-flex rounded-full ${sz.dot}`}
           style={{
             background:  c.dot,
-            boxShadow:   `0 0 6px ${c.glow}`,
           }}
         />
       </span>
