@@ -32,11 +32,11 @@ function LiveClock() {
   const ss = String(time.getSeconds()).padStart(2, '0');
 
   return (
-    <div className="hidden md:flex items-center gap-1.5 font-mono text-xs text-[#4A6580] select-none">
-      <Clock size={12} className="text-[#00D4FF] opacity-70" />
+    <div className="hidden md:flex items-center gap-1.5 font-mono text-xs text-[#6B7280] select-none">
+      <Clock size={12} className="text-[#3B82F6]" />
       <span>
-        <span className="text-[#E8F4FD]">{hh}:{mm}</span>
-        <span className="text-[#4A6580]">:{ss}</span>
+        <span className="text-[#111827] font-semibold">{hh}:{mm}</span>
+        <span className="text-[#6B7280]">:{ss}</span>
       </span>
     </div>
   );
@@ -58,13 +58,13 @@ function VenueDropdown() {
     <div ref={ref} className="relative hidden md:block">
       <button
         onClick={() => setOpen(v => !v)}
-        className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#0A192F] border border-[#0F2340] hover:border-[#00D4FF]/30 text-xs text-[#E8F4FD] transition-all duration-200 group"
+        className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#F3F4F6] border border-[#E5E7EB] hover:bg-[#E5E7EB] text-xs text-[#111827] transition-all duration-200 group cursor-pointer"
       >
-        <MapPin size={11} className="text-[#00D4FF]" />
+        <MapPin size={11} className="text-[#3B82F6]" />
         <span className="max-w-[130px] truncate font-medium">{currentVenue.shortName}</span>
         <ChevronDown
           size={11}
-          className={`text-[#4A6580] transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+          className={`text-[#6B7280] transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
         />
       </button>
 
@@ -75,23 +75,23 @@ function VenueDropdown() {
             animate={{ opacity: 1, y: 0,  scale: 1 }}
             exit={{   opacity: 0, y: -6, scale: 0.97 }}
             transition={{ duration: 0.15 }}
-            className="absolute right-0 top-full mt-2 w-64 rounded-xl border border-[#00D4FF]/12 bg-[#0D1B2E]/95 backdrop-blur-xl shadow-2xl z-[200] overflow-hidden"
+            className="absolute right-0 top-full mt-2 w-64 rounded-lg border border-[#E5E7EB] bg-white shadow-none z-[200] overflow-hidden"
           >
-            <p className="px-3 py-2 text-[9px] font-bold uppercase tracking-[0.14em] text-[#4A6580] border-b border-white/5">
+            <p className="px-3 py-2 text-[9px] font-bold uppercase tracking-[0.14em] text-[#6B7280] border-b border-[#E5E7EB]">
               FIFA WC 2026 Venues
             </p>
             {Object.values(venues).map(v => (
               <button
                 key={v.id}
                 onClick={() => { switchVenue(v.id); setOpen(false); }}
-                className={`w-full flex items-center justify-between px-4 py-3 text-xs transition-colors ${
+                className={`w-full flex items-center justify-between px-4 py-3 text-xs transition-colors cursor-pointer ${
                   v.id === currentVenue.id
-                    ? 'bg-[#00D4FF]/10 text-[#00D4FF]'
-                    : 'text-[#E8F4FD] hover:bg-white/4'
+                    ? 'bg-[#3B82F6] text-white'
+                    : 'text-[#111827] hover:bg-[#F3F4F6]'
                 }`}
               >
                 <span className="font-semibold">{v.name}</span>
-                <span className="text-[#4A6580] text-[10px]">{v.capacity.toLocaleString()}</span>
+                <span className={v.id === currentVenue.id ? 'text-white/80 text-[10px]' : 'text-[#6B7280] text-[10px]'}>{v.capacity.toLocaleString()}</span>
               </button>
             ))}
           </motion.div>
@@ -124,16 +124,16 @@ function LanguageDropdown() {
     <div ref={ref} className="relative hidden md:block">
       <button
         onClick={() => setOpen(v => !v)}
-        className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#0A192F] border border-[#0F2340] hover:border-[#00D4FF]/30 text-xs text-[#E8F4FD] transition-all duration-200 group"
+        className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#F3F4F6] border border-[#E5E7EB] hover:bg-[#E5E7EB] text-xs text-[#111827] transition-all duration-200 group cursor-pointer"
       >
-        <Globe size={11} className="text-[#00D4FF]" />
+        <Globe size={11} className="text-[#3B82F6]" />
         <span className="flex items-center gap-1 font-medium">
           <span>{activeLang.flag}</span>
           <span>{activeLang.name}</span>
         </span>
         <ChevronDown
           size={11}
-          className={`text-[#4A6580] transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+          className={`text-[#6B7280] transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
         />
       </button>
 
@@ -144,19 +144,19 @@ function LanguageDropdown() {
             animate={{ opacity: 1, y: 0,  scale: 1 }}
             exit={{   opacity: 0, y: -6, scale: 0.97 }}
             transition={{ duration: 0.15 }}
-            className="absolute right-0 top-full mt-2 w-40 rounded-xl border border-[#00D4FF]/12 bg-[#0D1B2E]/95 backdrop-blur-xl shadow-2xl z-[200] overflow-hidden"
+            className="absolute right-0 top-full mt-2 w-40 rounded-lg border border-[#E5E7EB] bg-white shadow-none z-[200] overflow-hidden"
           >
-            <p className="px-3 py-2 text-[9px] font-bold uppercase tracking-[0.14em] text-[#4A6580] border-b border-white/5">
+            <p className="px-3 py-2 text-[9px] font-bold uppercase tracking-[0.14em] text-[#6B7280] border-b border-[#E5E7EB]">
               Select Language
             </p>
             {LANGUAGES.map(l => (
               <button
                 key={l.code}
                 onClick={() => handleLanguageChange(l.code)}
-                className={`w-full flex items-center gap-2 px-4 py-2.5 text-xs transition-colors ${
+                className={`w-full flex items-center gap-2 px-4 py-2.5 text-xs transition-colors cursor-pointer ${
                   l.code === i18n.language
-                    ? 'bg-[#00D4FF]/10 text-[#00D4FF]'
-                    : 'text-[#E8F4FD] hover:bg-white/4'
+                    ? 'bg-[#3B82F6] text-white'
+                    : 'text-[#111827] hover:bg-[#F3F4F6]'
                 }`}
               >
                 <span>{l.flag}</span>
@@ -184,16 +184,16 @@ function NotificationBell() {
 
   const typeColor = {
     critical: { dot: '#FF3366', bg: 'bg-[#FF3366]/10', text: 'text-[#FF3366]' },
-    warning:  { dot: '#FFB800', bg: 'bg-[#FFB800]/10', text: 'text-[#FFB800]' },
-    info:     { dot: '#00D4FF', bg: 'bg-[#00D4FF]/10', text: 'text-[#00D4FF]' },
-    success:  { dot: '#00FF87', bg: 'bg-[#00FF87]/10', text: 'text-[#00FF87]' },
+    warning:  { dot: '#F59E0B', bg: 'bg-[#F59E0B]/10', text: 'text-[#F59E0B]' },
+    info:     { dot: '#3B82F6', bg: 'bg-[#3B82F6]/10', text: 'text-[#3B82F6]' },
+    success:  { dot: '#10B981', bg: 'bg-[#10B981]/10', text: 'text-[#10B981]' },
   };
 
   return (
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen(v => !v)}
-        className="relative p-2 rounded-lg text-[#4A6580] hover:text-[#E8F4FD] hover:bg-white/5 transition-all"
+        className="relative p-2 rounded-lg text-[#6B7280] hover:text-[#111827] hover:bg-gray-100 transition-all cursor-pointer"
         aria-label="Notifications"
       >
         <Bell size={16} />
@@ -215,16 +215,16 @@ function NotificationBell() {
             animate={{ opacity: 1, y: 0,  scale: 1 }}
             exit={{   opacity: 0, y: -6, scale: 0.97 }}
             transition={{ duration: 0.15 }}
-            className="absolute right-0 top-full mt-2 w-80 rounded-xl border border-[#00D4FF]/12 bg-[#0D1B2E]/95 backdrop-blur-xl shadow-2xl z-[200] overflow-hidden"
+            className="absolute right-0 top-full mt-2 w-80 rounded-lg border border-[#E5E7EB] bg-white shadow-none z-[200] overflow-hidden"
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-white/5">
-              <span className="font-heading font-semibold text-sm text-[#E8F4FD]">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-[#E5E7EB]">
+              <span className="font-heading font-semibold text-sm text-[#111827]">
                 Notifications
               </span>
               <button
                 onClick={markAllNotificationsRead}
-                className="text-[10px] text-[#00D4FF] hover:text-[#33DDFF] transition-colors font-medium"
+                className="text-[10px] text-[#3B82F6] hover:text-[#2563EB] transition-colors font-semibold cursor-pointer"
               >
                 Mark all read
               </button>
@@ -233,22 +233,22 @@ function NotificationBell() {
             {/* List */}
             <div className="max-h-72 overflow-y-auto">
               {notifications.length === 0 ? (
-                <p className="text-center py-8 text-[#4A6580] text-xs">No notifications</p>
+                <p className="text-center py-8 text-[#6B7280] text-xs">No notifications</p>
               ) : (
                 notifications.slice(0, 10).map(n => {
                   const c = typeColor[n.type] || typeColor.info;
                   return (
                     <div
                       key={n.id}
-                      className={`flex items-start gap-3 px-4 py-3 border-b border-white/4 transition-colors ${!n.read ? 'bg-white/[0.02]' : ''}`}
+                      className={`flex items-start gap-3 px-4 py-3 border-b border-[#E5E7EB] transition-colors ${!n.read ? 'bg-[#F3F4F6]/50' : ''}`}
                     >
                       <span
                         className="w-2 h-2 rounded-full shrink-0 mt-1.5"
-                        style={{ background: c.dot, boxShadow: `0 0 6px ${c.dot}80` }}
+                        style={{ background: c.dot }}
                       />
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs text-[#E8F4FD] leading-snug">{n.message}</p>
-                        <p className="text-[10px] text-[#4A6580] mt-0.5">
+                        <p className="text-xs text-[#111827] leading-snug">{n.message}</p>
+                        <p className="text-[10px] text-[#6B7280] mt-0.5">
                           {n.time instanceof Date
                             ? n.time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
                             : new Date(n.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -256,7 +256,7 @@ function NotificationBell() {
                       </div>
                       <button
                         onClick={() => dismissNotification(n.id)}
-                        className="text-[#4A6580] hover:text-[#E8F4FD] shrink-0 p-0.5 rounded transition-colors"
+                        className="text-[#6B7280] hover:text-[#111827] shrink-0 p-0.5 rounded transition-colors cursor-pointer"
                       >
                         <X size={11} />
                       </button>
@@ -297,31 +297,24 @@ export default function Navbar() {
   return (
     <>
       {/* ── Main Bar ─────────────────────────────────────────── */}
-      <nav className="fixed top-0 left-0 right-0 z-50 h-16">
-        {/* Backdrop */}
-        <div className="absolute inset-0 bg-[#060D1A]/85 backdrop-blur-xl border-b border-[#00D4FF]/10" />
-
+      <nav className="fixed top-0 left-0 right-0 z-50 h-16 bg-white border-b-2 border-[#E5E7EB]">
         <div className="relative h-full max-w-screen-2xl mx-auto px-4 lg:px-6 flex items-center justify-between gap-4">
 
           {/* ── Logo ── */}
           <Link to="/" className="flex items-center gap-2.5 shrink-0 group">
             <div className="relative w-8 h-8 shrink-0">
-              <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-[#00D4FF] to-[#00FF87] opacity-15 group-hover:opacity-25 transition-opacity" />
-              <div className="relative w-full h-full rounded-lg border border-[#00D4FF]/40 flex items-center justify-center">
+              <div className="absolute inset-0 rounded bg-[#3B82F6]/10 group-hover:bg-[#3B82F6]/20 transition-colors" />
+              <div className="relative w-full h-full rounded border-2 border-[#3B82F6] flex items-center justify-center">
                 <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                  <ellipse cx="9" cy="10" rx="7" ry="5" stroke="#00D4FF" strokeWidth="1.2" strokeOpacity="0.8" fill="none"/>
-                  <ellipse cx="9" cy="10" rx="4" ry="2.5" fill="#0d3a1f" fillOpacity="0.9"/>
-                  <line x1="2" y1="10" x2="16" y2="10" stroke="#00D4FF" strokeOpacity="0.2" strokeWidth="0.5"/>
-                  <circle cx="9" cy="10" r="1" stroke="#00D4FF" strokeOpacity="0.2" strokeWidth="0.5" fill="none"/>
-                  <circle cx="2.5" cy="10" r="0.8" fill="#00D4FF" fillOpacity="0.6"/>
-                  <circle cx="15.5" cy="10" r="0.8" fill="#00D4FF" fillOpacity="0.6"/>
+                  <ellipse cx="9" cy="10" rx="7" ry="5" stroke="#3B82F6" strokeWidth="1.5" fill="none"/>
+                  <ellipse cx="9" cy="10" rx="4" ry="2.5" fill="#3B82F6" fillOpacity="0.8"/>
                 </svg>
               </div>
             </div>
             <span className="font-heading font-bold text-[17px] tracking-tight hidden sm:block">
-              <span className="text-[#E8F4FD]">Stadium</span>
-              <span className="text-[#00D4FF]">IQ</span>
-              <span className="ms-1.5 text-[#4A6580] font-medium text-sm">2026</span>
+              <span className="text-[#111827]">Stadium</span>
+              <span className="text-[#3B82F6]">IQ</span>
+              <span className="ms-1.5 text-[#6B7280] font-semibold text-sm">2026</span>
             </span>
           </Link>
 
@@ -333,7 +326,7 @@ export default function Navbar() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0.8 }}
               transition={{ duration: 0.15 }}
-              className="hidden lg:flex items-center gap-0.5"
+              className="hidden lg:flex items-center gap-1"
             >
               {NAV_LINKS.map(({ to, label, icon: Icon }) => {
                 const active = isActive(to);
@@ -341,22 +334,14 @@ export default function Navbar() {
                   <Link
                     key={to}
                     to={to}
-                    className={`relative flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-[13px] font-medium transition-all duration-200 ${
+                    className={`relative flex items-center gap-1.5 px-3.5 py-2 rounded-md text-[13px] font-semibold transition-all duration-200 cursor-pointer ${
                       active
-                        ? 'text-[#00D4FF] bg-[#00D4FF]/8'
-                        : 'text-[#4A6580] hover:text-[#E8F4FD] hover:bg-white/4'
+                        ? 'text-white bg-[#3B82F6]'
+                        : 'text-[#6B7280] hover:text-[#111827] hover:bg-[#F3F4F6]'
                     }`}
                   >
                     <Icon size={14} />
                     {label}
-                    {active && (
-                      <motion.span
-                        layoutId="nav-indicator"
-                        className="absolute bottom-0 left-3 right-3 h-[2px] rounded-full bg-[#00D4FF]"
-                        style={{ boxShadow: '0 0 8px #00D4FF' }}
-                        transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-                      />
-                    )}
                   </Link>
                 );
               })}
@@ -371,10 +356,10 @@ export default function Navbar() {
             <button
               onClick={toggleLiveMode}
               title={isLiveMode ? 'Live simulation ON — click to pause' : 'Live simulation OFF — click to resume'}
-              className={`hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-bold border transition-all duration-200 ${
+              className={`hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-bold border transition-all duration-200 cursor-pointer ${
                 isLiveMode
-                  ? 'border-[#00FF87]/30 text-[#00FF87] bg-[#00FF87]/8 hover:bg-[#00FF87]/12'
-                  : 'border-[#4A6580]/30 text-[#4A6580] hover:border-[#00D4FF]/30 hover:text-[#00D4FF]'
+                  ? 'border-[#10B981]/40 text-[#10B981] bg-[#10B981]/10 hover:bg-[#10B981]/20'
+                  : 'border-[#E5E7EB] text-[#6B7280] hover:bg-gray-100'
               }`}
             >
               {isLiveMode
@@ -391,7 +376,7 @@ export default function Navbar() {
             {/* Mobile hamburger */}
             <button
               onClick={() => setMobileOpen(v => !v)}
-              className="p-2 rounded-lg text-[#4A6580] hover:text-[#E8F4FD] hover:bg-white/5 transition-all lg:hidden"
+              className="p-2 rounded-lg text-[#6B7280] hover:text-[#111827] hover:bg-[#F3F4F6] transition-all lg:hidden cursor-pointer"
               aria-label="Toggle menu"
             >
               <AnimatePresence mode="wait" initial={false}>
@@ -419,7 +404,7 @@ export default function Navbar() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm"
+              className="fixed inset-0 z-40 bg-black/40"
               onClick={() => setMobileOpen(false)}
             />
             <motion.div
@@ -427,15 +412,15 @@ export default function Navbar() {
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', stiffness: 320, damping: 32 }}
-              className="fixed top-0 right-0 bottom-0 z-50 w-72 bg-[#060D1A] border-l border-[#00D4FF]/10 flex flex-col"
+              className="fixed top-0 right-0 bottom-0 z-50 w-72 bg-white border-l-2 border-[#E5E7EB] flex flex-col"
             >
-              <div className="flex items-center justify-between px-5 py-4 border-b border-[#00D4FF]/10">
-                <span className="font-heading font-bold text-[#E8F4FD]">
-                  Stadium<span className="text-[#00D4FF]">IQ</span>
+              <div className="flex items-center justify-between px-5 py-4 border-b border-[#E5E7EB]">
+                <span className="font-heading font-bold text-[#111827]">
+                  Stadium<span className="text-[#3B82F6]">IQ</span>
                 </span>
                 <button
                   onClick={() => setMobileOpen(false)}
-                  className="p-1.5 rounded-lg text-[#4A6580] hover:text-[#E8F4FD] hover:bg-white/5"
+                  className="p-1.5 rounded-lg text-[#6B7280] hover:text-[#111827] hover:bg-[#F3F4F6]"
                 >
                   <X size={18} />
                 </button>
@@ -454,16 +439,16 @@ export default function Navbar() {
                     >
                       <Link
                         to={to}
-                        className={`flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-medium transition-all ${
+                        className={`flex items-center gap-3 px-4 py-3.5 rounded-md text-sm font-semibold transition-all ${
                           active
-                            ? 'bg-[#00D4FF]/10 text-[#00D4FF] border border-[#00D4FF]/20'
-                            : 'text-[#4A6580] hover:text-[#E8F4FD] hover:bg-white/5'
+                            ? 'bg-[#3B82F6] text-white'
+                            : 'text-[#6B7280] hover:text-[#111827] hover:bg-[#F3F4F6]'
                         }`}
                       >
                         <Icon size={18} />
                         {label}
                         {active && (
-                          <span className="ml-auto w-1.5 h-1.5 rounded-full bg-[#00D4FF]" />
+                          <span className="ml-auto w-1.5 h-1.5 rounded-full bg-white" />
                         )}
                       </Link>
                     </motion.div>
@@ -471,8 +456,8 @@ export default function Navbar() {
                 })}
 
                 {/* Mobile Language Selector */}
-                <div className="border-t border-white/5 mt-4 pt-4 px-4">
-                  <p className="text-[10px] text-[#4A6580] uppercase tracking-wider font-bold mb-2">
+                <div className="border-t border-[#E5E7EB] mt-4 pt-4 px-4">
+                  <p className="text-[10px] text-[#6B7280] uppercase tracking-wider font-bold mb-2">
                     {t('nav.language')}
                   </p>
                   <div className="grid grid-cols-2 gap-1.5">
@@ -480,10 +465,10 @@ export default function Navbar() {
                       <button
                         key={l.code}
                         onClick={() => { i18n.changeLanguage(l.code); setMobileOpen(false); }}
-                        className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-xs transition-all ${
+                        className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-xs transition-all cursor-pointer ${
                           l.code === i18n.language
-                            ? 'border-[#00D4FF] bg-[#00D4FF]/10 text-[#00D4FF]'
-                            : 'border-[#0F2340] text-[#E8F4FD] hover:bg-white/5'
+                            ? 'border-[#3B82F6] bg-[#3B82F6]/10 text-[#3B82F6]'
+                            : 'border-[#E5E7EB] text-[#111827] hover:bg-[#F3F4F6]'
                         }`}
                       >
                         <span>{l.flag}</span>
@@ -494,9 +479,9 @@ export default function Navbar() {
                 </div>
               </nav>
 
-              <div className="px-5 py-4 border-t border-white/5">
-                <p className="text-[10px] text-[#4A6580]">StadiumIQ Platform v2026.1</p>
-                <p className="text-[10px] text-[#4A6580] mt-0.5">FIFA World Cup 2026 — Official Tools</p>
+              <div className="px-5 py-4 border-t border-[#E5E7EB]">
+                <p className="text-[10px] text-[#6B7280]">StadiumIQ Platform v2026.1</p>
+                <p className="text-[10px] text-[#6B7280] mt-0.5">FIFA World Cup 2026 — Official Tools</p>
               </div>
             </motion.div>
           </>

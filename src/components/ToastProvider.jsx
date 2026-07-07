@@ -19,16 +19,16 @@ const ICONS = {
 };
 
 const COLORS = {
-  success: { bg: 'rgba(0,255,135,0.08)', border: '#00FF87', text: '#00FF87', glow: 'rgba(0,255,135,0.25)' },
-  warning: { bg: 'rgba(255,184,0,0.08)', border: '#FFB800', text: '#FFB800', glow: 'rgba(255,184,0,0.25)' },
-  error:   { bg: 'rgba(255,51,102,0.08)', border: '#FF3366', text: '#FF3366', glow: 'rgba(255,51,102,0.25)' },
-  info:    { bg: 'rgba(0,212,255,0.08)', border: '#00D4FF', text: '#00D4FF', glow: 'rgba(0,212,255,0.25)' },
-  ai:      { bg: 'rgba(168,85,247,0.08)', border: '#A855F7', text: '#A855F7', glow: 'rgba(168,85,247,0.25)' },
+  success: { bg: '#ECFDF5', border: '#10B981', text: '#047857' },
+  warning: { bg: '#FEF3C7', border: '#F59E0B', text: '#B45309' },
+  error:   { bg: '#FFF5F5', border: '#FF3366', text: '#C53030' },
+  info:    { bg: '#EFF6FF', border: '#3B82F6', text: '#1D4ED8' },
+  ai:      { bg: '#F3E8FF', border: '#A855F7', text: '#6D28D9' },
 };
 
 let toastId = 0;
 
-// ─── Toast Item ───────────────────────────────────────────────────
+// ─── Toast Item ───
 function ToastItem({ toast, onDismiss }) {
   const c   = COLORS[toast.type] || COLORS.info;
   const Icon = ICONS[toast.type] || Info;
@@ -39,44 +39,36 @@ function ToastItem({ toast, onDismiss }) {
       initial={{ opacity: 0, x: 80, scale: 0.92 }}
       animate={{ opacity: 1, x: 0,  scale: 1    }}
       exit={{    opacity: 0, x: 80, scale: 0.9, height: 0, marginBottom: 0 }}
-      transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-      className="relative flex items-start gap-3 w-[340px] max-w-[calc(100vw-32px)] p-4 rounded-2xl shadow-2xl border backdrop-blur-sm"
+      transition={{ duration: 0.2, ease: 'easeOut' }}
+      className="relative flex items-start gap-3 w-[340px] max-w-[calc(100vw-32px)] p-4 rounded-lg border-2 shadow-none"
       role="alert"
       aria-live="polite"
       style={{
-        background:  c.bg,
-        borderColor: `${c.border}35`,
-        borderLeft:  `3px solid ${c.border}`,
-        boxShadow:   `0 8px 32px ${c.glow}, 0 0 0 1px ${c.border}15`,
+        backgroundColor: c.bg,
+        borderColor: c.border,
       }}
     >
-      {/* Glow blob */}
       <div
-        className="absolute -top-2 -right-2 w-24 h-24 rounded-full blur-2xl pointer-events-none"
-        style={{ background: c.glow, opacity: 0.3 }}
-      />
-
-      <div
-        className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 mt-0.5"
-        style={{ background: `${c.border}18` }}
+        className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-0.5"
+        style={{ backgroundColor: '#FFFFFF', border: `1.5px solid ${c.border}` }}
       >
-        <Icon size={15} style={{ color: c.border }} />
+        <Icon size={14} style={{ color: c.border }} />
       </div>
 
       <div className="flex-1 min-w-0">
         {toast.title && (
-          <p className="text-[11px] font-heading font-bold uppercase tracking-[0.12em] mb-0.5"
+          <p className="text-[11px] font-heading font-bold uppercase tracking-wider mb-0.5"
              style={{ color: c.text }}>
             {toast.title}
           </p>
         )}
-        <p className="text-xs text-[#E8F4FD] leading-snug">{toast.message}</p>
+        <p className="text-xs text-[#111827] font-semibold leading-snug">{toast.message}</p>
       </div>
 
       <button
         onClick={() => onDismiss(toast.id)}
         aria-label="Dismiss notification"
-        className="p-1 rounded-lg text-[#4A6580] hover:text-[#E8F4FD] hover:bg-white/5 transition-colors shrink-0"
+        className="p-1 rounded text-[#6B7280] hover:text-[#111827] hover:bg-black/5 transition-colors shrink-0 cursor-pointer"
       >
         <X size={13} />
       </button>
@@ -84,7 +76,7 @@ function ToastItem({ toast, onDismiss }) {
   );
 }
 
-// ─── Provider ─────────────────────────────────────────────────────
+// ─── Provider ───
 export function ToastProvider({ children }) {
   const [toasts, setToasts] = useState([]);
   const timers = useRef({});
@@ -133,7 +125,7 @@ export function ToastProvider({ children }) {
   );
 }
 
-// ─── Hook ────────────────────────────────────────────────────────
+// ─── Hook ───
 export function useToast() {
   const ctx = useContext(ToastContext);
   if (!ctx) throw new Error('useToast() must be inside <ToastProvider>');

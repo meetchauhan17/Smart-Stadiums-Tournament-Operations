@@ -25,7 +25,7 @@ const SYSTEM_SHORTCUTS = [
 
 function Key({ k }) {
   return (
-    <kbd className="inline-flex items-center justify-center min-w-[28px] h-6 px-1.5 rounded-md text-[10px] font-mono font-bold text-[#060D1A] bg-[#00D4FF] shadow-[0_1px_0_rgba(0,0,0,0.4)]">
+    <kbd className="inline-flex items-center justify-center min-w-[28px] h-6 px-1.5 rounded bg-[#111827] text-white text-[10px] font-mono font-bold uppercase tracking-wider shadow-none">
       {k}
     </kbd>
   );
@@ -80,14 +80,14 @@ export default function KeyboardShortcuts() {
     <>
       {/* Trigger hint — bottom-left corner */}
       <div
-        className="fixed bottom-5 left-5 z-[500] hidden md:flex items-center gap-1.5 text-[10px] text-[#4A6580] font-mono cursor-pointer hover:text-[#00D4FF] transition-colors group select-none"
+        className="fixed bottom-5 left-5 z-[500] hidden md:flex items-center gap-1.5 text-[10px] text-[#6B7280] font-mono cursor-pointer hover:text-[#3B82F6] transition-colors group select-none"
         onClick={() => setOpen(true)}
         role="button"
         aria-label="Show keyboard shortcuts"
         tabIndex={0}
         onKeyDown={(e) => e.key === 'Enter' && setOpen(true)}
       >
-        <Keyboard size={12} className="group-hover:text-[#00D4FF] transition-colors" />
+        <Keyboard size={12} className="group-hover:text-[#3B82F6] transition-colors" />
         <span>Press <Key k="?" /> for shortcuts</span>
       </div>
 
@@ -100,40 +100,40 @@ export default function KeyboardShortcuts() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[550] bg-black/70 backdrop-blur-sm"
+              className="fixed inset-0 z-[550] bg-black/40"
               onClick={close}
               aria-hidden="true"
             />
 
             {/* Panel */}
             <motion.div
-              initial={{ opacity: 0, scale: 0.92, y: 20 }}
+              initial={{ opacity: 0, scale: 0.95, y: 15 }}
               animate={{ opacity: 1, scale: 1,    y: 0  }}
-              exit={{    opacity: 0, scale: 0.9,  y: 20 }}
-              transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+              exit={{    opacity: 0, scale: 0.95,  y: 15 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
               className="fixed inset-0 z-[560] flex items-center justify-center p-4 pointer-events-none"
             >
               <div
-                className="pointer-events-auto w-full max-w-lg bg-[#0A192F] border border-[#00D4FF]/20 rounded-2xl shadow-[0_24px_80px_rgba(0,0,0,0.6),0_0_0_1px_rgba(0,212,255,0.08)] overflow-hidden"
+                className="pointer-events-auto w-full max-w-lg bg-white border-4 border-[#111827] rounded-lg shadow-none overflow-hidden"
                 role="dialog"
                 aria-modal="true"
                 aria-label="Keyboard shortcuts"
               >
                 {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-white/5">
+                <div className="flex items-center justify-between px-6 py-4 border-b-2 border-[#E5E7EB]">
                   <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-xl bg-[#00D4FF]/10 border border-[#00D4FF]/20 flex items-center justify-center">
-                      <Keyboard size={15} className="text-[#00D4FF]" />
+                    <div className="w-8 h-8 rounded-full bg-[#3B82F6]/10 flex items-center justify-center">
+                      <Keyboard size={15} className="text-[#3B82F6]" />
                     </div>
                     <div>
-                      <h2 className="font-heading font-bold text-sm text-white">Keyboard Shortcuts</h2>
-                      <p className="text-[10px] text-[#4A6580]">Navigate StadiumIQ at full speed</p>
+                      <h2 className="font-heading font-extrabold text-sm text-[#111827]">Keyboard Shortcuts</h2>
+                      <p className="text-[10px] text-[#6B7280] font-semibold">Navigate StadiumIQ at full speed</p>
                     </div>
                   </div>
                   <button
                     onClick={close}
                     aria-label="Close shortcuts overlay"
-                    className="p-2 rounded-xl text-[#4A6580] hover:text-white hover:bg-white/5 transition-colors"
+                    className="p-2 rounded hover:bg-gray-100 text-[#6B7280] hover:text-[#111827] transition-colors cursor-pointer"
                   >
                     <X size={16} />
                   </button>
@@ -142,7 +142,7 @@ export default function KeyboardShortcuts() {
                 <div className="p-6 grid gap-6">
                   {/* Navigation shortcuts */}
                   <div>
-                    <h3 className="text-[9px] font-bold text-[#00D4FF] uppercase tracking-[0.2em] mb-3">
+                    <h3 className="text-[9px] font-bold text-[#3B82F6] uppercase tracking-wider mb-3">
                       Page Navigation
                     </h3>
                     <div className="space-y-2">
@@ -150,10 +150,10 @@ export default function KeyboardShortcuts() {
                         <button
                           key={route}
                           onClick={() => { navigate(route); close(); }}
-                          className="w-full flex items-center justify-between p-2.5 rounded-xl border border-white/5 bg-[#0D1B2E]/50 hover:border-[#00D4FF]/20 hover:bg-[#00D4FF]/5 transition-all group"
+                          className="w-full flex items-center justify-between p-2.5 rounded border-2 border-[#E5E7EB] bg-white hover:border-[#3B82F6] hover:bg-[#EFF6FF] transition-all duration-150 group cursor-pointer"
                         >
-                          <span className="flex items-center gap-2.5 text-xs text-[#E8F4FD] group-hover:text-white">
-                            <Icon size={13} className="text-[#4A6580] group-hover:text-[#00D4FF]" />
+                          <span className="flex items-center gap-2.5 text-xs text-[#111827] font-semibold">
+                            <Icon size={13} className="text-[#6B7280] group-hover:text-[#3B82F6]" />
                             {label}
                           </span>
                           <div className="flex gap-1">
@@ -166,13 +166,13 @@ export default function KeyboardShortcuts() {
 
                   {/* System shortcuts */}
                   <div>
-                    <h3 className="text-[9px] font-bold text-[#4A6580] uppercase tracking-[0.2em] mb-3">
+                    <h3 className="text-[9px] font-bold text-[#6B7280] uppercase tracking-wider mb-3">
                       System
                     </h3>
                     <div className="space-y-2">
                       {SYSTEM_SHORTCUTS.map(({ keys, label }) => (
-                        <div key={label} className="flex items-center justify-between text-xs">
-                          <span className="text-[#4A6580]">{label}</span>
+                        <div key={label} className="flex items-center justify-between text-xs border-b border-[#E5E7EB]/50 pb-2">
+                          <span className="text-[#6B7280] font-semibold">{label}</span>
                           <div className="flex gap-1">
                             {keys.map(k => <Key key={k} k={k} />)}
                           </div>
@@ -182,9 +182,9 @@ export default function KeyboardShortcuts() {
                   </div>
                 </div>
 
-                <div className="px-6 py-3 border-t border-white/5 flex items-center justify-between">
-                  <span className="text-[10px] text-[#4A6580]">StadiumIQ 2026 — FIFA World Cup Platform</span>
-                  <span className="text-[10px] text-[#4A6580] flex items-center gap-1">
+                <div className="px-6 py-3 border-t-2 border-[#E5E7EB] flex items-center justify-between bg-[#F3F4F6]">
+                  <span className="text-[10px] text-[#6B7280] font-semibold">StadiumIQ 2026 — FIFA World Cup Platform</span>
+                  <span className="text-[10px] text-[#6B7280] font-semibold flex items-center gap-1">
                     Press <Key k="Esc" /> to close
                   </span>
                 </div>

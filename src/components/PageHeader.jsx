@@ -10,8 +10,8 @@ export default function PageHeader({ title, subtitle, icon: Icon, actions }) {
   return (
     <div className="w-full flex flex-col gap-3 mb-6 mt-4">
       {/* Breadcrumbs */}
-      <nav className="flex items-center gap-1.5 text-xs text-[#4A6580] font-medium">
-        <Link to="/" className="hover:text-[#00D4FF] transition-colors flex items-center gap-1">
+      <nav className="flex items-center gap-1.5 text-xs text-[#6B7280] font-semibold">
+        <Link to="/" className="hover:text-[#3B82F6] transition-colors flex items-center gap-1">
           <Home size={12} />
           <span>Home</span>
         </Link>
@@ -22,11 +22,11 @@ export default function PageHeader({ title, subtitle, icon: Icon, actions }) {
 
           return (
             <div key={to} className="flex items-center gap-1.5">
-              <ChevronRight size={11} className="text-[#0F2340]" />
+              <ChevronRight size={11} className="text-[#6B7280]" />
               {isLast ? (
-                <span className="text-[#E8F4FD] font-semibold">{displayValue}</span>
+                <span className="text-[#111827] font-bold">{displayValue}</span>
               ) : (
-                <Link to={to} className="hover:text-[#00D4FF] transition-colors">
+                <Link to={to} className="hover:text-[#3B82F6] transition-colors">
                   {displayValue}
                 </Link>
               )}
@@ -39,16 +39,16 @@ export default function PageHeader({ title, subtitle, icon: Icon, actions }) {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-start gap-3.5">
           {Icon && (
-            <div className="w-12 h-12 rounded-xl bg-[#00D4FF]/8 border border-[#00D4FF]/20 flex items-center justify-center text-[#00D4FF] shrink-0 shadow-[0_0_15px_rgba(0,212,255,0.06)]">
-              <Icon size={24} />
+            <div className="w-12 h-12 rounded-full bg-[#EFF6FF] border-2 border-[#3B82F6] flex items-center justify-center text-[#3B82F6] shrink-0 shadow-none">
+              <Icon size={20} />
             </div>
           )}
           <div>
-            <h1 className="font-heading font-bold text-2xl md:text-3xl text-white tracking-tight leading-none">
+            <h1 className="font-heading font-extrabold text-2xl md:text-3xl text-[#111827] tracking-tight leading-none">
               {title}
             </h1>
             {subtitle && (
-              <p className="text-sm text-[#4A6580] mt-1.5 leading-relaxed font-medium">
+              <p className="text-sm text-[#6B7280] mt-1.5 leading-relaxed font-semibold">
                 {subtitle}
               </p>
             )}
@@ -63,8 +63,8 @@ export default function PageHeader({ title, subtitle, icon: Icon, actions }) {
         )}
       </div>
 
-      {/* Decorative neon bottom bar */}
-      <div className="w-full h-px bg-gradient-to-r from-[#00D4FF]/25 via-[#00D4FF]/5 to-transparent mt-1" />
+      {/* Flat bottom line divider */}
+      <div className="w-full h-0.5 bg-[#E5E7EB] mt-1" />
     </div>
   );
 }

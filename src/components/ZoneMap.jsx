@@ -2,14 +2,14 @@ import { motion } from 'framer-motion';
 import { useStadium } from '../context/StadiumContext';
 
 /**
- * Get crowd density color (green -> yellow -> orange -> red)
+ * Get crowd density color (Flat Design accents)
  */
 function getZoneColor(density) {
-  if (density >= 90) return '#FF3366'; // Danger Red
+  if (density >= 90) return '#FF3366'; // Red 500
   if (density >= 80) return '#FF8C42'; // Orange
-  if (density >= 65) return '#FFB800'; // Amber/Yellow
-  if (density >= 45) return '#00D4FF'; // Cyan
-  return '#00FF87'; // Success Green
+  if (density >= 65) return '#F59E0B'; // Amber 500
+  if (density >= 45) return '#3B82F6'; // Blue 500
+  return '#10B981'; // Emerald 500
 }
 
 const ZONES_ORDER = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'VIP', 'MEDIA'];
@@ -61,30 +61,23 @@ export default function ZoneMap({ onZoneSelect, selectedZoneId }) {
       tabIndex={0}
       onKeyDown={handleKeyDown}
       aria-label={`Stadium Interactive Map. Selected: Zone ${selectedZoneId}. Use arrow keys to select other zones.`}
-      className="relative w-full max-w-sm mx-auto flex flex-col items-center bg-[#0D1B2E]/40 border border-[#00D4FF]/10 hover:border-[#00D4FF]/30 rounded-2xl p-4 focus:outline-none focus:ring-2 focus:ring-[#00D4FF]/40 transition-all select-none"
+      className="relative w-full max-w-sm mx-auto flex flex-col items-center bg-white border-2 border-[#E5E7EB] hover:border-[#3B82F6] rounded-lg p-5 focus:outline-none focus:ring-2 focus:ring-[#3B82F6] transition-all select-none shadow-none"
     >
-      <div className="w-full flex items-center justify-between mb-3">
-        <span className="text-xs font-heading font-semibold uppercase tracking-wider text-[#00D4FF]">
+      <div className="w-full flex items-center justify-between mb-4">
+        <span className="text-xs font-heading font-extrabold uppercase tracking-wider text-[#3B82F6]">
           Stadium Interactive Map
         </span>
-        <span className="text-[10px] text-[#4A6580]">Use arrows / Click to select</span>
+        <span className="text-[10px] text-[#6B7280] font-semibold">Use arrows / Click to select</span>
       </div>
 
-      <svg viewBox="0 0 64 64" className="w-full h-auto drop-shadow-2xl">
-        <defs>
-          <filter id="zoneGlow" x="-20%" y="-20%" width="140%" height="140%">
-            <feGaussianBlur stdDeviation="1.5" result="blur" />
-            <feComposite in="SourceGraphic" in2="blur" operator="over" />
-          </filter>
-        </defs>
-
+      <svg viewBox="0 0 64 64" className="w-full h-auto drop-shadow-none">
         {/* Outer perimeter outline */}
-        <polygon points="18,10 46,10 58,22 58,42 46,54 18,54 6,42 6,22" fill="none" stroke="#00D4FF" strokeOpacity="0.1" strokeWidth="1" />
+        <polygon points="18,10 46,10 58,22 58,42 46,54 18,54 6,42 6,22" fill="none" stroke="#E5E7EB" strokeWidth="1" />
 
         {/* Center Pitch Field */}
-        <polygon points="26,23 38,23 38,41 26,41" fill="#0d3a1f" stroke="#00FF87" strokeWidth="0.8" strokeOpacity="0.5" />
-        <line x1="32" y1="23" x2="32" y2="41" stroke="#00FF87" strokeWidth="0.5" strokeOpacity="0.4" />
-        <circle cx="32" cy="32" r="3" fill="none" stroke="#00FF87" strokeWidth="0.5" strokeOpacity="0.4" />
+        <polygon points="26,23 38,23 38,41 26,41" fill="#ECFDF5" stroke="#10B981" strokeWidth="1" />
+        <line x1="32" y1="23" x2="32" y2="41" stroke="#10B981" strokeWidth="0.8" />
+        <circle cx="32" cy="32" r="3" fill="none" stroke="#10B981" strokeWidth="0.8" />
 
         {/* Render Zones */}
         {Object.entries(zonesConfig).map(([zoneId, cfg]) => {
@@ -106,24 +99,22 @@ export default function ZoneMap({ onZoneSelect, selectedZoneId }) {
               <motion.path
                 d={cfg.path}
                 fill={color}
-                fillOpacity={isSelected ? 0.45 : 0.2}
-                stroke={isSelected ? '#00D4FF' : color}
-                strokeWidth={isSelected ? 1.5 : 0.8}
-                strokeOpacity={isSelected ? 1.0 : 0.55}
-                filter={isSelected ? 'url(#zoneGlow)' : 'none'}
-                whileHover={{ fillOpacity: 0.5, strokeWidth: 1.2, strokeOpacity: 0.95 }}
-                transition={{ duration: 0.2 }}
+                fillOpacity={isSelected ? 0.65 : 0.25}
+                stroke={isSelected ? '#3B82F6' : color}
+                strokeWidth={isSelected ? 2.5 : 1}
+                strokeOpacity={isSelected ? 1.0 : 0.6}
+                whileHover={{ fillOpacity: 0.55, strokeWidth: 1.5 }}
+                transition={{ duration: 0.15 }}
               />
 
               {/* Zone label tag */}
               <text
                 x={cfg.textX}
                 y={cfg.textY}
-                fontFamily="Space Grotesk, sans-serif"
-                fontWeight="bold"
-                fontSize="3.2"
-                fill={isSelected ? '#00D4FF' : '#E8F4FD'}
-                fillOpacity={isSelected ? 1.0 : 0.75}
+                fontFamily="Outfit, sans-serif"
+                fontWeight="extrabold"
+                fontSize="3.5"
+                fill={isSelected ? '#3B82F6' : '#111827'}
                 textAnchor="middle"
                 dominantBaseline="middle"
                 className="pointer-events-none select-none transition-colors"
@@ -136,17 +127,17 @@ export default function ZoneMap({ onZoneSelect, selectedZoneId }) {
       </svg>
 
       {/* Grid Legend */}
-      <div className="grid grid-cols-5 gap-1.5 w-full mt-4 border-t border-white/5 pt-3">
+      <div className="grid grid-cols-5 gap-1.5 w-full mt-4 border-t-2 border-[#E5E7EB] pt-4">
         {[
-          { label: '<45%', color: '#00FF87' },
-          { label: '45-65%', color: '#00D4FF' },
-          { label: '65-80%', color: '#FFB800' },
+          { label: '<45%', color: '#10B981' },
+          { label: '45-65%', color: '#3B82F6' },
+          { label: '65-80%', color: '#F59E0B' },
           { label: '80-90%', color: '#FF8C42' },
           { label: '>90%', color: '#FF3366' },
         ].map((item, i) => (
           <div key={i} className="flex flex-col items-center gap-1">
-            <span className="w-full h-1.5 rounded-sm" style={{ backgroundColor: item.color }} />
-            <span className="text-[8px] text-[#4A6580] font-semibold">{item.label}</span>
+            <span className="w-full h-2 rounded-none" style={{ backgroundColor: item.color }} />
+            <span className="text-[8px] text-[#6B7280] font-bold">{item.label}</span>
           </div>
         ))}
       </div>

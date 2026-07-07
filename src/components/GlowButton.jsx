@@ -1,14 +1,7 @@
 import { motion } from 'framer-motion';
 
 /**
- * GlowButton — Premium dark glass button with neon borders and box-shadow glow
- *
- * @prop {'primary'|'outline'|'danger'|'success'|'warning'} variant
- * @prop {'sm'|'md'|'lg'} size
- * @prop {fn} onClick
- * @prop {boolean} disabled
- * @prop {string} className
- * @prop {node} children
+ * GlowButton — Redesigned as a premium Flat Design button (no shadows, glows, or vignettes)
  */
 export default function GlowButton({
   variant = 'primary',
@@ -20,45 +13,40 @@ export default function GlowButton({
   type = 'button',
 }) {
   const baseStyle =
-    'relative inline-flex items-center justify-center gap-2 font-heading font-semibold uppercase tracking-wider rounded-xl transition-all duration-300 select-none overflow-hidden';
+    'relative inline-flex items-center justify-center gap-2 font-heading font-extrabold uppercase tracking-wider transition-all duration-150 select-none overflow-hidden border-2 cursor-pointer';
 
   const variants = {
     primary: {
-      border: 'border-[#00D4FF]/40 hover:border-[#00D4FF]',
-      text: 'text-[#00D4FF] hover:text-[#060D1A]',
-      bg: 'bg-[#00D4FF]/5 hover:bg-[#00D4FF]',
-      glow: 'hover:shadow-[0_0_24px_rgba(0,212,255,0.45)]',
+      border: 'border-[#3B82F6]',
+      text: 'text-white',
+      bg: 'bg-[#3B82F6] hover:bg-[#2563EB]',
     },
     outline: {
-      border: 'border-[#4A6580]/30 hover:border-[#00D4FF]/60',
-      text: 'text-[#E8F4FD] hover:text-[#00D4FF]',
-      bg: 'bg-transparent hover:bg-[#00D4FF]/5',
-      glow: 'hover:shadow-[0_0_15px_rgba(0,212,255,0.15)]',
+      border: 'border-[#E5E7EB] hover:border-[#6B7280]',
+      text: 'text-[#111827]',
+      bg: 'bg-white hover:bg-[#F3F4F6]',
     },
     danger: {
-      border: 'border-[#FF3366]/40 hover:border-[#FF3366]',
-      text: 'text-[#FF3366] hover:text-white',
-      bg: 'bg-[#FF3366]/5 hover:bg-[#FF3366]',
-      glow: 'hover:shadow-[0_0_24px_rgba(255,51,102,0.45)]',
+      border: 'border-[#FF3366]',
+      text: 'text-white',
+      bg: 'bg-[#FF3366] hover:bg-[#E0245E]',
     },
     success: {
-      border: 'border-[#00FF87]/40 hover:border-[#00FF87]',
-      text: 'text-[#00FF87] hover:text-[#060D1A]',
-      bg: 'bg-[#00FF87]/5 hover:bg-[#00FF87]',
-      glow: 'hover:shadow-[0_0_24px_rgba(0,255,135,0.45)]',
+      border: 'border-[#10B981]',
+      text: 'text-white',
+      bg: 'bg-[#10B981] hover:bg-[#059669]',
     },
     warning: {
-      border: 'border-[#FFB800]/40 hover:border-[#FFB800]',
-      text: 'text-[#FFB800] hover:text-[#060D1A]',
-      bg: 'bg-[#FFB800]/5 hover:bg-[#FFB800]',
-      glow: 'hover:shadow-[0_0_24px_rgba(255,184,0,0.45)]',
+      border: 'border-[#F59E0B]',
+      text: 'text-white',
+      bg: 'bg-[#F59E0B] hover:bg-[#D97706]',
     },
   };
 
   const sizes = {
-    sm: 'px-4 py-2 text-[10px] gap-1.5 rounded-lg',
-    md: 'px-6 py-3 text-xs gap-2',
-    lg: 'px-8 py-4 text-sm gap-2.5 rounded-2xl',
+    sm: 'px-4 py-2 text-[10px] gap-1.5 rounded',
+    md: 'px-5 py-2.5 text-xs gap-2 rounded',
+    lg: 'px-7 py-3.5 text-sm gap-2.5 rounded',
   };
 
   const v = variants[variant] || variants.primary;
@@ -66,20 +54,15 @@ export default function GlowButton({
 
   return (
     <motion.button
-      whileHover={!disabled ? { scale: 1.025 } : {}}
       whileTap={!disabled ? { scale: 0.975 } : {}}
       onClick={onClick}
       disabled={disabled}
       type={type}
-      className={`border ${v.border} ${v.text} ${v.bg} ${v.glow} ${sz} ${baseStyle} ${
-        disabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'
+      className={`${v.border} ${v.text} ${v.bg} ${sz} ${baseStyle} ${
+        disabled ? 'opacity-40 cursor-not-allowed' : ''
       } ${className}`}
     >
-      {/* Light sheen effect on hover */}
-      <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:animate-shimmer pointer-events-none" />
-
-      {/* Button content */}
-      <span className="relative z-10 flex items-center gap-1.5">{children}</span>
+      <span className="relative z-10 flex items-center gap-1.5 justify-center w-full">{children}</span>
     </motion.button>
   );
 }

@@ -10,11 +10,10 @@ import { useStadium } from '../context/StadiumContext';
 import { useAI } from '../hooks/useAI';
 import PageHeader from '../components/PageHeader';
 import ZoneMap from '../components/ZoneMap';
-import GlowButton from '../components/GlowButton';
 import LiveBadge from '../components/LiveBadge';
 import PageTransition from '../components/PageTransition';
 
-// ─── Constants ────────────────────────────────────────────────────
+// ─── Constants ───
 const STADIUM_LOCATIONS = [
   { id: 'Gate A', label: 'Gate A (VIP Entry)', distance: '120m', walk: '2 min' },
   { id: 'Gate C', label: 'Gate C (North Entry)', distance: '280m', walk: '4 min' },
@@ -73,7 +72,6 @@ export default function Fan() {
     { id: 'q4', name: 'Official FIFA Merchandise Shop', wait: 9, status: 'normal' },
   ]);
 
-  // ── Performance: Debounce Search for Concessions ──
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
 
@@ -84,7 +82,7 @@ export default function Fan() {
     return () => clearTimeout(handler);
   }, [searchQuery]);
 
-  // Memoize filtered concessions list based on debounced search query
+  // Memoize filtered concessions list
   const filteredQueues = useMemo(() => {
     return queues.filter(q => q.name.toLowerCase().includes(debouncedQuery.toLowerCase()));
   }, [queues, debouncedQuery]);
@@ -100,7 +98,7 @@ export default function Fan() {
 Match: ${currentMatchAtVenue.homeTeam.name} vs ${currentMatchAtVenue.awayTeam.name}
 Language rule: ALWAYS respond in ${currentLangName} — regardless of what language the user types in.
 You help fans with seating, directions, food, services, and general match info.
-Be warm and helpful. Keep responses under 100 words.`;
+You must be warm and helpful. Keep responses under 100 words.`;
 
   const { messages, sendMessage, isLoading, clearMessages } = useAI(fanSystemPrompt);
   const [chatInput, setChatInput] = useState('');
@@ -194,10 +192,10 @@ Be warm and helpful. Keep responses under 100 words.`;
 
   return (
     <PageTransition>
-      <div className="max-w-6xl mx-auto px-4 py-6 mt-14">
+      <div className="max-w-6xl mx-auto px-4 py-6 mt-14 bg-white text-[#111827]">
       {/* Non-English active banner indicator */}
       {i18n.language !== 'en' && activeLangConfig && (
-        <div className="mb-4 p-3 rounded-xl border border-[#00D4FF]/20 bg-[#00D4FF]/5 flex items-center justify-between text-xs text-[#00D4FF]">
+        <div className="mb-4 p-3 rounded border-2 border-[#3B82F6] bg-[#EFF6FF] flex items-center justify-between text-xs text-[#1D4ED8] font-semibold">
           <span className="flex items-center gap-2">
             <Globe size={13} className="animate-spin" style={{ animationDuration: '6s' }} />
             <span>
@@ -207,7 +205,7 @@ Be warm and helpful. Keep responses under 100 words.`;
           <button
             onClick={() => i18n.changeLanguage('en')}
             aria-label="Switch back to English UI language"
-            className="text-[10px] uppercase font-bold tracking-wider hover:underline focus:outline-none"
+            className="text-[10px] uppercase font-bold tracking-wider hover:underline focus:outline-none cursor-pointer"
           >
             Switch to English
           </button>
@@ -224,68 +222,66 @@ Be warm and helpful. Keep responses under 100 words.`;
       <div className="grid grid-cols-1 lg:grid-cols-10 gap-6 mt-4">
         {/* ─── LEFT SIDEBAR ─── */}
         <div className="lg:col-span-3 flex flex-col gap-5">
-          <div className="glass-card p-5 border border-[#00D4FF]/10 bg-[#0D1B2E]/60 rounded-2xl flex flex-col items-center text-center">
-            <div className="relative w-16 h-16 rounded-full bg-gradient-to-br from-[#00D4FF] to-[#00FF87] p-0.5 mb-3">
-              <div className="w-full h-full rounded-full bg-[#060D1A] flex items-center justify-center font-heading font-bold text-white text-lg">
-                {profile.name.split(' ').map(n => n[0]).join('')}
-              </div>
+          <div className="glass-card p-5 bg-white border-2 border-[#E5E7EB] rounded-lg flex flex-col items-center text-center shadow-none">
+            <div className="relative w-16 h-16 rounded-full bg-[#3B82F6]/10 border-2 border-[#3B82F6] flex items-center justify-center font-heading font-extrabold text-[#3B82F6] text-lg mb-3">
+              {profile.name.split(' ').map(n => n[0]).join('')}
             </div>
-            <h3 className="font-heading font-semibold text-white text-base">{profile.name}</h3>
-            <span className="text-[10px] text-[#4A6580] tracking-widest font-semibold uppercase mt-0.5">
+            <h3 className="font-heading font-extrabold text-[#111827] text-base">{profile.name}</h3>
+            <span className="text-[10px] text-[#6B7280] tracking-wider font-extrabold uppercase mt-0.5">
               {t('fan.profile_title')}
             </span>
 
-            <div className="grid grid-cols-3 gap-2 w-full mt-4 border-t border-white/5 pt-4">
+            <div className="grid grid-cols-3 gap-2 w-full mt-4 border-t-2 border-[#E5E7EB] pt-4">
               <div className="flex flex-col items-center">
-                <span className="text-[9px] text-[#4A6580] uppercase tracking-wider">{t('fan.section')}</span>
-                <span className="text-sm font-heading font-bold text-[#00D4FF]">{profile.section.replace('Zone ', '')}</span>
+                <span className="text-[9px] text-[#6B7280] uppercase tracking-wider font-bold">{t('fan.section')}</span>
+                <span className="text-sm font-heading font-extrabold text-[#3B82F6]">{profile.section.replace('Zone ', '')}</span>
               </div>
-              <div className="flex flex-col items-center border-x border-white/5">
-                <span className="text-[9px] text-[#4A6580] uppercase tracking-wider">{t('fan.row')}</span>
-                <span className="text-sm font-heading font-bold text-white">{profile.row}</span>
+              <div className="flex flex-col items-center border-x-2 border-[#E5E7EB]">
+                <span className="text-[9px] text-[#6B7280] uppercase tracking-wider font-bold">{t('fan.row')}</span>
+                <span className="text-sm font-heading font-extrabold text-[#111827]">{profile.row}</span>
               </div>
               <div className="flex flex-col items-center">
-                <span className="text-[9px] text-[#4A6580] uppercase tracking-wider">{t('fan.seat')}</span>
-                <span className="text-sm font-heading font-bold text-white">{profile.seat}</span>
+                <span className="text-[9px] text-[#6B7280] uppercase tracking-wider font-bold">{t('fan.seat')}</span>
+                <span className="text-sm font-heading font-extrabold text-[#111827]">{profile.seat}</span>
               </div>
             </div>
           </div>
 
-          <div className="glass-card p-5 border border-[#00D4FF]/10 bg-[#0D1B2E]/40 rounded-2xl">
-            <h4 className="font-heading font-semibold text-xs text-[#00D4FF] uppercase tracking-wider mb-3">
+          <div className="glass-card p-5 bg-white border-2 border-[#E5E7EB] rounded-lg shadow-none">
+            <h4 className="font-heading font-extrabold text-xs text-[#3B82F6] uppercase tracking-wider mb-3">
               {t('fan.match_info')}
             </h4>
-            <div className="flex flex-col gap-3 text-xs text-[#E8F4FD]">
-              <div className="flex justify-between items-center py-1.5 border-b border-white/5">
-                <span className="text-[#4A6580]">{t('fan.fixture')}</span>
-                <span className="font-semibold text-right">
+            <div className="flex flex-col gap-3 text-xs text-[#111827]">
+              <div className="flex justify-between items-center py-1.5 border-b border-[#E5E7EB] font-semibold">
+                <span className="text-[#6B7280] font-bold">{t('fan.fixture')}</span>
+                <span className="text-right">
                   {currentMatchAtVenue.homeTeam.flag} {currentMatchAtVenue.homeTeam.code} vs{' '}
                   {currentMatchAtVenue.awayTeam.code} {currentMatchAtVenue.awayTeam.flag}
                 </span>
               </div>
-              <div className="flex justify-between items-center py-1.5 border-b border-white/5">
-                <span className="text-[#4A6580]">{t('fan.kickoff')}</span>
-                <span className="font-mono font-semibold">{currentMatchAtVenue.kickoffTime}</span>
+              <div className="flex justify-between items-center py-1.5 border-b border-[#E5E7EB] font-semibold">
+                <span className="text-[#6B7280] font-bold">{t('fan.kickoff')}</span>
+                <span className="font-mono">{currentMatchAtVenue.kickoffTime}</span>
               </div>
-              <div className="flex justify-between items-center py-1.5">
-                <span className="text-[#4A6580]">{t('fan.gate')}</span>
-                <span className="font-semibold text-[#00FF87]">{currentMatchAtVenue.gates.generalN}</span>
+              <div className="flex justify-between items-center py-1.5 font-semibold">
+                <span className="text-[#6B7280] font-bold">{t('fan.gate')}</span>
+                <span className="text-[#10B981] font-extrabold">{currentMatchAtVenue.gates.generalN}</span>
               </div>
             </div>
           </div>
 
-          <div className="glass-card p-5 border border-[#00D4FF]/10 bg-[#0D1B2E]/40 rounded-2xl flex flex-col gap-3">
-            <h4 className="font-heading font-semibold text-xs text-[#00D4FF] uppercase tracking-wider">
+          <div className="glass-card p-5 bg-white border-2 border-[#E5E7EB] rounded-lg flex flex-col gap-3 shadow-none">
+            <h4 className="font-heading font-extrabold text-xs text-[#3B82F6] uppercase tracking-wider">
               {t('fan.config_title')}
             </h4>
             <div className="flex flex-col gap-1.5">
-              <label htmlFor="current-zone-select" className="text-[10px] text-[#4A6580] uppercase tracking-wider">{t('fan.current_zone')}</label>
+              <label htmlFor="current-zone-select" className="text-[10px] text-[#6B7280] uppercase tracking-wider font-bold">{t('fan.current_zone')}</label>
               <select
                 id="current-zone-select"
                 value={profile.section}
                 onChange={(e) => setProfile(p => ({ ...p, section: e.target.value }))}
                 aria-label="Change current stadium location zone"
-                className="w-full bg-[#0A192F] border border-[#0F2340] rounded-xl px-3 py-2 text-xs text-white focus:border-[#00D4FF]"
+                className="w-full bg-[#F3F4F6] border-0 rounded px-3 py-2 text-xs text-[#111827] font-semibold focus:bg-white focus:ring-2 focus:ring-[#3B82F6]"
               >
                 {['Zone A', 'Zone B', 'Zone C', 'Zone D', 'Zone E', 'Zone F', 'Zone G', 'Zone H'].map(z => (
                   <option key={z} value={z}>{z}</option>
@@ -294,17 +290,17 @@ Be warm and helpful. Keep responses under 100 words.`;
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <span className="text-[10px] text-[#4A6580] uppercase tracking-wider">{t('fan.language_label')}</span>
+              <span className="text-[10px] text-[#6B7280] uppercase tracking-wider font-bold">{t('fan.language_label')}</span>
               <div className="grid grid-cols-5 gap-1">
                 {LOCAL_LANGS.map(l => (
                   <button
                     key={l.code}
                     onClick={() => i18n.changeLanguage(l.code)}
                     aria-label={`Change assistance language to ${l.name}`}
-                    className={`flex flex-col items-center justify-center p-1.5 rounded-lg border transition-all ${
+                    className={`flex flex-col items-center justify-center p-1.5 rounded border transition-all cursor-pointer ${
                       i18n.language === l.code
-                        ? 'border-[#00D4FF] bg-[#00D4FF]/10 text-white'
-                        : 'border-[#0F2340] bg-transparent text-[#4A6580] hover:text-[#E8F4FD]'
+                        ? 'border-[#3B82F6] bg-[#3B82F6] text-white font-bold'
+                        : 'border-[#E5E7EB] bg-white text-[#6B7280] hover:bg-[#F3F4F6] hover:text-[#111827]'
                     }`}
                   >
                     <span className="text-sm">{l.flag}</span>
@@ -318,14 +314,14 @@ Be warm and helpful. Keep responses under 100 words.`;
 
         {/* ─── MAIN CONTENT ─── */}
         <div className="lg:col-span-7 flex flex-col gap-4">
-          <div className="flex bg-[#0A192F]/60 border border-[#00D4FF]/10 rounded-xl p-1 shrink-0" role="tablist">
+          <div className="flex bg-[#F3F4F6] border-2 border-[#E5E7EB] rounded-lg p-1 shrink-0" role="tablist">
             <button
               onClick={() => setActiveTab('directions')}
               role="tab"
               aria-selected={activeTab === 'directions'}
               aria-label="Show AI Navigation Wayfinding"
-              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-xs font-semibold uppercase tracking-wider transition-all ${
-                activeTab === 'directions' ? 'bg-[#00D4FF] text-[#060D1A]' : 'text-[#4A6580] hover:text-[#E8F4FD]'
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                activeTab === 'directions' ? 'bg-[#3B82F6] text-white' : 'text-[#6B7280] hover:bg-white hover:text-[#111827]'
               }`}
             >
               <Compass size={13} />
@@ -336,8 +332,8 @@ Be warm and helpful. Keep responses under 100 words.`;
               role="tab"
               aria-selected={activeTab === 'chat'}
               aria-label="Open AI Assistant chat window"
-              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-xs font-semibold uppercase tracking-wider transition-all ${
-                activeTab === 'chat' ? 'bg-[#00D4FF] text-[#060D1A]' : 'text-[#4A6580] hover:text-[#E8F4FD]'
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                activeTab === 'chat' ? 'bg-[#3B82F6] text-white' : 'text-[#6B7280] hover:bg-white hover:text-[#111827]'
               }`}
             >
               <MessageSquare size={13} />
@@ -348,8 +344,8 @@ Be warm and helpful. Keep responses under 100 words.`;
               role="tab"
               aria-selected={activeTab === 'experience'}
               aria-label="Show Concessions and Concourse Hub"
-              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-xs font-semibold uppercase tracking-wider transition-all ${
-                activeTab === 'experience' ? 'bg-[#00D4FF] text-[#060D1A]' : 'text-[#4A6580] hover:text-[#E8F4FD]'
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                activeTab === 'experience' ? 'bg-[#3B82F6] text-white' : 'text-[#6B7280] hover:bg-white hover:text-[#111827]'
               }`}
             >
               <ShoppingBag size={13} />
@@ -373,16 +369,16 @@ Be warm and helpful. Keep responses under 100 words.`;
                     onZoneSelect={(zoneId) => setProfile(p => ({ ...p, section: `Zone ${zoneId}` }))}
                   />
 
-                  <div className="glass-card p-5 border border-[#00D4FF]/10 bg-[#0D1B2E]/40 rounded-2xl flex flex-col justify-between">
+                  <div className="glass-card p-5 bg-white border-2 border-[#E5E7EB] rounded-lg flex flex-col justify-between shadow-none">
                     <div>
-                      <h3 className="font-heading font-semibold text-white text-base mb-1 flex items-center gap-2">
-                        <Compass size={16} className="text-[#00D4FF]" />
+                      <h3 className="font-heading font-extrabold text-[#111827] text-base mb-1 flex items-center gap-2">
+                        <Compass size={16} className="text-[#3B82F6]" />
                         {t('fan.nav_title')}
                       </h3>
-                      <p className="text-xs text-[#4A6580] mb-4">{t('fan.nav_desc')}</p>
+                      <p className="text-xs text-[#6B7280] mb-4 font-semibold">{t('fan.nav_desc')}</p>
 
                       <div className="flex flex-col gap-2 mb-4">
-                        <label htmlFor="destination-select" className="text-[10px] text-[#4A6580] uppercase tracking-wider font-semibold">
+                        <label htmlFor="destination-select" className="text-[10px] text-[#6B7280] uppercase tracking-wider font-extrabold">
                           {t('fan.select_destination')}
                         </label>
                         <select
@@ -390,7 +386,7 @@ Be warm and helpful. Keep responses under 100 words.`;
                           value={navDestination}
                           onChange={(e) => setNavDestination(e.target.value)}
                           aria-label="Select walking target location"
-                          className="w-full bg-[#0A192F] border border-[#0F2340] rounded-xl px-3 py-2 text-xs text-white focus:border-[#00D4FF]"
+                          className="w-full bg-[#F3F4F6] border-0 rounded px-3 py-2 text-xs text-[#111827] font-semibold focus:bg-white focus:ring-2 focus:ring-[#3B82F6]"
                         >
                           <option value="">{t('fan.choose_destination')}</option>
                           {STADIUM_LOCATIONS.map(loc => (
@@ -399,27 +395,26 @@ Be warm and helpful. Keep responses under 100 words.`;
                         </select>
                       </div>
 
-                      <GlowButton
+                      <button
                         onClick={() => generateDirections(navDestination)}
                         disabled={!navDestination || navLoading}
-                        variant="primary"
                         aria-label="Calculate directions from current zone"
-                        className="w-full text-center"
+                        className="btn-primary w-full text-center cursor-pointer text-xs"
                       >
                         {navLoading ? t('fan.calculating_route') : t('fan.find_route')}
-                      </GlowButton>
+                      </button>
 
                       {navInstructions.length > 0 && (
-                        <div className="mt-5 space-y-2 border-t border-white/5 pt-4">
-                          <div className="flex items-center justify-between text-[10px] text-[#4A6580] uppercase tracking-wider font-semibold mb-2">
+                        <div className="mt-5 space-y-2 border-t-2 border-[#E5E7EB] pt-4">
+                          <div className="flex items-center justify-between text-[10px] text-[#6B7280] uppercase tracking-wider font-bold mb-2">
                             <span>{t('fan.directions_label')}</span>
-                            <span className="text-[#00FF87] flex items-center gap-1">
+                            <span className="text-[#10B981] flex items-center gap-1">
                               <Clock size={10} /> {navTime} {t('fan.walk_time')}
                             </span>
                           </div>
                           {navInstructions.map((step, idx) => (
-                            <div key={idx} className="flex gap-2.5 items-start text-xs text-[#E8F4FD]">
-                              <span className="w-5 h-5 rounded-full bg-[#00D4FF]/10 text-[#00D4FF] flex items-center justify-center shrink-0 font-mono text-[10px] font-bold">
+                            <div key={idx} className="flex gap-2.5 items-start text-xs text-[#111827] font-semibold">
+                              <span className="w-5 h-5 rounded-full bg-[#3B82F6]/10 text-[#3B82F6] flex items-center justify-center shrink-0 font-mono text-[10px] font-bold border border-[#3B82F6]/20">
                                 {idx + 1}
                               </span>
                               <span className="pt-0.5 leading-snug">{step}</span>
@@ -429,25 +424,25 @@ Be warm and helpful. Keep responses under 100 words.`;
                       )}
 
                       {navInstructions.length === 0 && !navLoading && !navError && (
-                        <div className="mt-5 border-t border-white/5 pt-6 text-center text-[#4A6580]">
-                          <Compass size={24} className="opacity-20 mx-auto mb-2 text-[#00D4FF] animate-pulse" />
-                          <p className="text-xs font-semibold text-[#E8F4FD]">{t('fan.no_route_title', 'No active route')}</p>
-                          <p className="text-[10px] text-[#4A6580] max-w-[200px] mx-auto leading-normal mt-1">
+                        <div className="mt-5 border-t-2 border-[#E5E7EB] pt-6 text-center text-[#6B7280]">
+                          <Compass size={24} className="opacity-20 mx-auto mb-2 text-[#3B82F6] animate-pulse" />
+                          <p className="text-xs font-bold text-[#111827]">{t('fan.no_route_title', 'No active route')}</p>
+                          <p className="text-[10px] text-[#6B7280] max-w-[200px] mx-auto leading-normal mt-1 font-semibold">
                             Choose a destination from the drop-down list to calculate walking times.
                           </p>
                         </div>
                       )}
 
                       {navError && (
-                        <div className="mt-4 p-3 rounded-lg border border-[#FF3366]/20 bg-[#FF3366]/5 flex items-start gap-2">
+                        <div className="mt-4 p-3 rounded border-2 border-[#FF3366]/20 bg-[#FFF5F5] flex items-start gap-2">
                           <AlertCircle size={14} className="text-[#FF3366] shrink-0 mt-0.5" />
-                          <p className="text-[10px] text-[#FF3366] leading-snug">{navError}</p>
+                          <p className="text-[10px] text-[#FF3366] leading-snug font-semibold">{navError}</p>
                         </div>
                       )}
                     </div>
 
-                    <div className="text-[10px] text-[#4A6580] mt-4 flex items-center gap-1.5">
-                      <Info size={11} className="text-[#00D4FF]" />
+                    <div className="text-[10px] text-[#6B7280] mt-4 flex items-center gap-1.5 font-semibold">
+                      <Info size={11} className="text-[#3B82F6]" />
                       <span>{t('fan.nav_note')}</span>
                     </div>
                   </div>
@@ -461,19 +456,19 @@ Be warm and helpful. Keep responses under 100 words.`;
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="glass-card border border-[#00D4FF]/10 bg-[#0D1B2E]/40 rounded-2xl flex-1 flex flex-col overflow-hidden max-h-[500px]"
+                  className="glass-card bg-white border-2 border-[#E5E7EB] rounded-lg flex-1 flex flex-col overflow-hidden max-h-[500px] shadow-none"
                 >
-                  <div className="px-4 py-3 border-b border-white/5 flex items-center justify-between">
+                  <div className="px-4 py-3 border-b-2 border-[#E5E7EB] flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <div className="w-2.5 h-2.5 rounded-full bg-[#00FF87] animate-pulse" />
-                      <span className="font-heading font-semibold text-xs text-[#E8F4FD] uppercase tracking-wider">
+                      <div className="w-2.5 h-2.5 rounded-full bg-[#10B981] animate-pulse" />
+                      <span className="font-heading font-extrabold text-xs text-[#111827] uppercase tracking-wider">
                         {t('fan.chat_title')}
                       </span>
                     </div>
                     <button
                       onClick={clearMessages}
                       aria-label="Clear chat conversation logs"
-                      className="text-[10px] text-[#4A6580] hover:text-white transition-all font-semibold focus:outline-none"
+                      className="text-[10px] text-[#6B7280] hover:text-[#111827] transition-all font-bold focus:outline-none cursor-pointer"
                     >
                       {t('fan.chat_reset')}
                     </button>
@@ -482,11 +477,11 @@ Be warm and helpful. Keep responses under 100 words.`;
                   <div className="flex-1 overflow-y-auto p-4 space-y-3.5 min-h-[300px]">
                     {messages.length === 0 && (
                       <div className="h-full flex flex-col items-center justify-center text-center py-10">
-                        <MessageSquare size={36} className="text-[#00D4FF] opacity-20 mb-3" />
-                        <h4 className="font-heading font-semibold text-sm text-[#E8F4FD] mb-1">
+                        <MessageSquare size={36} className="text-[#3B82F6] opacity-35 mb-3" />
+                        <h4 className="font-heading font-extrabold text-sm text-[#111827] mb-1">
                           {t('fan.chat_empty_title')}
                         </h4>
-                        <p className="text-xs text-[#4A6580] max-w-xs leading-relaxed">
+                        <p className="text-xs text-[#6B7280] max-w-xs leading-relaxed font-semibold">
                           {t('fan.chat_empty_desc')}
                         </p>
                       </div>
@@ -498,10 +493,10 @@ Be warm and helpful. Keep responses under 100 words.`;
                         className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}
                       >
                         <div
-                          className={`max-w-[80%] rounded-2xl px-4 py-3 text-xs leading-relaxed ${
+                          className={`max-w-[80%] rounded px-4 py-3 text-xs leading-relaxed font-semibold ${
                             m.role === 'user'
-                              ? 'bg-[#00D4FF]/10 text-white rounded-tr-none border border-[#00D4FF]/20'
-                              : 'bg-[#0A192F] text-[#E8F4FD] rounded-tl-none border border-[#0F2340]'
+                              ? 'bg-[#3B82F6] text-white rounded-tr-none'
+                              : 'bg-[#F3F4F6] text-[#111827] rounded-tl-none border border-[#E5E7EB]'
                           }`}
                         >
                           {m.content}
@@ -514,29 +509,29 @@ Be warm and helpful. Keep responses under 100 words.`;
 
                     {isLoading && (
                       <div className="flex justify-start">
-                        <div className="bg-[#0A192F] border border-[#0F2340] rounded-2xl rounded-tl-none px-4 py-3 text-xs text-[#4A6580] flex items-center gap-1.5 font-medium">
-                          <span className="w-1.5 h-1.5 rounded-full bg-[#00D4FF] animate-bounce" />
-                          <span className="w-1.5 h-1.5 rounded-full bg-[#00D4FF] animate-bounce [animation-delay:0.2s]" />
-                          <span className="w-1.5 h-1.5 rounded-full bg-[#00D4FF] animate-bounce [animation-delay:0.4s]" />
+                        <div className="bg-[#F3F4F6] border border-[#E5E7EB] rounded rounded-tl-none px-4 py-3 text-xs text-[#6B7280] flex items-center gap-1.5 font-bold">
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#3B82F6] animate-bounce" />
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#3B82F6] animate-bounce [animation-delay:0.2s]" />
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#3B82F6] animate-bounce [animation-delay:0.4s]" />
                         </div>
                       </div>
                     )}
                   </div>
 
-                  <form onSubmit={handleSendChat} className="p-3 border-t border-white/5 bg-[#060D1A]/60 flex gap-2">
+                  <form onSubmit={handleSendChat} className="p-3 border-t-2 border-[#E5E7EB] bg-[#F3F4F6] flex gap-2">
                     <input
                       type="text"
                       value={chatInput}
                       onChange={(e) => setChatInput(e.target.value)}
                       placeholder={t('fan.chat_placeholder')}
                       aria-label="Ask the stadium AI assistant a question"
-                      className="flex-1 bg-[#0A192F] border border-[#0F2340] rounded-xl px-4 py-2.5 text-xs text-white focus:border-[#00D4FF] focus:outline-none"
+                      className="flex-1 bg-[#FFFFFF] border-0 rounded px-4 py-2.5 text-xs text-[#111827] focus:ring-2 focus:ring-[#3B82F6] focus:outline-none"
                     />
                     <button
                       type="submit"
                       disabled={isLoading || !chatInput.trim()}
                       aria-label="Send message to AI assistant"
-                      className="w-10 h-10 rounded-xl bg-[#00D4FF] hover:bg-[#33DDFF] text-[#060D1A] flex items-center justify-center shrink-0 transition-colors disabled:opacity-40 focus:outline-none"
+                      className="w-10 h-10 rounded bg-[#3B82F6] hover:bg-[#2563EB] text-white flex items-center justify-center shrink-0 transition-colors disabled:opacity-40 focus:outline-none cursor-pointer"
                     >
                       <SendHorizontal size={16} />
                     </button>
@@ -553,45 +548,44 @@ Be warm and helpful. Keep responses under 100 words.`;
                   exit={{ opacity: 0, y: -10 }}
                   className="grid grid-cols-1 md:grid-cols-2 gap-5 flex-1"
                 >
-                  <div className="glass-card p-5 border border-[#00D4FF]/10 bg-[#0D1B2E]/40 rounded-2xl flex flex-col justify-between">
+                  <div className="glass-card p-5 bg-white border-2 border-[#E5E7EB] rounded-lg flex flex-col justify-between shadow-none">
                     <div>
-                      <h3 className="font-heading font-semibold text-white text-sm mb-2 flex items-center gap-2">
-                        <ShoppingBag size={14} className="text-[#00D4FF]" />
+                      <h3 className="font-heading font-extrabold text-[#111827] text-sm mb-3 flex items-center gap-2">
+                        <ShoppingBag size={14} className="text-[#3B82F6]" />
                         {t('fan.concessions_title')}
                       </h3>
 
-                      {/* Performance: 500ms debounced search query field */}
-                      <div className="mb-3">
+                      <div className="mb-4">
                         <input
                           type="text"
                           value={searchQuery}
                           onChange={(e) => setSearchQuery(e.target.value)}
                           placeholder="Search food & concessions..."
                           aria-label="Search food concessions stands"
-                          className="w-full bg-[#0A192F] border border-[#0F2340] rounded-xl px-3 py-2 text-xs text-[#E8F4FD] focus:border-[#00D4FF]"
+                          className="w-full bg-[#F3F4F6] border-0 rounded px-3 py-2.5 text-xs text-[#111827] focus:bg-white focus:ring-2 focus:ring-[#3B82F6]"
                         />
                       </div>
 
                       <div className="space-y-3 max-h-60 overflow-y-auto pr-1">
                         {filteredQueues.length === 0 ? (
-                          <p className="text-center py-6 text-xs text-[#4A6580]">
+                          <p className="text-center py-6 text-xs text-[#6B7280] font-semibold">
                             No concessions match your search query.
                           </p>
                         ) : (
                           filteredQueues.map(q => (
-                            <div key={q.id} className="flex items-center justify-between p-3 rounded-xl border border-[#0F2340] bg-[#0A192F]/50">
+                            <div key={q.id} className="flex items-center justify-between p-3 rounded border-2 border-[#E5E7EB] bg-[#F3F4F6]">
                               <div>
-                                <p className="text-xs font-semibold text-[#E8F4FD]">{q.name}</p>
-                                <span className="text-[10px] text-[#4A6580]">{t('fan.queue_estimated')}</span>
+                                <p className="text-xs font-bold text-[#111827]">{q.name}</p>
+                                <span className="text-[10px] text-[#6B7280] font-semibold">{t('fan.queue_estimated')}</span>
                               </div>
                               <div className="flex flex-col items-end">
-                                <span className={`text-xs font-bold ${
+                                <span className={`text-xs font-extrabold ${
                                   q.status === 'high'    ? 'text-[#FF3366]' :
-                                  q.status === 'normal'  ? 'text-[#FFB800]' : 'text-[#00FF87]'
+                                  q.status === 'normal'  ? 'text-[#F59E0B]' : 'text-[#10B981]'
                                 }`}>
                                   {q.wait} min
                                 </span>
-                                <span className="text-[9px] text-[#4A6580] uppercase font-bold tracking-wider">
+                                <span className="text-[9px] text-[#6B7280] uppercase font-extrabold tracking-wider">
                                   {t(`common.${q.status}`)}
                                 </span>
                               </div>
@@ -601,41 +595,41 @@ Be warm and helpful. Keep responses under 100 words.`;
                       </div>
                     </div>
 
-                    <div className="text-[9px] text-[#4A6580] mt-4 flex items-center gap-1.5">
+                    <div className="text-[9px] text-[#6B7280] mt-4 flex items-center gap-1.5 font-semibold">
                       <Clock size={10} />
                       <span>{t('fan.concessions_note')}</span>
                     </div>
                   </div>
 
                   <div className="flex flex-col gap-4">
-                    <div className="glass-card p-4 border border-[#00D4FF]/10 bg-gradient-to-br from-[#0D1B2E]/60 to-[#0A192F]/60 rounded-2xl flex flex-col items-center justify-center text-center">
-                      <div className="flex items-center gap-1.5 text-[9px] text-[#4A6580] font-bold uppercase tracking-wider mb-2">
-                        <Calendar size={11} className="text-[#00D4FF]" />
+                    <div className="glass-card p-5 bg-[#F3F4F6] border-2 border-[#E5E7EB] rounded-lg flex flex-col items-center justify-center text-center shadow-none">
+                      <div className="flex items-center gap-1.5 text-[9px] text-[#6B7280] font-extrabold uppercase tracking-wider mb-2">
+                        <Calendar size={11} className="text-[#3B82F6]" />
                         {t('fan.countdown_label')}
                       </div>
-                      <p className="font-heading font-bold text-3xl text-white tracking-widest font-mono">
+                      <p className="font-heading font-extrabold text-3xl text-[#111827] tracking-widest font-mono">
                         {countdown}
                       </p>
                     </div>
 
-                    <div className="glass-card p-4 border border-[#00D4FF]/10 bg-[#0D1B2E]/40 rounded-2xl flex items-center justify-between">
+                    <div className="glass-card p-4 bg-white border-2 border-[#E5E7EB] rounded-lg flex items-center justify-between shadow-none">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-[#00D4FF]/10 border border-[#00D4FF]/20 flex items-center justify-center text-[#00D4FF]">
+                        <div className="w-10 h-10 rounded-full bg-[#EFF6FF] border border-[#3B82F6] flex items-center justify-center text-[#3B82F6]">
                           <CloudSun size={20} />
                         </div>
                         <div>
-                          <p className="text-xs font-semibold text-white">{weatherData.condition}</p>
-                          <span className="text-[10px] text-[#4A6580]">{t('fan.weather_label')}</span>
+                          <p className="text-xs font-extrabold text-[#111827]">{weatherData.condition}</p>
+                          <span className="text-[10px] text-[#6B7280] font-semibold">{t('fan.weather_label')}</span>
                         </div>
                       </div>
                       <div className="flex flex-col items-end">
-                        <span className="text-lg font-heading font-bold text-[#E8F4FD]">{weatherData.temp.value}°C</span>
-                        <span className="text-[9px] text-[#4A6580]">Humidity {weatherData.humidity.value}%</span>
+                        <span className="text-lg font-heading font-extrabold text-[#111827]">{weatherData.temp.value}°C</span>
+                        <span className="text-[9px] text-[#6B7280] font-semibold">Humidity {weatherData.humidity.value}%</span>
                       </div>
                     </div>
 
-                    <div className="glass-card p-4 border border-[#00D4FF]/10 bg-[#0D1B2E]/40 rounded-2xl flex flex-col gap-2">
-                      <p className="text-xs font-semibold text-[#E8F4FD]">{t('fan.rate_experience')}</p>
+                    <div className="glass-card p-4 bg-white border-2 border-[#E5E7EB] rounded-lg flex flex-col gap-2 shadow-none">
+                      <p className="text-xs font-extrabold text-[#111827]">{t('fan.rate_experience')}</p>
                       <div className="flex items-center gap-2">
                         <div className="flex items-center gap-1" role="img" aria-label="Rating Stars selector">
                           {[1, 2, 3, 4, 5].map(starIdx => {
@@ -647,13 +641,13 @@ Be warm and helpful. Keep responses under 100 words.`;
                                 onMouseEnter={() => setRatingHover(starIdx)}
                                 onMouseLeave={() => setRatingHover(0)}
                                 aria-label={`Rate ${starIdx} stars`}
-                                className="focus:outline-none transition-transform active:scale-125"
+                                className="focus:outline-none transition-transform active:scale-125 cursor-pointer"
                                 disabled={rated}
                               >
                                 <Star
                                   size={18}
                                   className={`transition-colors ${
-                                    isFilled ? 'fill-[#FFB800] text-[#FFB800]' : 'text-[#0F2340] fill-transparent hover:text-[#FFB800]'
+                                    isFilled ? 'fill-[#F59E0B] text-[#F59E0B]' : 'text-[#E5E7EB] fill-transparent hover:text-[#F59E0B]'
                                   }`}
                                 />
                               </button>
@@ -661,12 +655,12 @@ Be warm and helpful. Keep responses under 100 words.`;
                           })}
                         </div>
                         {rated && (
-                          <span className="text-[10px] text-[#00FF87] font-semibold">
+                          <span className="text-[10px] text-[#10B981] font-bold">
                             {t('fan.rating_thanks')}
                           </span>
                         )}
                       </div>
-                      <span className="text-[9px] text-[#4A6580]">{t('fan.rating_note')}</span>
+                      <span className="text-[9px] text-[#6B7280] font-semibold">{t('fan.rating_note')}</span>
                     </div>
                   </div>
                 </motion.div>

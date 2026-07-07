@@ -39,11 +39,11 @@ function AppContent() {
   useLiveData();
 
   return (
-    <div className="min-h-screen bg-[#060D1A] text-[#E8F4FD] relative overflow-hidden selection:bg-[#00D4FF]/30 selection:text-white">
+    <div className="min-h-screen bg-[#FFFFFF] text-[#111827] relative overflow-hidden selection:bg-[#3B82F6]/20 selection:text-[#111827]">
       {/* Accessibility: Skip link */}
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:absolute focus:top-3 focus:left-3 focus:bg-[#00D4FF] focus:text-[#060D1A] focus:px-4 focus:py-2.5 focus:rounded-xl focus:z-[999] font-bold text-xs uppercase tracking-wider shadow-[0_0_20px_rgba(0,212,255,0.4)]"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-3 focus:left-3 focus:bg-[#3B82F6] focus:text-white focus:px-4 focus:py-2.5 focus:rounded-md focus:z-[999] font-bold text-xs uppercase tracking-wider ring-2 ring-offset-2 ring-[#3B82F6]"
       >
         Skip to main content
       </a>
@@ -54,8 +54,8 @@ function AppContent() {
       {/* Keyboard shortcut overlay (press ?) */}
       <KeyboardShortcuts />
 
-      {/* Decorative top ambient grid background */}
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#0c1b30_1px,transparent_1px),linear-gradient(to_bottom,#0c1b30_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] opacity-30 pointer-events-none z-0" />
+      {/* Decorative top ambient grid background - replaced with flat subtle geometric pattern */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#F3F4F6_1px,transparent_1px),linear-gradient(to_bottom,#F3F4F6_1px,transparent_1px)] bg-[size:4rem_4rem] opacity-70 pointer-events-none z-0" />
 
       {/* Main Pages routes wrapped under accessible main and lazy Suspense */}
       <main id="main-content" tabIndex="-1" className="relative z-10 min-h-screen flex flex-col justify-between focus:outline-none">

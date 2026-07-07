@@ -3,77 +3,70 @@ import { X, AlertTriangle, Zap, Info, CheckCircle, MapPin, Clock } from 'lucide-
 
 import { useStadium } from '../context/StadiumContext';
 
-// ─── Config ───────────────────────────────────────────────────────
+// ─── Config (Flat Design Colors) ───────────────────────────────────
 const SEVERITY = {
   critical: {
     icon:      Zap,
     color:     '#FF3366',
-    bg:        'rgba(255,51,102,0.07)',
+    bg:        '#FFF5F5',
     border:    '#FF3366',
-    badge:     'rgba(255,51,102,0.15)',
+    badge:     '#FFFFFF',
     badgeText: '#FF3366',
     label:     'CRITICAL',
-    glow:      '0 0 16px rgba(255,51,102,0.25)',
   },
   high: {
     icon:      AlertTriangle,
     color:     '#FF8C42',
-    bg:        'rgba(255,140,66,0.07)',
+    bg:        '#FFFBF7',
     border:    '#FF8C42',
-    badge:     'rgba(255,140,66,0.15)',
+    badge:     '#FFFFFF',
     badgeText: '#FF8C42',
     label:     'HIGH',
-    glow:      '0 0 16px rgba(255,140,66,0.2)',
   },
   warning: {
     icon:      AlertTriangle,
-    color:     '#FFB800',
-    bg:        'rgba(255,184,0,0.07)',
-    border:    '#FFB800',
-    badge:     'rgba(255,184,0,0.15)',
-    badgeText: '#FFB800',
+    color:     '#F59E0B',
+    bg:        '#FEF3C7',
+    border:    '#F59E0B',
+    badge:     '#FFFFFF',
+    badgeText: '#B45309',
     label:     'WARNING',
-    glow:      '0 0 16px rgba(255,184,0,0.2)',
   },
   medium: {
     icon:      AlertTriangle,
-    color:     '#FFB800',
-    bg:        'rgba(255,184,0,0.07)',
-    border:    '#FFB800',
-    badge:     'rgba(255,184,0,0.15)',
-    badgeText: '#FFB800',
+    color:     '#F59E0B',
+    bg:        '#FEF3C7',
+    border:    '#F59E0B',
+    badge:     '#FFFFFF',
+    badgeText: '#B45309',
     label:     'MEDIUM',
-    glow:      '0 0 12px rgba(255,184,0,0.15)',
   },
   info: {
     icon:      Info,
-    color:     '#00D4FF',
-    bg:        'rgba(0,212,255,0.06)',
-    border:    '#00D4FF',
-    badge:     'rgba(0,212,255,0.12)',
-    badgeText: '#00D4FF',
+    color:     '#3B82F6',
+    bg:        '#EFF6FF',
+    border:    '#3B82F6',
+    badge:     '#FFFFFF',
+    badgeText: '#1D4ED8',
     label:     'INFO',
-    glow:      '0 0 12px rgba(0,212,255,0.15)',
   },
   low: {
     icon:      Info,
-    color:     '#4A6580',
-    bg:        'rgba(74,101,128,0.08)',
-    border:    '#4A6580',
-    badge:     'rgba(74,101,128,0.15)',
-    badgeText: '#4A6580',
+    color:     '#6B7280',
+    bg:        '#F3F4F6',
+    border:    '#6B7280',
+    badge:     '#FFFFFF',
+    badgeText: '#6B7280',
     label:     'LOW',
-    glow:      'none',
   },
   success: {
     icon:      CheckCircle,
-    color:     '#00FF87',
-    bg:        'rgba(0,255,135,0.06)',
-    border:    '#00FF87',
-    badge:     'rgba(0,255,135,0.12)',
-    badgeText: '#00FF87',
+    color:     '#10B981',
+    bg:        '#ECFDF5',
+    border:    '#10B981',
+    badge:     '#FFFFFF',
+    badgeText: '#047857',
     label:     'RESOLVED',
-    glow:      '0 0 12px rgba(0,255,135,0.15)',
   },
 };
 
@@ -88,13 +81,7 @@ function formatTimestamp(ts) {
 }
 
 /**
- * AlertBanner — single alert item
- *
- * @prop {object} alert    - { id, severity, zone, message, timestamp, resolved, suggestedAction }
- * @prop {fn}     onDismiss  - (id) => void
- * @prop {fn}     onResolve  - (id) => void
- * @prop {boolean} compact  - Condensed layout for lists
- * @prop {number}  index    - Stagger index
+ * AlertBanner — Flat Block Style
  */
 export default function AlertBanner({
   alert,
@@ -112,38 +99,35 @@ export default function AlertBanner({
     : SEVERITY[alert.severity] || SEVERITY.info;
 
   const Icon = sev.icon;
-
   const showUrgent = matchDayMode && !alert.resolved;
 
   return (
     <motion.div
       layout
-      initial={{ opacity: 0, x: 60, scale: 0.96 }}
+      initial={{ opacity: 0, x: 40, scale: 0.98 }}
       animate={{ opacity: 1, x: 0,  scale: 1    }}
-      exit={{    opacity: 0, x: 60, scale: 0.95, height: 0, marginBottom: 0, paddingTop: 0, paddingBottom: 0 }}
+      exit={{    opacity: 0, x: 40, scale: 0.98, height: 0, marginBottom: 0, paddingTop: 0, paddingBottom: 0 }}
       transition={{
-        layout:  { duration: 0.25 },
-        default: { duration: 0.3, delay: index * 0.04, ease: [0.22, 1, 0.36, 1] },
+        layout:  { duration: 0.2 },
+        default: { duration: 0.2, delay: index * 0.03, ease: 'easeOut' },
       }}
-      className={`relative overflow-hidden rounded-xl border ${compact ? 'p-3' : 'p-4'} ${
-        showUrgent ? 'animate-[pulse_1.5s_infinite]' : ''
+      className={`relative overflow-hidden rounded-lg border-2 shadow-none ${compact ? 'p-3' : 'p-5'} ${
+        showUrgent ? 'border-[#FF3366] bg-[#FFF5F5] animate-pulse-slow' : ''
       }`}
       style={{
-        background:  sev.bg,
-        borderColor: showUrgent ? 'rgba(255, 51, 102, 0.6)' : `${sev.border}22`,
-        borderLeft:  `3px solid ${showUrgent ? '#FF3366' : sev.color}`,
-        boxShadow:   showUrgent ? '0 0 14px rgba(255, 51, 102, 0.35)' : sev.glow,
+        backgroundColor: showUrgent ? '#FFF5F5' : sev.bg,
+        borderColor: showUrgent ? '#FF3366' : '#E5E7EB',
+        borderLeft: `6px solid ${showUrgent ? '#FF3366' : sev.color}`,
       }}
     >
-      <div className="flex items-start gap-3">
-        {/* Icon */}
+      <div className="flex items-start gap-4">
+        {/* Icon Container */}
         <div
-          className={`${compact ? 'w-7 h-7' : 'w-8 h-8'} rounded-lg flex items-center justify-center shrink-0`}
-          style={{ background: sev.badge }}
+          className={`${compact ? 'w-8 h-8' : 'w-10 h-10'} rounded-full flex items-center justify-center shrink-0 border border-[#E5E7EB] bg-white`}
         >
           <Icon
-            size={compact ? 13 : 15}
-            style={{ color: sev.color }}
+            size={compact ? 14 : 16}
+            style={{ color: showUrgent ? '#FF3366' : sev.color }}
             className={alert.severity === 'critical' && !alert.resolved ? 'animate-pulse' : ''}
           />
         </div>
@@ -153,54 +137,54 @@ export default function AlertBanner({
           {/* Top row: badges */}
           <div className="flex items-center flex-wrap gap-2 mb-1">
             <span
-              className="text-[9px] font-bold tracking-[0.12em] px-1.5 py-0.5 rounded"
-              style={{ background: sev.badge, color: sev.badgeText }}
+              className="text-[9px] font-extrabold tracking-wider px-1.5 py-0.5 rounded border border-[#E5E7EB]"
+              style={{ backgroundColor: '#FFFFFF', color: showUrgent ? '#FF3366' : sev.badgeText }}
             >
-              {sev.label}
+              {showUrgent ? 'URGENT' : sev.label}
             </span>
 
             {alert.type && (
-              <span className="text-[9px] font-medium px-1.5 py-0.5 rounded bg-white/5 text-[#4A6580] uppercase tracking-wider">
+              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-gray-200/50 text-[#6B7280] uppercase tracking-wider">
                 {alert.type.replace(/_/g, ' ')}
               </span>
             )}
 
             {alert.isAIGenerated && (
-              <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-[#00D4FF]/10 text-[#00D4FF]">
+              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-[#3B82F6]/10 text-[#3B82F6] border border-[#3B82F6]/20">
                 ⚡ AI DETECTED
               </span>
             )}
           </div>
 
           {/* Message */}
-          <p className={`text-[#E8F4FD] leading-snug ${compact ? 'text-xs' : 'text-sm'}`}>
+          <p className={`text-[#111827] font-semibold leading-snug ${compact ? 'text-xs' : 'text-sm'}`}>
             {alert.message}
           </p>
 
-          {/* Suggested action (non-compact) */}
+          {/* Suggested action */}
           {!compact && alert.suggestedAction && !alert.resolved && (
-            <p className="mt-1.5 text-[10px] text-[#4A6580] leading-snug">
-              <span style={{ color: sev.color }}>→</span> {alert.suggestedAction}
+            <p className="mt-1.5 text-[11px] text-[#6B7280] leading-snug font-semibold">
+              <span style={{ color: showUrgent ? '#FF3366' : sev.color }}>Action Required:</span> {alert.suggestedAction}
             </p>
           )}
 
           {/* Meta row */}
           <div className="flex items-center gap-3 mt-2 flex-wrap">
             {alert.zone && (
-              <span className="flex items-center gap-1 text-[10px] text-[#4A6580]">
-                <MapPin size={9} />
-                {alert.zone}
+              <span className="flex items-center gap-1 text-[10px] text-[#6B7280] font-bold uppercase">
+                <MapPin size={10} />
+                Zone {alert.zone}
               </span>
             )}
             {alert.timestamp && (
-              <span className="flex items-center gap-1 text-[10px] text-[#4A6580]">
-                <Clock size={9} />
+              <span className="flex items-center gap-1 text-[10px] text-[#6B7280] font-semibold">
+                <Clock size={10} />
                 {formatTimestamp(alert.timestamp)}
               </span>
             )}
             {alert.responseTime && (
-              <span className="text-[10px] text-[#00FF87]">
-                ✓ Responded in {alert.responseTime}
+              <span className="text-[10px] text-[#10B981] font-bold">
+                ✓ Resolved in {alert.responseTime}
               </span>
             )}
           </div>
@@ -213,12 +197,7 @@ export default function AlertBanner({
               <button
                 onClick={() => onResolve(alert.id)}
                 aria-label={`Resolve alert: ${alert.message}`}
-                className="text-[9px] font-bold px-2.5 py-1 rounded-lg border transition-all"
-                style={{
-                  borderColor: '#00FF8730',
-                  color: '#00FF87',
-                  background: 'rgba(0,255,135,0.06)',
-                }}
+                className="text-[10px] font-bold px-3 py-1.5 rounded border-2 border-[#10B981] bg-white text-[#10B981] hover:bg-[#ECFDF5] hover:scale-105 transition-all cursor-pointer"
               >
                 Resolve
               </button>
@@ -227,9 +206,9 @@ export default function AlertBanner({
               <button
                 onClick={() => onDismiss(alert.id)}
                 aria-label={`Dismiss alert: ${alert.message}`}
-                className="p-1 rounded-lg text-[#4A6580] hover:text-[#E8F4FD] hover:bg-white/5 transition-colors flex items-center justify-center"
+                className="p-1.5 rounded hover:bg-gray-100 text-[#6B7280] hover:text-[#111827] transition-colors flex items-center justify-center cursor-pointer"
               >
-                <X size={12} />
+                <X size={14} />
               </button>
             )}
           </div>
@@ -240,14 +219,7 @@ export default function AlertBanner({
 }
 
 /**
- * AlertList — wraps multiple AlertBanners with AnimatePresence
- *
- * @prop {Array}   alerts
- * @prop {fn}      onDismiss
- * @prop {fn}      onResolve
- * @prop {boolean} showResolved
- * @prop {boolean} compact
- * @prop {number}  maxItems
+ * AlertList — wraps multiple AlertBanners
  */
 export function AlertList({
   alerts = [],
@@ -279,10 +251,10 @@ export function AlertList({
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="flex flex-col items-center justify-center py-10 text-[#4A6580]"
+          className="flex flex-col items-center justify-center py-10 text-[#6B7280]"
         >
-          <CheckCircle size={28} className="mb-2 opacity-25" />
-          <p className="text-sm">All clear — no active alerts</p>
+          <CheckCircle size={28} className="mb-2 text-[#10B981] opacity-75" />
+          <p className="text-sm font-semibold">All clear — no active alerts</p>
         </motion.div>
       )}
     </div>

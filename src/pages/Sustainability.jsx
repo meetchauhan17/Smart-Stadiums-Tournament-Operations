@@ -2,33 +2,31 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import {
-  AreaChart, Area, LineChart, Line, BarChart, Bar,
+  Line, BarChart, Bar,
   PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid,
-  Tooltip, Legend, ResponsiveContainer, ComposedChart, Brush
+  Tooltip, Legend, ResponsiveContainer, ComposedChart, Brush, Area
 } from 'recharts';
 import {
   Leaf, Sun, Droplets, Recycle, Zap, Wind,
   TrendingDown, Award, Copy, Check, RefreshCw,
-  BarChart3, TreePine, Car, Train,
+  BarChart3, TreePine, Train,
 } from 'lucide-react';
 import { useStadium } from '../context/StadiumContext';
-import { useAI } from '../hooks/useAI';
 import { callClaude, buildSustainabilitySystemPrompt } from '../utils/aiHelper';
 import PageHeader from '../components/PageHeader';
-import GlowButton from '../components/GlowButton';
 import PageTransition from '../components/PageTransition';
 import LiveBadge from '../components/LiveBadge';
 
-// ─── Custom Dark Tooltip ──────────────────────────────────────────
+// ─── Custom Flat Tooltip ───
 const CustomTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-[#0D1B2E] border border-[#00D4FF]/30 rounded-xl p-3 shadow-2xl">
-        <p className="text-[10px] font-bold text-[#00D4FF] uppercase tracking-wider mb-1">{label}</p>
+      <div className="bg-white border-2 border-[#E5E7EB] rounded p-3 shadow-none text-[#111827]">
+        <p className="text-[10px] font-bold text-[#3B82F6] uppercase tracking-wider mb-1">{label}</p>
         {payload.map((item, idx) => (
-          <p key={idx} className="text-xs text-[#E8F4FD] flex items-center gap-1.5 font-mono">
-            <span className="w-2 h-2 rounded-full" style={{ backgroundColor: item.fill || item.stroke }} />
-            {item.name}: <span className="font-bold">{item.value.toLocaleString()}{item.unit || ''}</span>
+          <p key={idx} className="text-xs text-[#111827] flex items-center gap-1.5 font-semibold">
+            <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.fill || item.stroke }} />
+            {item.name}: <span className="font-extrabold">{item.value.toLocaleString()}{item.unit || ''}</span>
           </p>
         ))}
       </div>
@@ -37,7 +35,7 @@ const CustomTooltip = ({ active, payload, label }) => {
   return null;
 };
 
-// ─── SVG Circular Gauge Component ─────────────────────────────────
+// ─── SVG Circular Gauge Component (Flat style) ───
 function CircularGauge({ value, max = 100, color, label, icon: Icon, size = 130, delay = 0 }) {
   const [animated, setAnimated] = useState(0);
   const r        = size * 0.38;
@@ -66,20 +64,14 @@ function CircularGauge({ value, max = 100, color, label, icon: Icon, size = 130,
 
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.85 }}
+      initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.5, delay: delay / 1000 }}
+      transition={{ duration: 0.3, delay: delay / 1000 }}
       className="flex flex-col items-center gap-2"
     >
       <div className="relative" style={{ width: size, height: size }}>
         <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-          <defs>
-            <filter id={`gauge-glow-${label}`} x="-30%" y="-30%" width="160%" height="160%">
-              <feGaussianBlur stdDeviation="3" result="blur"/>
-              <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-            </filter>
-          </defs>
-          <circle cx={cx} cy={cy} r={r} fill="none" stroke="#0F2340" strokeWidth={size * 0.07} />
+          <circle cx={cx} cy={cy} r={r} fill="none" stroke="#E5E7EB" strokeWidth={size * 0.07} />
           <circle
             cx={cx} cy={cy} r={r}
             fill="none"
@@ -88,7 +80,6 @@ function CircularGauge({ value, max = 100, color, label, icon: Icon, size = 130,
             strokeDasharray={dashArr}
             strokeLinecap="round"
             transform={`rotate(-90 ${cx} ${cy})`}
-            filter={`url(#gauge-glow-${label})`}
             style={{ transition: 'stroke-dasharray 0.05s linear' }}
           />
           <foreignObject x={cx - 14} y={cy - 22} width={28} height={28}>
@@ -96,12 +87,12 @@ function CircularGauge({ value, max = 100, color, label, icon: Icon, size = 130,
               {Icon && <Icon size={20} />}
             </div>
           </foreignObject>
-          <text x={cx} y={cy + 16} textAnchor="middle" fill="#E8F4FD" fontFamily="Space Grotesk, sans-serif" fontWeight="800" fontSize={size * 0.155}>
+          <text x={cx} y={cy + 16} textAnchor="middle" fill="#111827" fontFamily="Outfit, sans-serif" fontWeight="800" fontSize={size * 0.155}>
             {Math.round(animated)}%
           </text>
         </svg>
       </div>
-      <p className="text-[11px] font-semibold text-[#4A6580] text-center leading-tight max-w-[100px] h-8">
+      <p className="text-[11px] font-bold text-[#6B7280] text-center uppercase tracking-wider max-w-[100px] h-8 leading-tight">
         {label}
       </p>
     </motion.div>
@@ -109,15 +100,15 @@ function CircularGauge({ value, max = 100, color, label, icon: Icon, size = 130,
 }
 
 const TRANSPORT_DATA = [
-  { name: 'Public Transit', value: 62, color: '#00D4FF' },
-  { name: 'Rideshare',      value: 24, color: '#00FF87' },
-  { name: 'Private Vehicle',value: 14, color: '#FFB800' },
+  { name: 'Public Transit', value: 62, color: '#3B82F6' },
+  { name: 'Rideshare',      value: 24, color: '#10B981' },
+  { name: 'Private Vehicle',value: 14, color: '#F59E0B' },
 ];
 
 const ENERGY_BREAKDOWN = [
-  { name: 'Solar',   value: 43.6, color: '#00FF87' },
-  { name: 'Grid',    value: 48.2, color: '#4A6580' },
-  { name: 'Battery', value: 8.2,  color: '#00D4FF' },
+  { name: 'Solar',   value: 43.6, color: '#10B981' },
+  { name: 'Grid',    value: 48.2, color: '#6B7280' },
+  { name: 'Battery', value: 8.2,  color: '#3B82F6' },
 ];
 
 const ACHIEVEMENTS = [
@@ -150,7 +141,7 @@ export default function Sustainability() {
   const [aiLoading, setAiLoading] = useState(false);
   const [copied,    setCopied]    = useState(false);
   const [aiTip,     setAiTip]     = useState('');
-  const [tipLoading,setTipLoading]= useState(false);
+  const [tipLoading,setTipLoading] = useState(false);
 
   const sysPrompt = buildSustainabilitySystemPrompt();
 
@@ -231,7 +222,7 @@ Return JSON only: {"summary": "2-3 sentence summary", "opportunities": ["opp 1",
 
   return (
     <PageTransition>
-      <div className="max-w-7xl mx-auto px-4 py-6 mt-14">
+      <div className="max-w-7xl mx-auto px-4 py-6 mt-14 bg-white text-[#111827]">
       <PageHeader
         title={t('sustain.title')}
         subtitle={`${t('sustain.subtitle')} — ${currentVenue.name} · FIFA World Cup 2026`}
@@ -239,92 +230,66 @@ Return JSON only: {"summary": "2-3 sentence summary", "opportunities": ["opp 1",
         actions={<LiveBadge status="live" label={t('sustain.live_badge')} />}
       />
 
-      {/* ═══════════════════════════════════════════════════════════
-           HERO — 4 CIRCULAR PROGRESS GAUGES
-           ═══════════════════════════════════════════════════════════ */}
-      <div className="glass-card border border-[#00D4FF]/10 bg-[#0D1B2E]/50 rounded-2xl p-6 mb-6">
+      {/* HERO — circular progress gauges */}
+      <div className="glass-card bg-white border-2 border-[#E5E7EB] rounded-lg p-6 mb-6 shadow-none">
         <div className="flex flex-wrap items-center justify-center gap-10 md:gap-16 py-2">
-          <CircularGauge value={73} color="#00FF87" label="Solar Energy Coverage"    icon={Sun}     size={130} delay={0}   />
-          <CircularGauge value={68} color="#00D4FF" label="Water Recycling Rate"     icon={Droplets} size={130} delay={200} />
-          <CircularGauge value={81} color="#34D399" label="Waste Diversion"          icon={Recycle}  size={130} delay={400} />
+          <CircularGauge value={73} color="#10B981" label="Solar Energy Coverage"    icon={Sun}     size={130} delay={0}   />
+          <CircularGauge value={68} color="#3B82F6" label="Water Recycling Rate"     icon={Droplets} size={130} delay={200} />
+          <CircularGauge value={81} color="#059669" label="Waste Diversion"          icon={Recycle}  size={130} delay={400} />
           <CircularGauge value={45} color="#A855F7" label="Carbon Offset Progress"   icon={Wind}     size={130} delay={600} />
         </div>
 
         {/* AI Tip Banner */}
-        <div className="mt-6 mx-auto max-w-3xl rounded-xl border border-[#00FF87]/20 bg-[#00FF87]/5 p-4 flex items-start gap-3">
-          <div className="w-8 h-8 rounded-xl bg-[#00FF87]/10 flex items-center justify-center shrink-0">
-            <Zap size={16} className="text-[#00FF87]" />
+        <div className="mt-6 mx-auto max-w-3xl rounded border-2 border-[#10B981] bg-[#ECFDF5] p-4 flex items-start gap-3">
+          <div className="w-8 h-8 rounded-full bg-white border border-[#10B981] flex items-center justify-center shrink-0">
+            <Zap size={16} className="text-[#10B981]" />
           </div>
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-wider text-[#00FF87] mb-1">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-[#047857] mb-1">
               ⚡ {t('sustain.energy_tip_title')}
             </p>
             {tipLoading ? (
-              <div className="flex items-center gap-2 text-xs text-[#4A6580]">
+              <div className="flex items-center gap-2 text-xs text-[#6B7280] font-bold">
                 <RefreshCw size={11} className="animate-spin" />
                 {t('sustain.analyzing_patterns')}
               </div>
             ) : (
-              <p className="text-xs text-[#E8F4FD] leading-relaxed">{aiTip}</p>
+              <p className="text-xs text-[#047857] font-semibold leading-relaxed">{aiTip}</p>
             )}
           </div>
         </div>
       </div>
 
-      {/* ═══════════════════════════════════════════════════════════
-           MAIN GRID
-           ═══════════════════════════════════════════════════════════ */}
+      {/* MAIN GRID */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
 
         {/* LEFT COLUMN */}
         <div className="flex flex-col gap-5">
-          <div className="glass-card p-5 border border-[#00D4FF]/10 bg-[#0D1B2E]/40 rounded-2xl">
-            <h3 className="font-heading font-semibold text-xs text-[#00D4FF] uppercase tracking-wider mb-4 flex items-center gap-1.5">
+          <div className="glass-card p-5 bg-white border-2 border-[#E5E7EB] rounded-lg shadow-none">
+            <h3 className="font-heading font-extrabold text-xs text-[#3B82F6] uppercase tracking-wider mb-4 flex items-center gap-1.5">
               <BarChart3 size={12} /> {t('sustain.chart_energy_title')}
             </h3>
             <div className="h-56">
               <ResponsiveContainer width="100%" height="100%">
                 <ComposedChart data={sustainabilityHistory} margin={{ top: 10, right: -10, left: -20, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="gradSolar" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%"  stopColor="#00FF87" stopOpacity={0.25}/>
-                      <stop offset="95%" stopColor="#00FF87" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#0F2340" />
-                  <XAxis dataKey="dayLabel" stroke="#4A6580" fontSize={8} />
-                  <YAxis yAxisId="left" stroke="#4A6580" fontSize={8} unit=" kWh" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                  <XAxis dataKey="dayLabel" stroke="#6B7280" fontSize={8} />
+                  <YAxis yAxisId="left" stroke="#6B7280" fontSize={8} unit=" kWh" />
                   <YAxis yAxisId="right" orientation="right" stroke="#A855F7" fontSize={8} unit="%" domain={[0, 100]} />
                   <Tooltip content={<CustomTooltip />} />
                   <Legend wrapperStyle={{ fontSize: '9px', paddingBottom: '10px' }} />
-                  <Area yAxisId="left" type="monotone" dataKey="solarGenerated" stroke="#00FF87" strokeWidth={1.5} fill="url(#gradSolar)" name="Solar (kWh)" />
-                  <Line yAxisId="left" type="monotone" dataKey="energyUsed" stroke="#00D4FF" strokeWidth={1.5} dot={false} name="Grid Draw (kWh)" />
+                  <Area yAxisId="left" type="monotone" dataKey="solarGenerated" stroke="#10B981" strokeWidth={1.5} fill="#ECFDF5" fillOpacity={0.4} name="Solar (kWh)" />
+                  <Line yAxisId="left" type="monotone" dataKey="energyUsed" stroke="#3B82F6" strokeWidth={2} dot={false} name="Grid Draw (kWh)" />
                   <Line yAxisId="right" type="monotone" dataKey="renewableShare" stroke="#A855F7" strokeWidth={2} dot={false} name="Renewable %" />
-                  <Brush dataKey="dayLabel" height={15} stroke="#00D4FF" fill="#060D1A" travellerWidth={4} />
+                  <Brush dataKey="dayLabel" height={15} stroke="#E5E7EB" fill="#F3F4F6" travellerWidth={4} />
                 </ComposedChart>
               </ResponsiveContainer>
             </div>
-
-            {/* Accessibility: Hidden energy data table for screen readers */}
-            <table className="sr-only" aria-label="30-day energy production vs consumption data">
-              <caption>Energy Intelligence — Solar Generated vs Grid Draw vs Renewable Share (30 days)</caption>
-              <thead><tr><th>Day</th><th>Solar (kWh)</th><th>Grid Draw (kWh)</th><th>Renewable (%)</th></tr></thead>
-              <tbody>
-                {sustainabilityHistory.slice(0, 10).map((row, i) => (
-                  <tr key={i}>
-                    <td>{row.dayLabel}</td>
-                    <td>{row.solarGenerated}</td>
-                    <td>{row.energyUsed}</td>
-                    <td>{row.renewableShare}%</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <div className="glass-card p-4 border border-[#00D4FF]/10 bg-[#0D1B2E]/40 rounded-2xl">
-              <h4 className="font-heading font-semibold text-[10px] text-[#4A6580] uppercase tracking-wider mb-3">
+            <div className="glass-card p-4 bg-white border-2 border-[#E5E7EB] rounded-lg shadow-none">
+              <h4 className="font-heading font-bold text-[10px] text-[#6B7280] uppercase tracking-wider mb-3">
                 {t('sustain.power_mix_title')}
               </h4>
               <div className="h-28 relative">
@@ -342,31 +307,31 @@ Return JSON only: {"summary": "2-3 sentence summary", "opportunities": ["opp 1",
               <div className="space-y-1 mt-1">
                 {ENERGY_BREAKDOWN.map((e) => (
                   <div key={e.name} className="flex items-center justify-between text-[10px]">
-                    <div className="flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full" style={{ background: e.color }} />
-                      <span className="text-[#4A6580]">{e.name}</span>
+                    <div className="flex items-center gap-1.5 font-semibold">
+                      <span className="w-2.5 h-2.5 rounded-full" style={{ background: e.color }} />
+                      <span className="text-[#6B7280]">{e.name}</span>
                     </div>
-                    <span className="font-bold text-[#E8F4FD]">{e.value}%</span>
+                    <span className="font-extrabold text-[#111827]">{e.value}%</span>
                   </div>
                 ))}
               </div>
             </div>
 
-            <div className="glass-card p-4 border border-[#00D4FF]/10 bg-[#0D1B2E]/40 rounded-2xl flex flex-col gap-3">
-              <h4 className="font-heading font-semibold text-[10px] text-[#4A6580] uppercase tracking-wider">
+            <div className="glass-card p-4 bg-white border-2 border-[#E5E7EB] rounded-lg flex flex-col gap-3 shadow-none">
+              <h4 className="font-heading font-bold text-[10px] text-[#6B7280] uppercase tracking-wider">
                 {t('sustain.live_kpi_title')}
               </h4>
               {[
-                { label: 'Total Used',    val: sustainabilityMetrics.energyUsed.value.toLocaleString(),     unit: 'kWh', color: '#00D4FF' },
-                { label: 'Solar Output',  val: sustainabilityMetrics.solarGenerated.value.toLocaleString(), unit: 'kWh', color: '#00FF87' },
+                { label: 'Total Used',    val: sustainabilityMetrics.energyUsed.value.toLocaleString(),     unit: 'kWh', color: '#3B82F6' },
+                { label: 'Solar Output',  val: sustainabilityMetrics.solarGenerated.value.toLocaleString(), unit: 'kWh', color: '#10B981' },
                 { label: 'EV Chargers',   val: sustainabilityMetrics.evChargers.value,                     unit: 'active', color: '#A855F7' },
-                { label: 'LED Coverage',  val: sustainabilityMetrics.ledCoverage.value,                     unit: '%',   color: '#00FF87' },
-                { label: 'Renewable Mix', val: sustainabilityMetrics.renewableShare.value,                   unit: '%',   color: '#00D4FF' },
+                { label: 'LED Coverage',  val: sustainabilityMetrics.ledCoverage.value,                     unit: '%',   color: '#10B981' },
+                { label: 'Renewable Mix', val: sustainabilityMetrics.renewableShare.value,                   unit: '%',   color: '#3B82F6' },
               ].map(m => (
                 <div key={m.label} className="flex items-center justify-between">
-                  <span className="text-[10px] text-[#4A6580]">{m.label}</span>
-                  <span className="font-heading font-bold text-xs" style={{ color: m.color }}>
-                    {m.val} <span className="text-[9px] text-[#4A6580] font-normal">{m.unit}</span>
+                  <span className="text-[10px] text-[#6B7280] font-semibold">{m.label}</span>
+                  <span className="font-heading font-extrabold text-xs" style={{ color: m.color }}>
+                    {m.val} <span className="text-[9px] text-[#6B7280] font-normal">{m.unit}</span>
                   </span>
                 </div>
               ))}
@@ -376,66 +341,66 @@ Return JSON only: {"summary": "2-3 sentence summary", "opportunities": ["opp 1",
 
         {/* RIGHT COLUMN */}
         <div className="flex flex-col gap-5">
-          <div className="glass-card p-5 border border-[#00D4FF]/10 bg-[#0D1B2E]/40 rounded-2xl">
-            <h3 className="font-heading font-semibold text-xs text-[#00D4FF] uppercase tracking-wider mb-4 flex items-center gap-1.5">
+          <div className="glass-card p-5 bg-white border-2 border-[#E5E7EB] rounded-lg shadow-none">
+            <h3 className="font-heading font-extrabold text-xs text-[#3B82F6] uppercase tracking-wider mb-4 flex items-center gap-1.5">
               <TrendingDown size={12} /> {t('sustain.impact_title')}
             </h3>
             <div className="space-y-4">
               <div>
-                <div className="flex justify-between text-[10px] text-[#4A6580] mb-1.5">
+                <div className="flex justify-between text-[10px] text-[#6B7280] mb-1.5 font-bold">
                   <span>Carbon Footprint vs Target</span>
-                  <span className="text-[#FF3366] font-bold">
+                  <span className="text-[#FF3366]">
                     {sustainabilityMetrics.carbonOffset.value} / 3.0 tCO₂e
                   </span>
                 </div>
-                <div className="h-2 rounded-full bg-[#0F2340] relative overflow-hidden">
+                <div className="h-2 rounded-full bg-[#F3F4F6] relative overflow-hidden">
                   <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${(sustainabilityMetrics.carbonOffset.value / 3) * 100}%` }}
-                    className="h-full rounded-full bg-gradient-to-r from-[#FF3366] to-[#FFB800]"
+                    className="h-full rounded-full bg-[#FF3366]"
                   />
                 </div>
               </div>
 
               <div>
-                <div className="flex justify-between text-[10px] text-[#4A6580] mb-1.5">
+                <div className="flex justify-between text-[10px] text-[#6B7280] mb-1.5 font-bold">
                   <span>Water Saved vs Baseline</span>
-                  <span className="text-[#00D4FF] font-bold">
+                  <span className="text-[#3B82F6]">
                     {(sustainabilityMetrics.waterSaved.value / 1000).toFixed(1)}k / 40k L
                   </span>
                 </div>
-                <div className="h-2 rounded-full bg-[#0F2340] overflow-hidden">
+                <div className="h-2 rounded-full bg-[#F3F4F6] overflow-hidden">
                   <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${(sustainabilityMetrics.waterSaved.value / 40000) * 100}%` }}
-                    className="h-full rounded-full bg-gradient-to-r from-[#00D4FF] to-[#00FF87]"
+                    className="h-full rounded-full bg-[#3B82F6]"
                   />
                 </div>
               </div>
 
               <div>
-                <div className="flex justify-between text-[10px] text-[#4A6580] mb-1.5">
+                <div className="flex justify-between text-[10px] text-[#6B7280] mb-1.5 font-bold">
                   <span>Waste Diverted from Landfill</span>
-                  <span className="text-[#00FF87] font-bold">
+                  <span className="text-[#10B981]">
                     {sustainabilityMetrics.wasteRecycled.value}%
                   </span>
                 </div>
-                <div className="h-2 rounded-full bg-[#0F2340] overflow-hidden">
+                <div className="h-2 rounded-full bg-[#F3F4F6] overflow-hidden">
                   <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${sustainabilityMetrics.wasteRecycled.value}%` }}
-                    className="h-full rounded-full bg-gradient-to-r from-[#00FF87] to-[#34D399]"
+                    className="h-full rounded-full bg-[#10B981]"
                   />
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="glass-card p-5 border border-[#00D4FF]/10 bg-[#0D1B2E]/40 rounded-2xl">
-            <h3 className="font-heading font-semibold text-xs text-[#00D4FF] uppercase tracking-wider mb-1 flex items-center gap-1.5">
+          <div className="glass-card p-5 bg-white border-2 border-[#E5E7EB] rounded-lg shadow-none">
+            <h3 className="font-heading font-extrabold text-xs text-[#3B82F6] uppercase tracking-wider mb-1 flex items-center gap-1.5">
               <Train size={12} /> {t('sustain.transport_title')}
             </h3>
-            <p className="text-[10px] text-[#4A6580] mb-4">{t('sustain.transport_desc')}</p>
+            <p className="text-[10px] text-[#6B7280] mb-4 font-semibold">{t('sustain.transport_desc')}</p>
             <div className="flex items-center gap-5">
               <div className="w-28 h-28 shrink-0">
                 <ResponsiveContainer width="100%" height="100%">
@@ -452,14 +417,14 @@ Return JSON only: {"summary": "2-3 sentence summary", "opportunities": ["opp 1",
               <div className="flex-1 space-y-2.5">
                 {TRANSPORT_DATA.map((t) => (
                   <div key={t.name}>
-                    <div className="flex items-center justify-between text-[10px] mb-1">
-                      <span className="text-[#4A6580] flex items-center gap-1">
+                    <div className="flex items-center justify-between text-[10px] mb-1 font-bold">
+                      <span className="text-[#6B7280] flex items-center gap-1">
                         <span className="w-2.5 h-2.5 rounded-full" style={{ background: t.color }} />
                         {t.name}
                       </span>
-                      <span className="font-bold" style={{ color: t.color }}>{t.value}%</span>
+                      <span style={{ color: t.color }}>{t.value}%</span>
                     </div>
-                    <div className="h-1.5 rounded-full bg-[#0F2340] overflow-hidden">
+                    <div className="h-1.5 rounded-full bg-[#F3F4F6] overflow-hidden">
                       <motion.div
                         initial={{ width: 0 }}
                         animate={{ width: `${t.value}%` }}
@@ -473,8 +438,8 @@ Return JSON only: {"summary": "2-3 sentence summary", "opportunities": ["opp 1",
             </div>
           </div>
 
-          <div className="glass-card p-5 border border-[#00D4FF]/10 bg-[#0D1B2E]/40 rounded-2xl">
-            <h3 className="font-heading font-semibold text-xs text-[#00D4FF] uppercase tracking-wider mb-4 flex items-center gap-1.5">
+          <div className="glass-card p-5 bg-white border-2 border-[#E5E7EB] rounded-lg shadow-none">
+            <h3 className="font-heading font-extrabold text-xs text-[#3B82F6] uppercase tracking-wider mb-4 flex items-center gap-1.5">
               <Recycle size={12} /> {t('sustain.waste_title')}
             </h3>
             <div className="h-36">
@@ -487,53 +452,49 @@ Return JSON only: {"summary": "2-3 sentence summary", "opportunities": ["opp 1",
                   ]}
                   margin={{ top: 4, right: 4, left: -30, bottom: 0 }}
                 >
-                  <CartesianGrid strokeDasharray="3 3" stroke="#0F2340" />
-                  <XAxis dataKey="name" stroke="#4A6580" fontSize={9} />
-                  <YAxis stroke="#4A6580" fontSize={9} unit="kg" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                  <XAxis dataKey="name" stroke="#6B7280" fontSize={9} />
+                  <YAxis stroke="#6B7280" fontSize={9} unit="kg" />
                   <Tooltip content={<CustomTooltip />} />
-                  <Bar dataKey="recyclable" fill="#00FF87" radius={[3,3,0,0]} name="Recyclable" stackId="a" />
-                  <Bar dataKey="compost"    fill="#00D4FF" radius={[0,0,0,0]} name="Compost"     stackId="a" />
+                  <Bar dataKey="recyclable" fill="#10B981" radius={[3,3,0,0]} name="Recyclable" stackId="a" />
+                  <Bar dataKey="compost"    fill="#3B82F6" radius={[0,0,0,0]} name="Compost"     stackId="a" />
                   <Bar dataKey="landfill"   fill="#FF3366" radius={[3,3,0,0]} name="Landfill"    stackId="a" />
                 </BarChart>
               </ResponsiveContainer>
-
-              {/* Accessibility: Hidden waste data table for screen readers */}
-              <table className="sr-only" aria-label="Waste diversion comparison data table">
-                <caption>Waste Sorted by Match Day — Recyclable, Compost, Landfill (kg)</caption>
-                <thead><tr><th>Match</th><th>Recyclable (kg)</th><th>Compost (kg)</th><th>Landfill (kg)</th></tr></thead>
-                <tbody>
-                  <tr><td>Match 1</td><td>2840</td><td>1620</td><td>480</td></tr>
-                  <tr><td>Match 2</td><td>3100</td><td>1780</td><td>420</td></tr>
-                  <tr><td>Today</td><td>3460</td><td>1940</td><td>380</td></tr>
-                </tbody>
-              </table>
             </div>
           </div>
         </div>
       </div>
 
       {/* AI REPORT */}
-      <div className="glass-card p-6 border border-[#00FF87]/15 bg-[#0D1B2E]/60 rounded-2xl mb-6">
-        <div className="flex items-start justify-between gap-4 mb-5">
+      <div className="glass-card p-6 bg-white border-2 border-[#E5E7EB] rounded-lg mb-6 shadow-none">
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-5">
           <div>
-            <h3 className="font-heading font-bold text-base text-white flex items-center gap-2 mb-1">
-              <TreePine size={16} className="text-[#00FF87]" />
+            <h3 className="font-heading font-extrabold text-base text-[#111827] flex items-center gap-2 mb-1">
+              <TreePine size={16} className="text-[#10B981]" />
               {t('sustain.ai_report_title')}
             </h3>
-            <p className="text-xs text-[#4A6580]">{t('sustain.ai_report_desc')}</p>
+            <p className="text-xs text-[#6B7280] font-semibold">{t('sustain.ai_report_desc')}</p>
           </div>
           <div className="flex gap-2 shrink-0">
             {aiReport && (
-              <GlowButton size="sm" variant="success" onClick={handleCopy}>
+              <button
+                onClick={handleCopy}
+                className="btn-ghost flex items-center gap-1.5 h-10 px-3 cursor-pointer text-xs"
+              >
                 {copied ? <Check size={11} /> : <Copy size={11} />}
                 {copied ? t('sustain.copied') : t('sustain.copy_report')}
-              </GlowButton>
+              </button>
             )}
-            <GlowButton size="sm" onClick={handleGenerateReport} disabled={aiLoading}>
+            <button
+              onClick={handleGenerateReport}
+              disabled={aiLoading}
+              className="btn-primary flex items-center gap-1.5 h-10 px-4 cursor-pointer text-xs"
+            >
               {aiLoading
                 ? <><RefreshCw size={11} className="animate-spin" /> {t('sustain.generating_report')}</>
                 : <><Leaf size={11} /> {t('sustain.generate_report')}</>}
-            </GlowButton>
+            </button>
           </div>
         </div>
 
@@ -546,8 +507,8 @@ Return JSON only: {"summary": "2-3 sentence summary", "opportunities": ["opp 1",
               exit={{ opacity: 0 }}
               className="flex flex-col items-center justify-center py-12 gap-3"
             >
-              <div className="w-10 h-10 border-t-2 border-[#00FF87] border-r-transparent rounded-full animate-spin" />
-              <span className="text-xs font-heading font-semibold tracking-wider text-[#4A6580] animate-pulse">
+              <div className="w-10 h-10 border-t-2 border-[#10B981] border-r-transparent rounded-full animate-spin" />
+              <span className="text-xs font-heading font-bold tracking-wider text-[#6B7280] animate-pulse">
                 {t('sustain.generating_data_msg')}
               </span>
             </motion.div>
@@ -560,34 +521,34 @@ Return JSON only: {"summary": "2-3 sentence summary", "opportunities": ["opp 1",
               animate={{ opacity: 1, y: 0 }}
               className="grid grid-cols-1 md:grid-cols-3 gap-5"
             >
-              <div className="p-4 rounded-xl bg-[#0A192F]/60 border border-[#00D4FF]/10">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-[#00D4FF] mb-2 flex items-center gap-1">
+              <div className="p-4 rounded border-2 border-[#E5E7EB] bg-[#F3F4F6]">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-[#3B82F6] mb-2 flex items-center gap-1">
                   <BarChart3 size={10} /> Performance Summary
                 </p>
-                <p className="text-xs text-[#E8F4FD] leading-relaxed">{aiReport.summary}</p>
+                <p className="text-xs text-[#111827] font-semibold leading-relaxed">{aiReport.summary}</p>
               </div>
 
-              <div className="p-4 rounded-xl bg-[#0A192F]/60 border border-[#00FF87]/10">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-[#00FF87] mb-3 flex items-center gap-1">
+              <div className="p-4 rounded border-2 border-[#E5E7EB] bg-[#F3F4F6]">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-[#10B981] mb-3 flex items-center gap-1">
                   <Zap size={10} /> Top 3 Opportunities
                 </p>
                 <div className="space-y-2">
                   {aiReport.opportunities?.map((opp, i) => (
                     <div key={i} className="flex gap-2 items-start">
-                      <span className="w-4 h-4 rounded-full bg-[#00FF87]/15 text-[#00FF87] text-[9px] font-bold flex items-center justify-center shrink-0 mt-0.5">
+                      <span className="w-4 h-4 rounded-full bg-[#10B981]/15 text-[#10B981] text-[9px] font-bold flex items-center justify-center shrink-0 mt-0.5 border border-[#10B981]/25">
                         {i + 1}
                       </span>
-                      <p className="text-xs text-[#E8F4FD] leading-snug">{opp}</p>
+                      <p className="text-xs text-[#111827] font-semibold leading-snug">{opp}</p>
                     </div>
                   ))}
                 </div>
               </div>
 
-              <div className="p-4 rounded-xl bg-[#0A192F]/60 border border-[#A855F7]/10">
+              <div className="p-4 rounded border-2 border-[#E5E7EB] bg-[#F3F4F6]">
                 <p className="text-[10px] font-bold uppercase tracking-wider text-[#A855F7] mb-2 flex items-center gap-1">
                   <TrendingDown size={10} /> Projected Impact
                 </p>
-                <p className="text-xs text-[#E8F4FD] leading-relaxed">{aiReport.impact}</p>
+                <p className="text-xs text-[#111827] font-semibold leading-relaxed">{aiReport.impact}</p>
               </div>
             </motion.div>
           )}
@@ -599,8 +560,8 @@ Return JSON only: {"summary": "2-3 sentence summary", "opportunities": ["opp 1",
               animate={{ opacity: 1 }}
               className="flex flex-col items-center justify-center py-10 text-center"
             >
-              <TreePine size={36} className="text-[#4A6580]/25 mb-3" />
-              <p className="text-xs text-[#4A6580] max-w-sm leading-relaxed">
+              <TreePine size={36} className="text-[#6B7280]/35 mb-3" />
+              <p className="text-xs text-[#6B7280] font-semibold max-w-sm leading-relaxed">
                 {t('sustain.report_placeholder')}
               </p>
             </motion.div>
@@ -609,9 +570,9 @@ Return JSON only: {"summary": "2-3 sentence summary", "opportunities": ["opp 1",
       </div>
 
       {/* ACHIEVEMENTS */}
-      <div className="glass-card p-5 border border-[#00D4FF]/10 bg-[#0D1B2E]/40 rounded-2xl mb-5">
-        <h3 className="font-heading font-bold text-sm text-white mb-4 flex items-center gap-2">
-          <Award size={15} className="text-[#FFB800]" />
+      <div className="glass-card p-5 bg-white border-2 border-[#E5E7EB] rounded-lg mb-5 shadow-none">
+        <h3 className="font-heading font-extrabold text-sm text-[#111827] mb-4 flex items-center gap-2">
+          <Award size={15} className="text-[#F59E0B]" />
           {t('sustain.achievements_title')}
         </h3>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -619,56 +580,56 @@ Return JSON only: {"summary": "2-3 sentence summary", "opportunities": ["opp 1",
             <motion.div
               key={a.id}
               whileHover={a.earned ? { scale: 1.03 } : {}}
-              className={`p-3.5 rounded-xl border flex flex-col gap-1.5 transition-all ${
-                a.earned ? 'border-[#FFB800]/30 bg-[#FFB800]/6 cursor-default' : 'border-[#0F2340] bg-[#0A192F]/30 opacity-40 cursor-not-allowed'
+              className={`p-3.5 rounded border-2 flex flex-col gap-1.5 transition-all ${
+                a.earned ? 'border-[#F59E0B]/30 bg-[#FEF3C7] cursor-default' : 'border-[#E5E7EB] bg-[#F3F4F6] opacity-40 cursor-not-allowed'
               }`}
             >
               <div className="flex items-center justify-between">
                 <span className="text-xl">{a.icon}</span>
                 {a.earned && (
-                  <span className="w-4 h-4 rounded-full bg-[#00FF87]/15 flex items-center justify-center">
-                    <Check size={9} className="text-[#00FF87]" />
+                  <span className="w-4 h-4 rounded-full bg-[#10B981]/15 flex items-center justify-center border border-[#10B981]/25">
+                    <Check size={9} className="text-[#10B981]" />
                   </span>
                 )}
               </div>
-              <p className="text-[10px] font-bold text-[#E8F4FD] leading-tight">{a.label}</p>
-              <p className="text-[9px] text-[#4A6580] leading-tight">{a.desc}</p>
+              <p className="text-[10px] font-bold text-[#111827] leading-tight">{a.label}</p>
+              <p className="text-[9px] text-[#6B7280] font-semibold leading-tight">{a.desc}</p>
             </motion.div>
           ))}
         </div>
       </div>
 
       {/* LEADERBOARD */}
-      <div className="glass-card p-5 border border-[#00D4FF]/10 bg-[#0D1B2E]/40 rounded-2xl">
-        <h3 className="font-heading font-bold text-sm text-white mb-4 flex items-center gap-2">
-          <TreePine size={15} className="text-[#00FF87]" />
+      <div className="glass-card p-5 bg-white border-2 border-[#E5E7EB] rounded-lg shadow-none">
+        <h3 className="font-heading font-extrabold text-sm text-[#111827] mb-4 flex items-center gap-2">
+          <TreePine size={15} className="text-[#10B981]" />
           {t('sustain.leaderboard_title')}
         </h3>
         <div className="space-y-3">
           {[...VENUE_LEADERBOARD].sort((a, b) => b.score - a.score).map((v, idx) => (
-            <div key={v.name} className="p-3.5 rounded-xl border border-[#0F2340] bg-[#0A192F]/40 flex items-center gap-4">
+            <div key={v.name} className="p-3.5 rounded border-2 border-[#E5E7EB] bg-white flex items-center gap-4">
               <span className="font-heading font-black text-lg w-6 text-center" style={{
-                color: idx === 0 ? '#FFB800' : idx === 1 ? '#4A6580' : '#8B5CF6'
+                color: idx === 0 ? '#F59E0B' : idx === 1 ? '#6B7280' : '#8B5CF6'
               }}>
                 {idx + 1}
               </span>
               <div className="flex-1">
                 <div className="flex items-center justify-between mb-1.5">
-                  <span className="font-semibold text-xs text-white flex items-center gap-1.5">
+                  <span className="font-bold text-xs text-[#111827] flex items-center gap-1.5">
                     <span>{v.flag}</span> {v.name}
                   </span>
-                  <span className="font-heading font-bold text-sm text-[#00FF87]">
+                  <span className="font-heading font-extrabold text-sm text-[#10B981]">
                     {v.score} / 100
                   </span>
                 </div>
-                <div className="h-1.5 rounded-full bg-[#0F2340] overflow-hidden">
+                <div className="h-2 rounded-full bg-[#F3F4F6] overflow-hidden">
                   <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${v.score}%` }}
-                    className="h-full rounded-full bg-gradient-to-r from-[#00D4FF] to-[#00FF87]"
+                    className="h-full rounded-full bg-gradient-to-r from-[#3B82F6] to-[#10B981]"
                   />
                 </div>
-                <div className="flex gap-4 mt-2 text-[9px] text-[#4A6580]">
+                <div className="flex gap-4 mt-2 text-[9px] text-[#6B7280] font-bold">
                   <span>☀️ {v.energy}%</span>
                   <span>💧 {v.water}%</span>
                   <span>♻️ {v.waste}%</span>
