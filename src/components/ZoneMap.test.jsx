@@ -5,6 +5,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { StadiumProvider } from '../context/StadiumContext';
+import { ToastProvider } from '../components/Toast';
 import { BrowserRouter } from 'react-router-dom';
 import ZoneMap from './ZoneMap';
 
@@ -18,9 +19,11 @@ function renderZoneMap(props = {}) {
   return {
     ...render(
       <BrowserRouter>
-        <StadiumProvider>
-          <ZoneMap {...defaultProps} />
-        </StadiumProvider>
+        <ToastProvider>
+          <StadiumProvider>
+            <ZoneMap {...defaultProps} />
+          </StadiumProvider>
+        </ToastProvider>
       </BrowserRouter>
     ),
     onZoneSelect: defaultProps.onZoneSelect,

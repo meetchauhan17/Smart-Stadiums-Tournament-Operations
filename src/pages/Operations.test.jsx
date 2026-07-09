@@ -6,6 +6,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { BrowserRouter } from 'react-router-dom';
 import { StadiumProvider } from '../context/StadiumContext';
+import { ToastProvider } from '../components/Toast';
 import { http, HttpResponse } from 'msw';
 import { server, MOCK_CLAUDE_URL, mockClaudeSuccess } from '../test/mswServer';
 import Operations from './Operations';
@@ -13,11 +14,13 @@ import Operations from './Operations';
 // ─── Render helper ────────────────────────────────────────────────
 function renderOperations() {
   return render(
-    <BrowserRouter>
+    <ToastProvider>
       <StadiumProvider>
-        <Operations />
+        <BrowserRouter>
+          <Operations />
+        </BrowserRouter>
       </StadiumProvider>
-    </BrowserRouter>
+    </ToastProvider>
   );
 }
 

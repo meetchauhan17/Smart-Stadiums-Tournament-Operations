@@ -5,12 +5,15 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, act, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { StadiumProvider, useStadium } from './StadiumContext';
+import { ToastProvider } from '../components/Toast';
 
 // ─── Helper: renders a component inside the StadiumProvider ──────
 function renderWithProvider(ui) {
   return render(
     <BrowserRouter>
-      <StadiumProvider>{ui}</StadiumProvider>
+      <ToastProvider>
+        <StadiumProvider>{ui}</StadiumProvider>
+      </ToastProvider>
     </BrowserRouter>
   );
 }

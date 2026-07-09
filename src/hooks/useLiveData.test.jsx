@@ -9,7 +9,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, act, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { StadiumProvider, useStadium } from '../context/StadiumContext';
-import { ToastProvider } from '../components/ToastProvider';
+import { ToastProvider } from '../components/Toast';
 import { useLiveData } from './useLiveData';
 
 // ─── Hook host — renders useLiveData inside the provider ─────────
@@ -23,11 +23,11 @@ function LiveDataHost({ onCtx }) {
 function renderWithLiveData(onCtx) {
   return render(
     <BrowserRouter>
-      <StadiumProvider>
-        <ToastProvider>
+      <ToastProvider>
+        <StadiumProvider>
           <LiveDataHost onCtx={onCtx} />
-        </ToastProvider>
-      </StadiumProvider>
+        </StadiumProvider>
+      </ToastProvider>
     </BrowserRouter>
   );
 }

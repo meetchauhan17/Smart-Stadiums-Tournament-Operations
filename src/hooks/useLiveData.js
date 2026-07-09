@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useStadium } from '../context/StadiumContext';
-import { useToast } from '../components/ToastProvider';
+import { useToast } from '../components/Toast';
 
 // ─── Alert Pools for simulation ──────────────────────────────────
 const ALERT_POOL = [
