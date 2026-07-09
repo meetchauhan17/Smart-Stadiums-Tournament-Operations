@@ -73,6 +73,17 @@ export function useLiveData() {
   // Store refs to keep track of active timeouts for auto-resolution of alerts
   const autoResolveTimeouts = useRef({});
 
+  const staffRef = useRef(staffOnDuty);
+  const alertsRef = useRef(activeAlerts);
+
+  useEffect(() => {
+    staffRef.current = staffOnDuty;
+  }, [staffOnDuty]);
+
+  useEffect(() => {
+    alertsRef.current = activeAlerts;
+  }, [activeAlerts]);
+
   // ═══════════════════════════════════════════════════════════════════
   //  1. CROWD DENSITY SIMULATION
   // ═══════════════════════════════════════════════════════════════════
@@ -171,17 +182,16 @@ export function useLiveData() {
           : Math.floor(Math.random() * 120000) + 180000;
         
         autoResolveTimeouts.current[newAlertId] = setTimeout(() => {
-          setActiveAlerts(prev => {
-            const match = prev.find(a => a.id === newAlertId);
-            if (match && !match.resolved) {
-              toast.success(match.message, "INCIDENT RESOLVED");
-            }
-            return prev.map(a =>
+          const currentAlerts = alertsRef.current;
+          const match = currentAlerts.find(a => a.id === newAlertId);
+          if (match && !match.resolved) {
+            toast.success(match.message, "INCIDENT RESOLVED");
+            setActiveAlerts(prev => prev.map(a =>
               a.id === newAlertId
                 ? { ...a, resolved: true, responseTime: `${(autoResolveDelay / 60000).toFixed(1)} min (Auto)` }
                 : a
-            );
-          });
+            ));
+          }
           delete autoResolveTimeouts.current[newAlertId];
         }, autoResolveDelay);
       }
@@ -212,41 +222,39 @@ export function useLiveData() {
     const staffInterval = matchDayMode ? 6000 : 30000;
 
     const interval = setInterval(() => {
-      setStaffOnDuty((prev) => {
-        const maxOnBreak = Math.floor(prev.length * 0.15);
-        const currentOnBreak = prev.filter((s) => s.status === 'break').length;
+      const prev = staffRef.current;
+      const maxOnBreak = Math.floor(prev.length * 0.15);
+      const currentOnBreak = prev.filter((s) => s.status === 'break').length;
 
-        const randIdx = Math.floor(Math.random() * prev.length);
-        const targetStaff = prev[randIdx];
+      const randIdx = Math.floor(Math.random() * prev.length);
+      const targetStaff = prev[randIdx];
 
-        const next = [...prev];
-        let updatedName = "";
-        let updatedStatus = "";
+      const next = [...prev];
+      let updatedName = "";
+      let updatedStatus = "";
 
-        if (targetStaff.status === 'break') {
-          next[randIdx] = {
-            ...targetStaff,
-            status: 'active',
-            lastUpdate: new Date().toISOString(),
-          };
-          updatedName = targetStaff.name;
-          updatedStatus = 'Active';
-        } else if (targetStaff.status === 'active' && currentOnBreak < maxOnBreak) {
-          next[randIdx] = {
-            ...targetStaff,
-            status: 'break',
-            lastUpdate: new Date().toISOString(),
-          };
-          updatedName = targetStaff.name;
-          updatedStatus = 'On Break';
-        }
+      if (targetStaff.status === 'break') {
+        next[randIdx] = {
+          ...targetStaff,
+          status: 'active',
+          lastUpdate: new Date().toISOString(),
+        };
+        updatedName = targetStaff.name;
+        updatedStatus = 'Active';
+      } else if (targetStaff.status === 'active' && currentOnBreak < maxOnBreak) {
+        next[randIdx] = {
+          ...targetStaff,
+          status: 'break',
+          lastUpdate: new Date().toISOString(),
+        };
+        updatedName = targetStaff.name;
+        updatedStatus = 'On Break';
+      }
 
-        if (updatedName) {
-          toast.info(`${updatedName} is now ${updatedStatus}`, "STAFF STATUS CHANGED");
-        }
-
-        return next;
-      });
+      if (updatedName) {
+        toast.info(`${updatedName} is now ${updatedStatus}`, "STAFF STATUS CHANGED");
+        setStaffOnDuty(next);
+      }
     }, staffInterval);
 
     return () => clearInterval(interval);

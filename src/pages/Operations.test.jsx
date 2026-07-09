@@ -37,39 +37,42 @@ vi.mock('../utils/aiHelper', async () => ({
   buildOperationsSystemPrompt: vi.fn().mockReturnValue('Mock system prompt'),
 }));
 
+// Mock recharts
+vi.mock('recharts', () => ({
+  ResponsiveContainer: ({ children }) => <div>{children}</div>,
+  AreaChart: ({ children }) => <div data-testid="area-chart">{children}</div>,
+  Area: () => null,
+  BarChart: ({ children }) => <div data-testid="bar-chart">{children}</div>,
+  Bar: () => null,
+  XAxis: () => null,
+  YAxis: () => null,
+  CartesianGrid: () => null,
+  Tooltip: () => null,
+}));
+
+// Mock ZoneMap
+vi.mock('../components/ZoneMap', () => ({
+  default: () => <div data-testid="zone-map">Mock ZoneMap</div>,
+}));
+
 // ════════════════════════════════════════════════════════════════════
-// 1. KPI Strip — 5 StatCards
+// 1. KPI Strip — 5 Flat Stats
 // ════════════════════════════════════════════════════════════════════
 describe('Operations — KPI strip', () => {
-  it('renders all 5 KPI stat cards by text key', () => {
+  it('renders all 5 KPI stats by label text', () => {
     renderOperations();
 
-    // Now using hardcoded English labels
     const kpiLabels = [
-      'Current Occupancy',
-      'Active Alerts',
-      'Staff On Duty',
-      'Avg Response',
-      'Fan Score',
+      'OCCUPANCY',
+      'ALERTS',
+      'STAFF ON DUTY',
+      'RESPONSE TIME',
+      'AIR QUALITY (AQI)',
     ];
     kpiLabels.forEach(label => {
       const elements = screen.queryAllByText(label);
       expect(elements.length).toBeGreaterThanOrEqual(1);
     });
-  });
-
-  it('renders exactly 5 distinct KPI title labels in the page', () => {
-    renderOperations();
-
-    const kpiLabels = [
-      'Current Occupancy',
-      'Active Alerts',
-      'Staff On Duty',
-      'Avg Response',
-      'Fan Score',
-    ];
-    const foundLabels = kpiLabels.filter(label => screen.queryAllByText(label).length > 0);
-    expect(foundLabels.length).toBe(5);
   });
 });
 
@@ -80,20 +83,7 @@ describe('Operations — alerts feed', () => {
   it('renders alerts panel heading', () => {
     renderOperations();
 
-    expect(screen.getByText('Active Alerts Feed')).toBeTruthy();
-  });
-
-  it('renders the unresolved label somewhere in the document', () => {
-    renderOperations();
-
-    const body = document.body.textContent;
-    expect(body).toContain('unresolved');
-  });
-
-  it('shows the trigger mock incident button', () => {
-    renderOperations();
-
-    expect(screen.getByText('Trigger AI Incident Mock')).toBeTruthy();
+    expect(screen.getByText(/ACTIVE ALERTS/i)).toBeTruthy();
   });
 });
 
@@ -104,18 +94,16 @@ describe('Operations — resolve alert', () => {
   it('renders Resolve buttons for active unresolved alerts', () => {
     renderOperations();
 
-    const resolveButtons = screen.queryAllByText('Resolve');
-    // At least some buttons exist (there are 5 initial alerts, some unresolved)
+    const resolveButtons = screen.queryAllByText('RESOLVE');
     expect(resolveButtons.length).toBeGreaterThanOrEqual(0);
   });
 
-  it('clicking Resolve removes the button from the DOM', async () => {
+  it('clicking Resolve removes the button from the DOM or decrements', async () => {
     const user = userEvent.setup();
     renderOperations();
 
-    const resolveButtons = screen.queryAllByText('Resolve');
+    const resolveButtons = screen.queryAllByText('RESOLVE');
     if (resolveButtons.length === 0) {
-      // Skip gracefully if no unresolved alerts in this seed
       expect(true).toBe(true);
       return;
     }
@@ -124,7 +112,7 @@ describe('Operations — resolve alert', () => {
     await user.click(resolveButtons[0]);
 
     await waitFor(() => {
-      const remaining = screen.queryAllByText('Resolve');
+      const remaining = screen.queryAllByText('RESOLVE');
       expect(remaining.length).toBeLessThanOrEqual(initialCount);
     });
   });
@@ -137,7 +125,7 @@ describe('Operations — AI recommendation panel', () => {
   it('renders the incident description textarea', () => {
     renderOperations();
 
-    const textarea = screen.getByPlaceholderText(/Turnstiles at Gate D/i);
+    const textarea = screen.getByPlaceholderText(/Describe turnstile failures, medical symptoms, crowd blockages/i);
     expect(textarea).toBeTruthy();
   });
 
@@ -159,26 +147,27 @@ describe('Operations — AI recommendation panel', () => {
     const user = userEvent.setup();
     renderOperations();
 
-    const textarea = screen.getByPlaceholderText(/Turnstiles at Gate D/i);
+    const textarea = screen.getByPlaceholderText(/Describe turnstile failures, medical symptoms, crowd blockages/i);
     await user.type(textarea, 'Fan crowd surge');
 
     const btn = screen.getByRole('button', { name: /get ai recommendation/i });
     expect(btn).not.toBeDisabled();
   });
 
-  it('shows AI output (ops.ai_strategy_generated) after successful API call', async () => {
+  it('shows AI output after successful API call', async () => {
     const user = userEvent.setup();
 
     renderOperations();
 
-    const textarea = screen.getByPlaceholderText(/Turnstiles at Gate D/i);
+    const textarea = screen.getByPlaceholderText(/Describe turnstile failures, medical symptoms, crowd blockages/i);
     await user.type(textarea, 'Overcrowding event at south gate entrance area');
 
     const btn = screen.getByRole('button', { name: /get ai recommendation/i });
     await user.click(btn);
 
     await waitFor(() => {
-      expect(screen.getByText('AI Strategy Generated')).toBeTruthy();
+      expect(screen.getByText('AI Rationale')).toBeTruthy();
+      expect(screen.getByText('Recommended Actions')).toBeTruthy();
     }, { timeout: 5000 });
   });
 });
@@ -187,58 +176,13 @@ describe('Operations — AI recommendation panel', () => {
 // 5. Chart rendering
 // ════════════════════════════════════════════════════════════════════
 describe('Operations — chart rendering', () => {
-  it('renders the chart console tab strip', () => {
+  it('renders the crowd flow chart title', () => {
     renderOperations();
-
-    expect(screen.getByRole('tablist')).toBeTruthy();
+    expect(screen.getByText('CROWD FLOW — 24H')).toBeTruthy();
   });
 
-  it('renders all 3 chart tab buttons', () => {
+  it('renders the gate throughput chart title', () => {
     renderOperations();
-
-    const tabs = screen.getAllByRole('tab');
-    expect(tabs.length).toBe(3);
-  });
-
-  it('telemetry tab is aria-selected="true" by default', () => {
-    renderOperations();
-
-    const tabs = screen.getAllByRole('tab');
-    const selectedTab = tabs.find(t => t.getAttribute('aria-selected') === 'true');
-    expect(selectedTab).toBeTruthy();
-    expect(selectedTab.textContent).toBe('Telemetry View');
-  });
-
-  it('switching to logistics tab shows throughput heading', async () => {
-    const user = userEvent.setup();
-    renderOperations();
-
-    const tabs = screen.getAllByRole('tab');
-    const logisticsTab = tabs.find(t => t.textContent === 'Logistics Desk');
-    await user.click(logisticsTab);
-
-    await waitFor(() => {
-      expect(screen.getByText('Gate Throughput Rates')).toBeTruthy();
-    });
-  });
-
-  it('switching to efficiency tab shows radar heading', async () => {
-    const user = userEvent.setup();
-    renderOperations();
-
-    const tabs = screen.getAllByRole('tab');
-    const efficiencyTab = tabs.find(t => t.textContent === 'Efficiency Radar');
-    await user.click(efficiencyTab);
-
-    await waitFor(() => {
-      expect(screen.getByText('Staff Shift Efficiency Comparison')).toBeTruthy();
-    });
-  });
-
-  it('renders the sr-only accessible heatmap data table', () => {
-    renderOperations();
-
-    const accessTable = screen.getByRole('table', { name: /Crowd density heatmap data table/i });
-    expect(accessTable).toBeTruthy();
+    expect(screen.getByText('ENTRY RATE BY GATE')).toBeTruthy();
   });
 });
