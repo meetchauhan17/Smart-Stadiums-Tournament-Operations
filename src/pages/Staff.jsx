@@ -1,378 +1,522 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useTranslation } from 'react-i18next';
 import {
-  Shield, Users, Briefcase, Zap,
-  Radio, Send, Clock, RefreshCw
+  Shield, Users, Briefcase, Zap, Megaphone, Copy, Check, RefreshCw
 } from 'lucide-react';
 import { useStadium } from '../context/StadiumContext';
-import { useAIAction } from '../hooks/useAI';
-import PageHeader from '../components/PageHeader';
-import LiveBadge from '../components/LiveBadge';
+import { callClaude } from '../utils/aiHelper';
 import PageTransition from '../components/PageTransition';
 
-const ROLES = ['Security', 'Medical Coordinator', 'Volunteer Steward', 'Concessions Operator'];
+const ROLE_ASSIGNMENTS = {
+  Security: 'Zone E — South Upper Stand',
+  Medical: 'Medical Post Gate B',
+  Volunteer: 'Gate C Entrance Lanes',
+  Operations: 'Command Control Room',
+};
+
+const DEFAULT_TASKS = {
+  Security: [
+    { id: 'sec-1', text: 'Perform security sweep of Zone E concourse', done: true },
+    { id: 'sec-2', text: 'Set up crowd diversion barriers at Gate D', done: false },
+    { id: 'sec-3', text: 'Verify Channel 4 tactical radio operational link', done: true },
+    { id: 'sec-4', text: 'Report queue compression rates to Operations Lead', done: false },
+  ],
+  Medical: [
+    { id: 'med-1', text: 'Inspect automated external defibrillator (AED) units', done: true },
+    { id: 'med-2', text: 'Check oxygen supply levels at Gate B Post', done: true },
+    { id: 'med-3', text: 'Confirm primary dispatch phone link is operational', done: false },
+    { id: 'med-4', text: 'Verify first-aid bag inventory', done: false },
+  ],
+  Volunteer: [
+    { id: 'vol-1', text: 'Distribute spectator maps at Gate C entry', done: true },
+    { id: 'vol-2', text: 'Guide accessibility seating ticket holders', done: false },
+    { id: 'vol-3', text: 'Monitor ticket scanning queues for delays', done: false },
+    { id: 'vol-4', text: 'Provide wayfinding directions to food courts', done: true },
+  ],
+  Operations: [
+    { id: 'ops-1', text: 'Check real-time crowd density scatter updates', done: true },
+    { id: 'ops-2', text: 'Verify solar power reserve output telemetry', done: true },
+    { id: 'ops-3', text: 'Log average response times for incident alerts', done: false },
+    { id: 'ops-4', text: 'Sync radio channels with dispatch commanders', done: false },
+  ],
+};
+
+const PROTOCOL_SCENARIOS = {
+  'Fan medical emergency': '1. Secure the immediate area and verify victim status.\n2. Radio dispatcher immediately on Channel 4 with Section/Row details.\n3. Administer initial first aid or CPR if qualified.\n4. Clear adjacent corridor to ensure rapid stretcher access.',
+  'Crowd too dense': '1. Report current bottleneck location to Operations Command.\n2. Open secondary bypass gates to divert incoming flow.\n3. Position stewards to guide fans into lower-density sectors.\n4. Defer queue entries until central concourse congestion decreases.',
+  'Lost child': '1. Obtain child name, age, clothing description, and parent info.\n2. Notify Operations and Security Dispatchers immediately.\n3. Remain with child at current position for at least 10 minutes.\n4. Guide child to official Lost & Found post if parents are not located.',
+  'Equipment failure': '1. Log ticket scanner or system code/location.\n2. Dispatch manual check-in stewards to affected gates immediately.\n3. Notify IT Operations Command to dispatch technician.\n4. Utilize physical ticket verification stamps if outage exceeds 5 minutes.',
+  'Aggressive fan': '1. Avoid direct physical confrontation and maintain de-escalation stance.\n2. Call Security dispatcher for immediate backup.\n3. Observe and document fan clothing, zone seat number, and behavior.\n4. Maintain safety perimeter for adjacent spectators.',
+};
 
 export default function Staff() {
-  const { t } = useTranslation();
-  const {
-    staffOnDuty,
-    currentMatchAtVenue,
-    currentVenue,
-    updateStaffStatus,
-    reassignStaff
-  } = useStadium();
+  const { staffOnDuty, reassignStaff, updateStaffStatus } = useStadium();
 
-  // ── Filters & Forms ──
-  const [selectedRoleFilter, setSelectedRoleFilter] = useState('All');
-  const [selectedZoneFilter, setSelectedZoneFilter] = useState('All');
-  const [commsMessage, setCommsMessage] = useState('');
-  const [briefingTopic, setBriefingTopic] = useState('Crowd Management');
-  const [briefingText, setBriefingText] = useState('');
-  
-  const { callAI, loading: aiLoading } = useAIAction();
-  const [toastMsg, setToastMsg] = useState('');
+  // Shift & Role State
+  const [myRole, setMyRole] = useState('Security');
+  const [myStatus, setMyStatus] = useState('ON DUTY');
+  const [tasks, setTasks] = useState(DEFAULT_TASKS.Security);
 
-  // ── Virtual Scroll state ──
-  const [scrollTop, setScrollTop] = useState(0);
-  const scrollContainerRef = useRef(null);
+  // Roster Filter State
+  const [searchTerm, setSearchTerm] = useState('');
+  const [roleFilter, setRoleFilter] = useState('All');
+  const [zoneFilter, setZoneFilter] = useState('All');
 
-  // Fetch pre-match briefing on mount
-  useEffect(() => {
-    handleGenerateBriefing();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // AI Guidance State
+  const [guidanceScenario, setGuidanceScenario] = useState('');
+  const [guidanceProtocol, setGuidanceProtocol] = useState('');
+  const [guidanceLoading, setGuidanceLoading] = useState(false);
 
-  const handleGenerateBriefing = async () => {
-    setBriefingText('');
-    const scenario = `${briefingTopic} protocols: ${currentMatchAtVenue.homeTeam.name} vs ${currentMatchAtVenue.awayTeam.name} at ${currentVenue.name}.`;
-    const res = await callAI('getStaffProtocol', scenario, 'All Staff Members');
-    if (res.success) {
-      setBriefingText(res.data);
-    } else {
-      setBriefingText(`1. Arrive at assigned zone 3 hours prior to kickoff.
-2. Confirm radio operation on Channel 4.
-3. Position safety barriers at ticket boundaries.
-4. Support ticket validator scans during crowd peaks.
-5. Report any access control anomalies to dispatcher.`);
+  // PA Generator State
+  const [paSituation, setPaSituation] = useState('');
+  const [paLanguage, setPaLanguage] = useState('English');
+  const [paOutput, setPaOutput] = useState('');
+  const [paLoading, setPaLoading] = useState(false);
+  const [paCopied, setPaCopied] = useState(false);
+
+  // Handle Role Change
+  const handleRoleChange = (role) => {
+    setMyRole(role);
+    setTasks(DEFAULT_TASKS[role] || []);
+  };
+
+  // Toggle Task Completion
+  const toggleTask = (id) => {
+    setTasks(prev => prev.map(t => t.id === id ? { ...t, done: !t.done } : t));
+  };
+
+  // Filtered Roster
+  const filteredStaff = useMemo(() => {
+    return staffOnDuty.filter(s => {
+      const matchSearch = s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          s.badge.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchRole   = roleFilter === 'All' || s.role === roleFilter;
+      const matchZone   = zoneFilter === 'All' || s.zone === zoneFilter;
+      return matchSearch && matchRole && matchZone;
+    });
+  }, [staffOnDuty, searchTerm, roleFilter, zoneFilter]);
+
+  // AI Protocol Fetcher
+  const handleGetProtocol = async (preset = null) => {
+    const scenario = preset || guidanceScenario;
+    if (!scenario.trim()) return;
+
+    setGuidanceLoading(true);
+    setGuidanceProtocol('');
+
+    try {
+      const response = await callClaude({
+        systemPrompt: 'You are an expert FIFA World Cup 2026 Stadium Operations Director. Output a short 4-step emergency protocol. Short and concise.',
+        prompt: `Provide a step-by-step security/operations protocol for this scenario: "${scenario}". Return exactly 4 numbered steps, each on its own line.`
+      });
+      setGuidanceProtocol(response);
+    } catch {
+      setGuidanceProtocol(PROTOCOL_SCENARIOS[scenario] || PROTOCOL_SCENARIOS['Fan medical emergency']);
+    } finally {
+      setGuidanceLoading(false);
     }
   };
 
-  const handleSendComms = (e) => {
-    e.preventDefault();
-    if (!commsMessage.trim()) return;
-    setToastMsg(`Radio Broadcast: "${commsMessage}"`);
-    setCommsMessage('');
-    setTimeout(() => setToastMsg(''), 4000);
+  // AI PA Announcement Generator
+  const handleGeneratePA = async () => {
+    if (!paSituation.trim()) return;
+
+    setPaLoading(true);
+    setPaOutput('');
+    setPaCopied(false);
+
+    try {
+      const response = await callClaude({
+        systemPrompt: `You are the chief stadium announcer at the FIFA World Cup 2026. Write a clear, professional public address announcement in the specified language. Keep it brief.`,
+        prompt: `Generate a PA announcement in ${paLanguage} for this situation: "${paSituation}". Do not include any greeting or preamble, just return the exact announcement text.`
+      });
+      setPaOutput(response);
+    } catch {
+      setPaOutput(`[PA ANNOUNCEMENT - ${paLanguage.toUpperCase()}]\nAttention all spectators. Please be advised that we are experiencing high congestion near Gate C. We kindly request fans to utilize Gate B or Gate D for faster entry. Thank you for your cooperation.`);
+    } finally {
+      setPaLoading(false);
+    }
   };
 
-  // ── Performance: Memoize filtered staff roster ──
-  const filteredStaff = useMemo(() => {
-    return staffOnDuty.filter(s => {
-      const matchRole = selectedRoleFilter === 'All' || s.role === selectedRoleFilter;
-      const matchZone = selectedZoneFilter === 'All' || s.zone === selectedZoneFilter;
-      return matchRole && matchZone;
-    });
-  }, [staffOnDuty, selectedRoleFilter, selectedZoneFilter]);
-
-  // ── Virtual Scroll calculations ──
-  const rowHeight = 58;
-  const containerHeight = 348;
-  const totalCount = filteredStaff.length;
-
-  const startIndex = Math.max(0, Math.floor(scrollTop / rowHeight) - 2);
-  const endIndex = Math.min(totalCount, Math.ceil((scrollTop + containerHeight) / rowHeight) + 2);
-  const visibleStaff = useMemo(() => {
-    return filteredStaff.slice(startIndex, endIndex);
-  }, [filteredStaff, startIndex, endIndex]);
-
-  const paddingTop = startIndex * rowHeight;
-  const paddingBottom = Math.max(0, (totalCount - endIndex) * rowHeight);
-
-  const handleScroll = (e) => {
-    setScrollTop(e.target.scrollTop);
+  const handleCopyPA = () => {
+    if (!paOutput) return;
+    navigator.clipboard.writeText(paOutput);
+    setPaCopied(true);
+    setTimeout(() => setPaCopied(false), 2000);
   };
-
-  const zonesList = ['Zone A', 'Zone B', 'Zone C', 'Zone D', 'Zone E', 'Zone F', 'Zone G', 'Zone H', 'VIP Suites', 'Media Zone'];
 
   return (
     <PageTransition>
-      <div className="max-w-7xl mx-auto px-4 py-6 mt-14 bg-white text-[#111827]">
-        {/* Tactical radio toast */}
-        <AnimatePresence>
-          {toastMsg && (
-            <motion.div
-              initial={{ opacity: 0, y: -50 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -50 }}
-              className="fixed top-20 left-1/2 -translate-x-1/2 z-[300] bg-[#10B981] text-white font-heading font-bold text-xs px-6 py-3 rounded-none border-2 border-[#111827] flex items-center gap-2 shadow-none"
-            >
-              <Radio size={14} className="animate-pulse" />
-              {toastMsg}
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        <PageHeader
-          title={t('staff.title')}
-          subtitle="Manage logistics, task assignment, and AI support briefings for on-duty stadium personnel."
-          icon={Briefcase}
-          actions={
-            <div className="flex items-center gap-2">
-              <LiveBadge status="live" label="STAFF LOGS" />
-            </div>
-          }
-        />
-
-        {/* Re-arranged: 3 side-by-side columns (4 - 4 - 4 Cols) */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-4">
-
-          {/* COLUMN 1 (4 Cols): Virtualized Staff Roster Table */}
-          <div className="lg:col-span-4 flex flex-col gap-4">
-            <div className="bg-white border-2 border-[#111827] rounded-none p-5 flex-1 flex flex-col justify-between shadow-none min-h-[460px]">
-              <div>
-                <div className="flex flex-col gap-2 mb-4 border-b-2 border-[#111827] pb-3 -mx-5 -mt-5 px-5 py-3 bg-[#EFF6FF]">
-                  <h3 className="font-heading font-extrabold text-xs text-[#3B82F6] uppercase tracking-wider flex items-center gap-2 mb-0">
-                    <Users size={14} className="text-[#3B82F6]" />
-                    Active Roster ({filteredStaff.length})
-                  </h3>
-                  
-                  <div className="flex gap-1.5 w-full">
-                    <select
-                      value={selectedRoleFilter}
-                      onChange={(e) => setSelectedRoleFilter(e.target.value)}
-                      aria-label="Filter staff by tactical role"
-                      className="bg-white border-2 border-[#111827] rounded-none px-2 py-1 text-[9px] text-[#111827] font-bold uppercase focus:outline-none flex-1"
-                    >
-                      <option value="All">All Roles</option>
-                      {ROLES.map(r => (
-                        <option key={r} value={r}>{r}</option>
-                      ))}
-                    </select>
-
-                    <select
-                      value={selectedZoneFilter}
-                      onChange={(e) => setSelectedZoneFilter(e.target.value)}
-                      aria-label="Filter staff by assigned stadium zone"
-                      className="bg-white border-2 border-[#111827] rounded-none px-2 py-1 text-[9px] text-[#111827] font-bold uppercase focus:outline-none flex-1"
-                    >
-                      <option value="All">All Zones</option>
-                      {zonesList.map(z => (
-                        <option key={z} value={z}>{z}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                {/* ── Virtual Scroll Container ── */}
-                <div
-                  ref={scrollContainerRef}
-                  onScroll={handleScroll}
-                  className="overflow-y-auto border-2 border-[#111827] rounded-none bg-[#F3F4F6]"
-                  style={{ height: containerHeight }}
-                >
-                  <div style={{ paddingTop, paddingBottom }}>
-                    <table className="w-full text-left text-xs border-collapse">
-                      <thead>
-                        <tr className="border-b-2 border-[#111827] text-[#6B7280] uppercase tracking-wider font-extrabold bg-[#F3F4F6] sticky top-0 z-20">
-                          <th className="py-2.5 px-3">Name</th>
-                          <th className="py-2.5 px-3">Role</th>
-                          <th className="py-2.5 px-3">Zone</th>
-                          <th className="py-2.5 px-3">Status</th>
-                          <th className="py-2.5 px-3 text-right">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {totalCount === 0 ? (
-                          <tr>
-                            <td colSpan={5} className="py-12 text-center text-[#6B7280] text-xs">
-                              <div className="flex flex-col items-center justify-center gap-2">
-                                <Briefcase size={28} className="opacity-30 text-[#3B82F6] mb-1" />
-                                <p className="font-extrabold text-[#111827]">No personnel found</p>
-                                <p className="text-[10px] text-[#6B7280] max-w-[180px] mx-auto leading-normal font-semibold">
-                                  Adjust filters to find active coordinators.
-                                </p>
-                              </div>
-                            </td>
-                          </tr>
-                        ) : (
-                          visibleStaff.map(staff => (
-                            <tr
-                              key={staff.id}
-                              style={{ height: rowHeight }}
-                              className="border-b border-[#E5E7EB] hover:bg-[#FFFFFF] transition-colors"
-                            >
-                              <td className="py-2 px-3">
-                                <div>
-                                  <p className="font-extrabold text-[#111827]">{staff.name}</p>
-                                  <span className="text-[9px] text-[#6B7280] font-mono font-bold">{staff.badge}</span>
-                                </div>
-                              </td>
-                              <td className="py-2 px-3 text-[#6B7280] font-bold">{staff.role.split(' ')[0]}</td>
-                              <td className="py-2 px-3">
-                                <select
-                                  value={staff.zone}
-                                  onChange={(e) => reassignStaff(staff.id, e.target.value)}
-                                  aria-label={`Reassign zone for ${staff.name}`}
-                                  className="bg-[#FFFFFF] border-2 border-[#111827] rounded-none px-1 py-0.5 text-[10px] text-[#3B82F6] font-extrabold focus:outline-none"
-                                >
-                                  {zonesList.map(z => (
-                                    <option key={z} value={z}>{z}</option>
-                                  ))}
-                                </select>
-                              </td>
-                              <td className="py-2 px-3">
-                                <select
-                                  value={staff.status}
-                                  onChange={(e) => updateStaffStatus(staff.id, e.target.value)}
-                                  aria-label={`Change shift status for ${staff.name}`}
-                                  className={`bg-transparent border border-transparent rounded px-1 py-0.5 text-[10px] font-extrabold ${
-                                    staff.status === 'active'      ? 'text-[#10B981]' :
-                                    staff.status === 'responding'  ? 'text-[#FF3366]' :
-                                    staff.status === 'break'       ? 'text-[#F59E0B]' : 'text-[#6B7280]'
-                                  }`}
-                                >
-                                  <option value="active" className="text-black">Active</option>
-                                  <option value="responding" className="text-black">Responding</option>
-                                  <option value="break" className="text-black">Break</option>
-                                  <option value="offline" className="text-black">Offline</option>
-                                </select>
-                              </td>
-                              <td className="py-2 px-3 text-right">
-                                <button
-                                  onClick={() => {
-                                    updateStaffStatus(staff.id, 'responding');
-                                    setToastMsg(`Tactical incident dispatched to ${staff.name} at ${staff.zone}`);
-                                    setTimeout(() => setToastMsg(''), 4000);
-                                  }}
-                                  aria-label={`Dispatch emergency response ticket to ${staff.name}`}
-                                  className="text-[10px] text-[#3B82F6] hover:text-white font-extrabold border-2 border-[#3B82F6] hover:bg-[#3B82F6] px-2 py-0.5 rounded-none transition-all cursor-pointer bg-white"
-                                >
-                                  Dispatch
-                                </button>
-                              </td>
-                            </tr>
-                          ))
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </div>
-
-              <p className="text-[9px] text-[#6B7280] font-bold mt-4 pt-3 border-t-2 border-[#111827]">
-                Updates in real-time.
+      <div className="pt-20 bg-gray-50 min-h-screen">
+        
+        {/* HEADER (bg-green-600, p-8) */}
+        <div className="bg-green-600 text-white p-8 border-b-2 border-gray-900">
+          <div className="max-w-screen-2xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+            <div>
+              <h1 className="text-5xl font-black uppercase tracking-tight">STAFF HUB</h1>
+              <p className="text-green-150 text-lg mt-2 font-medium">
+                Field coordination, AI briefings & task management
               </p>
             </div>
-          </div>
 
-          {/* COLUMN 2 (4 Cols): AI Briefings */}
-          <div className="lg:col-span-4 flex flex-col gap-4">
-            <div className="bg-white border-2 border-[#111827] rounded-none p-5 flex-1 flex flex-col justify-between min-h-[460px] shadow-none">
-              <div>
-                <div className="flex items-center justify-between mb-4 border-b-2 border-[#111827] pb-3 -mx-5 -mt-5 px-5 py-3 bg-[#ECFDF5]">
-                  <h3 className="font-heading font-extrabold text-xs text-[#10B981] uppercase tracking-wider flex items-center gap-2 mb-0">
-                    <Zap size={14} className="text-[#10B981]" />
-                    AI pre-match briefings
-                  </h3>
-                  <span className="text-[9px] text-[#6B7280] font-extrabold uppercase tracking-wider font-mono">
-                    Claude Dispatch
-                  </span>
+            {/* Stats strip on bg-green-700 */}
+            <div className="bg-green-700 border-2 border-gray-900 px-6 py-4 flex gap-8">
+              {[
+                { val: '50', lbl: 'ON DUTY' },
+                { val: '8', lbl: 'ZONES COVERED' },
+                { val: '2.3 min', lbl: 'AVG RESPONSE' }
+              ].map((s, idx) => (
+                <div key={idx} className="flex flex-col text-center">
+                  <span className="text-2xl font-black text-white leading-none">{s.val}</span>
+                  <span className="text-green-200 text-[9px] font-bold uppercase tracking-widest mt-1">{s.lbl}</span>
                 </div>
+              ))}
+            </div>
+          </div>
+        </div>
 
-                {/* Topic selector */}
-                <div className="grid grid-cols-3 gap-1.5 mb-4 mt-2" role="tablist">
-                  {['Crowd Management', 'Medical Hazard', 'Evacuation'].map(topic => (
+        {/* MAIN LAYOUT */}
+        <div className="bg-white p-6 grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-screen-2xl mx-auto">
+          
+          {/* COLUMN 1 — MY SHIFT */}
+          <div className="bg-gray-100 p-6 flex flex-col gap-6 border border-gray-200">
+            <h3 className="text-xl font-black uppercase tracking-wider text-gray-950 border-b-2 border-gray-900 pb-2">
+              My Shift Console
+            </h3>
+
+            {/* Role selector */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Assigned Role</label>
+              <select
+                value={myRole}
+                onChange={(e) => handleRoleChange(e.target.value)}
+                className="border-2 border-gray-900 p-3 bg-white text-gray-900 font-bold text-sm focus:outline-none"
+              >
+                <option value="Security">Security Coordinator</option>
+                <option value="Medical">Medical Responder</option>
+                <option value="Volunteer">Volunteer Steward</option>
+                <option value="Operations">Operations Dispatch</option>
+              </select>
+            </div>
+
+            {/* Current assignment display */}
+            <div className="bg-white border border-gray-300 p-4">
+              <span className="text-[10px] text-gray-400 font-black uppercase tracking-widest">Current Assignment</span>
+              <span className="block font-black text-gray-900 text-base mt-1 uppercase">
+                {ROLE_ASSIGNMENTS[myRole]}
+              </span>
+            </div>
+
+            {/* Task checklist */}
+            <div className="flex flex-col gap-1">
+              <span className="text-[10px] text-gray-400 font-black uppercase tracking-widest mb-1 border-b border-gray-200 pb-2">Active Task List</span>
+              <div className="flex flex-col">
+                {tasks.map(t => (
+                  <label key={t.id} className="flex items-center gap-3 border-b border-gray-200 py-3 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={t.done}
+                      onChange={() => toggleTask(t.id)}
+                      className="w-4.5 h-4.5 border-2 border-gray-900 rounded-none text-blue-600 focus:ring-0 cursor-pointer"
+                    />
+                    <span className={`text-xs font-bold ${t.done ? 'line-through text-gray-400' : 'text-gray-900'}`}>
+                      {t.text}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Status Buttons */}
+            <div className="flex flex-col gap-2 mt-2">
+              <span className="text-[10px] text-gray-400 font-black uppercase tracking-widest">Update Duty Status</span>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { label: 'ON DUTY', state: 'ON DUTY', activeBg: 'bg-green-600 text-white border-green-600', inactiveColor: 'border-2 border-green-600 text-green-600 bg-transparent' },
+                  { label: 'ON BREAK', state: 'ON BREAK', activeBg: 'bg-amber-500 text-white border-amber-500', inactiveColor: 'border-2 border-amber-500 text-amber-500 bg-transparent' },
+                  { label: 'SUPPORT', state: 'SUPPORT', activeBg: 'bg-red-600 text-white border-red-600', inactiveColor: 'border-2 border-red-600 text-red-600 bg-transparent animate-pulse' },
+                ].map(s => {
+                  const active = myStatus === s.state;
+                  return (
                     <button
-                      key={topic}
-                      onClick={() => setBriefingTopic(topic)}
-                      aria-label={`Select ${topic} briefing template`}
-                      role="tab"
-                      aria-selected={briefingTopic === topic}
-                      className={`py-1.5 rounded-none border-2 text-[9px] font-extrabold uppercase tracking-wider transition-all cursor-pointer ${
-                        briefingTopic === topic
-                          ? 'border-[#111827] bg-[#3B82F6] text-white'
-                          : 'border-[#111827] text-[#6B7280] hover:bg-[#F3F4F6] hover:text-[#111827]'
+                      key={s.state}
+                      onClick={() => setMyStatus(s.state)}
+                      className={`py-2.5 px-1 text-[10px] font-black uppercase transition-all rounded-none cursor-pointer ${
+                        active ? s.activeBg : s.inactiveColor
                       }`}
                     >
-                      {topic.split(' ')[0]}
+                      {s.label}
                     </button>
-                  ))}
-                </div>
-
-                <div className="p-4 rounded-none border-2 border-[#111827] bg-[#F3F4F6] text-xs leading-relaxed min-h-[220px] font-semibold text-[#111827]">
-                  {aiLoading ? (
-                    <div className="flex flex-col items-center justify-center py-10 gap-2">
-                      <RefreshCw size={18} className="animate-spin text-[#3B82F6]" />
-                      <span className="text-[10px] text-[#6B7280] animate-pulse">Generating briefs...</span>
-                    </div>
-                  ) : (
-                    <div className="space-y-1">
-                      {briefingText.split('\n').map((line, idx) => (
-                        <p key={idx}>{line}</p>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                  );
+                })}
               </div>
-
-              <button
-                onClick={handleGenerateBriefing}
-                disabled={aiLoading}
-                aria-label="Generate new AI pre-match briefing report"
-                className="btn-primary w-full mt-4 justify-center cursor-pointer text-xs"
-              >
-                <RefreshCw size={11} /> Generate New Briefing
-              </button>
             </div>
           </div>
 
-          {/* COLUMN 3 (4 Cols): Tactical Radio Channel */}
-          <div className="lg:col-span-4 flex flex-col gap-4">
-            <div className="bg-white border-2 border-[#111827] rounded-none p-5 flex flex-col justify-between min-h-[460px] shadow-none">
-              <div>
-                <div className="flex items-center justify-between mb-4 border-b-2 border-[#111827] pb-3 -mx-5 -mt-5 px-5 py-3 bg-[#FFF5F5]">
-                  <h3 className="font-heading font-extrabold text-xs text-[#FF3366] uppercase tracking-wider flex items-center gap-2 mb-0">
-                    <Radio size={14} className="text-[#FF3366]" />
-                    Staff Radio channel
-                  </h3>
-                  <span className="text-[9px] text-[#6B7280] font-extrabold uppercase tracking-wider">
-                    TTY-to-Audio
-                  </span>
-                </div>
+          {/* COLUMN 2 — TEAM ROSTER */}
+          <div className="flex flex-col gap-4">
+            <h3 className="text-xl font-black uppercase tracking-wider text-gray-950 border-b-2 border-gray-900 pb-2">
+              Active Team Roster
+            </h3>
 
-                <p className="text-[10px] text-[#6B7280] mb-4 font-bold mt-2">
-                  Push text-to-speech broadcast commands straight to stewards' tactical radios.
-                </p>
+            {/* Search */}
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search team members by name/badge..."
+              className="border-2 border-gray-900 p-3 w-full text-xs font-semibold focus:outline-none placeholder-gray-400"
+            />
 
-                <form onSubmit={handleSendComms} className="flex gap-2 mb-4">
-                  <input
-                    type="text"
-                    value={commsMessage}
-                    onChange={(e) => setCommsMessage(e.target.value)}
-                    placeholder="All stewards, assist at Gate D queue overflow..."
-                    aria-label="Staff radio tactical message"
-                    className="flex-1 bg-[#F3F4F6] border-2 border-[#111827] rounded-none px-4 py-2.5 text-xs text-[#111827] font-semibold focus:bg-white focus:outline-none"
-                  />
+            {/* Filter row */}
+            <div className="grid grid-cols-2 gap-2">
+              <select
+                value={roleFilter}
+                onChange={(e) => setRoleFilter(e.target.value)}
+                className="border-2 border-gray-900 p-2.5 bg-white text-gray-900 text-xs font-bold focus:outline-none"
+              >
+                <option value="All">All Roles</option>
+                <option value="Security">Security</option>
+                <option value="Medical">Medical</option>
+                <option value="Volunteer">Volunteer</option>
+                <option value="Operations">Operations</option>
+              </select>
+
+              <select
+                value={zoneFilter}
+                onChange={(e) => setZoneFilter(e.target.value)}
+                className="border-2 border-gray-900 p-2.5 bg-white text-gray-900 text-xs font-bold focus:outline-none"
+              >
+                <option value="All">All Zones</option>
+                {['A','B','C','D','E','F','G','H'].map(z => (
+                  <option key={z} value={`Zone ${z}`}>Zone {z}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Scrollable Table */}
+            <div className="overflow-y-auto max-h-[380px] border border-gray-200">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="bg-gray-900 text-white uppercase text-[9px] tracking-widest font-black sticky top-0">
+                    <th className="py-3 px-3">Name</th>
+                    <th className="py-3 px-3">Role</th>
+                    <th className="py-3 px-3">Zone</th>
+                    <th className="py-3 px-3">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredStaff.length === 0 ? (
+                    <tr>
+                      <td colSpan={4} className="py-12 text-center text-gray-400 font-bold">
+                        No active staff match search criteria.
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredStaff.map(s => (
+                      <tr key={s.id} className="border-b border-gray-150 hover:bg-gray-50 transition-colors">
+                        <td className="py-2.5 px-3">
+                          <p className="font-bold text-gray-950">{s.name}</p>
+                          <span className="text-[9px] text-gray-400 font-mono">{s.badge}</span>
+                        </td>
+                        <td className="py-2.5 px-3 text-gray-500 font-semibold uppercase text-[9px]">
+                          {s.role}
+                        </td>
+                        <td className="py-2.5 px-3">
+                          <select
+                            value={s.zone}
+                            onChange={(e) => reassignStaff(s.id, e.target.value)}
+                            className="bg-transparent border border-gray-200 rounded px-1.5 py-0.5 text-[10px] text-blue-600 font-bold focus:outline-none"
+                          >
+                            {['A','B','C','D','E','F','G','H'].map(z => (
+                              <option key={z} value={`Zone ${z}`}>Zone {z}</option>
+                            ))}
+                          </select>
+                        </td>
+                        <td className="py-2.5 px-3">
+                          <select
+                            value={s.status}
+                            onChange={(e) => updateStaffStatus(s.id, e.target.value)}
+                            className={`border rounded px-1.5 py-0.5 text-[10px] font-bold focus:outline-none ${
+                              s.status === 'active' ? 'bg-green-100 text-green-800 border-green-200' :
+                              s.status === 'break' ? 'bg-amber-100 text-amber-800 border-amber-200' :
+                              'bg-red-100 text-red-800 border-red-200'
+                            }`}
+                          >
+                            <option value="active">ON DUTY</option>
+                            <option value="break">BREAK</option>
+                            <option value="responding">SUPPORT</option>
+                          </select>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* COLUMN 3 — AI GUIDANCE */}
+          <div className="bg-gray-950 p-6 flex flex-col gap-4 border border-gray-900 text-white">
+            <h3 className="text-xl font-black uppercase tracking-wider text-white border-b-2 border-gray-800 pb-2">
+              AI Guidance
+            </h3>
+
+            {/* Quick scenario buttons */}
+            <div className="flex flex-col">
+              <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-2">QUICK PROTOCOLS</span>
+              <div className="flex flex-col border border-gray-800">
+                {Object.keys(PROTOCOL_SCENARIOS).map(scen => (
                   <button
-                    type="submit"
-                    disabled={!commsMessage.trim()}
-                    aria-label="Broadcast tactical message"
-                    className="w-10 h-10 rounded-none bg-[#FF3366] hover:bg-[#E0245E] border-2 border-[#111827] text-white flex items-center justify-center shrink-0 transition-colors disabled:opacity-40 cursor-pointer"
+                    key={scen}
+                    onClick={() => {
+                      setGuidanceScenario(scen);
+                      handleGetProtocol(scen);
+                    }}
+                    className="bg-gray-900 text-white px-4 py-3 border-b border-gray-850 hover:bg-green-600 text-left font-bold text-xs uppercase tracking-wide cursor-pointer transition-colors last:border-b-0"
                   >
-                    <Send size={13} />
+                    {scen}
                   </button>
-                </form>
+                ))}
               </div>
+            </div>
 
-              <div className="p-3 border-2 border-[#111827] bg-[#F3F4F6] text-[10px] font-bold text-[#6B7280] leading-normal flex-1 flex flex-col justify-end">
-                <span className="text-[#FF3366] block mb-1">Radio channel logs:</span>
-                <p className="italic">"Channel 4 operational. Stewards positioned at north perimeter boundaries."</p>
-              </div>
+            {/* Custom input */}
+            <div className="flex flex-col gap-1.5 mt-2">
+              <label className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">OR CUSTOM SITUATION</label>
+              <textarea
+                value={guidanceScenario}
+                onChange={(e) => setGuidanceScenario(e.target.value)}
+                placeholder="Type custom scenario (e.g. spectator blocking emergency fire corridor in Section 18)..."
+                className="bg-gray-900 text-white border border-gray-800 p-3 w-full text-xs min-h-[70px] resize-none focus:outline-none focus:border-green-600"
+              />
+            </div>
+
+            <button
+              onClick={() => handleGetProtocol()}
+              disabled={guidanceLoading || !guidanceScenario.trim()}
+              className="bg-green-600 text-white font-black py-4 w-full uppercase tracking-wider hover:bg-green-500 transition-colors disabled:opacity-50 cursor-pointer rounded-none"
+            >
+              {guidanceLoading ? 'GETTING PROTOCOL...' : 'GET PROTOCOL'}
+            </button>
+
+            {/* AI Protocol Response Panel */}
+            <div className="bg-gray-900 p-4 border border-gray-850 min-h-[160px] flex flex-col justify-center">
+              <AnimatePresence mode="wait">
+                {guidanceLoading && (
+                  <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center justify-center py-6 gap-2">
+                    <RefreshCw size={16} className="animate-spin text-green-500" />
+                    <span className="text-[10px] text-gray-500 font-bold animate-pulse uppercase">Synthesizing protocol...</span>
+                  </motion.div>
+                )}
+                {guidanceProtocol && !guidanceLoading && (
+                  <motion.div key="response" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col gap-3">
+                    <span className="text-[10px] text-green-400 font-black uppercase tracking-widest border-b border-gray-800 pb-1 flex items-center gap-1.5">
+                      <Shield size={12} /> PROTOCOL ACTION PLAN
+                    </span>
+                    <div className="space-y-2">
+                      {guidanceProtocol.split('\n').filter(l => l.trim().length > 0).map((line, idx) => (
+                        <div key={idx} className="border-l-4 border-green-500 pl-3 py-0.5 text-xs text-gray-200 font-bold leading-relaxed">
+                          {line}
+                        </div>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+                {!guidanceProtocol && !guidanceLoading && (
+                  <motion.div key="empty" initial={{ opacity: 0 }} className="text-center py-8">
+                    <p className="text-xs text-gray-600 font-bold">Select a scenario above to display the step-by-step response roadmap.</p>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </div>
 
         </div>
+
+        {/* FULL WIDTH — PA ANNOUNCEMENT GENERATOR */}
+        <div className="bg-gray-100 border-t-2 border-gray-900 p-8 max-w-screen-2xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8">
+          
+          {/* Left Inputs */}
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center gap-2">
+              <Megaphone className="text-gray-900" size={24} />
+              <h3 className="text-xl font-black text-gray-950 uppercase tracking-tight">PA ANNOUNCEMENT GENERATOR</h3>
+            </div>
+            <p className="text-xs text-gray-500 leading-snug">Generate clear and professional public announcements instantly translated into FIFA broadcast languages.</p>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Describe the Situation</label>
+              <textarea
+                value={paSituation}
+                onChange={(e) => setPaSituation(e.target.value)}
+                placeholder="e.g. Requesting spectator with license tag ABC-123 to move their vehicle blocking Gate B lane..."
+                className="border-2 border-gray-900 p-3 w-full min-h-[100px] text-xs bg-white text-gray-900 font-semibold focus:outline-none"
+              />
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Target Language</label>
+              <select
+                value={paLanguage}
+                onChange={(e) => setPaLanguage(e.target.value)}
+                className="border-2 border-gray-900 p-3 bg-white text-gray-950 font-bold text-xs focus:outline-none"
+              >
+                {LOCAL_LANGS.map(l => (
+                  <option key={l.code} value={l.name}>{l.name} ({l.code.toUpperCase()})</option>
+                ))}
+              </select>
+            </div>
+
+            <button
+              onClick={handleGeneratePA}
+              disabled={paLoading || !paSituation.trim()}
+              className="bg-gray-900 text-white font-black py-4 px-8 uppercase hover:bg-blue-600 transition-colors disabled:opacity-40 cursor-pointer rounded-none text-xs tracking-wider"
+            >
+              {paLoading ? 'Generating...' : 'GENERATE ANNOUNCEMENT'}
+            </button>
+          </div>
+
+          {/* Right Output */}
+          <div className="bg-white border-2 border-gray-900 p-6 relative flex flex-col justify-between min-h-[220px]">
+            {/* Copy Button */}
+            {paOutput && (
+              <button
+                onClick={handleCopyPA}
+                className="flex items-center gap-1 bg-gray-100 border border-gray-300 px-3 py-1 font-bold text-[10px] uppercase text-gray-600 hover:bg-gray-200 transition-colors absolute top-4 right-4 rounded-none cursor-pointer"
+              >
+                {paCopied ? <Check size={11} className="text-green-600" /> : <Copy size={11} />}
+                {paCopied ? 'Copied' : 'Copy'}
+              </button>
+            )}
+
+            <div className="flex-1 flex flex-col justify-center">
+              <AnimatePresence mode="wait">
+                {paLoading && (
+                  <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center justify-center gap-2 py-8">
+                    <RefreshCw size={20} className="animate-spin text-gray-900" />
+                    <span className="text-[10px] text-gray-400 font-black animate-pulse uppercase tracking-wider">Translating PA text...</span>
+                  </motion.div>
+                )}
+                {paOutput && !paLoading && (
+                  <motion.div key="output" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col">
+                    <span className="text-[9px] text-gray-400 font-black uppercase tracking-widest mb-3 border-b border-gray-100 pb-2">PA AUDIO READ-OUT</span>
+                    <p className="text-base font-black text-gray-950 leading-relaxed italic">
+                      "{paOutput}"
+                    </p>
+                  </motion.div>
+                )}
+                {!paOutput && !paLoading && (
+                  <motion.div key="empty" initial={{ opacity: 0 }} className="text-center py-8">
+                    <p className="text-sm text-gray-400 font-bold">Write a announcement scenario on the left and click GENERATE ANNOUNCEMENT to trigger live translations.</p>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </div>
+
+        </div>
+
       </div>
     </PageTransition>
   );

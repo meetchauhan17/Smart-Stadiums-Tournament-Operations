@@ -1,13 +1,9 @@
-// ─── PageTransition Wrapper ───────────────────────────────────────
-// Wrap each page in this to get slide-in-from-right on navigate.
-// Uses framer-motion AnimatePresence with slide + fade combo.
-
 import { motion } from 'framer-motion';
 
 const variants = {
-  initial:  { opacity: 0, x: 32, filter: 'blur(2px)' },
-  animate:  { opacity: 1, x: 0,  filter: 'blur(0px)' },
-  exit:     { opacity: 0, x: -24, filter: 'blur(1px)' },
+  initial:  { opacity: 0, y: 8 },
+  animate:  { opacity: 1, y: 0 },
+  exit:     { opacity: 0, y: -8 },
 };
 
 export default function PageTransition({ children, className = '' }) {
@@ -17,11 +13,8 @@ export default function PageTransition({ children, className = '' }) {
       initial="initial"
       animate="animate"
       exit="exit"
-      transition={{
-        duration: 0.3,
-        ease: [0.22, 1, 0.36, 1],
-      }}
-      className={className}
+      transition={{ duration: 0.2, ease: 'easeOut' }}
+      className={`min-h-screen w-full bg-white ${className}`.trim()}
     >
       {children}
     </motion.div>

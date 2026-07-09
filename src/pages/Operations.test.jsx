@@ -21,7 +21,7 @@ function renderOperations() {
   );
 }
 
-// ─── aiHelper mock (Operations uses aiHelper, not aiClient directly) ─
+// ─── aiHelper mock ───────────────────────────────────────────────
 vi.mock('../utils/aiHelper', async () => ({
   callClaude: vi.fn().mockResolvedValue(
     JSON.stringify({
@@ -41,35 +41,32 @@ describe('Operations — KPI strip', () => {
   it('renders all 5 KPI stat cards by text key', () => {
     renderOperations();
 
-    // StatCard renders the title prop directly — i18n mock returns the key.
-    // Some keys might appear more than once (e.g., subtitle also uses the key),
-    // so we use getAllByText and check at least one instance exists.
-    const kpiKeys = [
-      'ops.kpi_occupancy',
-      'ops.kpi_alerts',
-      'ops.kpi_staff',
-      'ops.kpi_response',
-      'ops.kpi_satisfaction',
+    // Now using hardcoded English labels
+    const kpiLabels = [
+      'Current Occupancy',
+      'Active Alerts',
+      'Staff On Duty',
+      'Avg Response',
+      'Fan Score',
     ];
-    kpiKeys.forEach(key => {
-      const elements = screen.queryAllByText(key);
+    kpiLabels.forEach(label => {
+      const elements = screen.queryAllByText(label);
       expect(elements.length).toBeGreaterThanOrEqual(1);
     });
   });
 
-  it('renders exactly 5 distinct KPI title keys in the page', () => {
+  it('renders exactly 5 distinct KPI title labels in the page', () => {
     renderOperations();
 
-    // Collect all unique kpi_ text keys found in the document
-    const kpiKeys = [
-      'ops.kpi_occupancy',
-      'ops.kpi_alerts',
-      'ops.kpi_staff',
-      'ops.kpi_response',
-      'ops.kpi_satisfaction',
+    const kpiLabels = [
+      'Current Occupancy',
+      'Active Alerts',
+      'Staff On Duty',
+      'Avg Response',
+      'Fan Score',
     ];
-    const foundKeys = kpiKeys.filter(key => screen.queryAllByText(key).length > 0);
-    expect(foundKeys.length).toBe(5);
+    const foundLabels = kpiLabels.filter(label => screen.queryAllByText(label).length > 0);
+    expect(foundLabels.length).toBe(5);
   });
 });
 
@@ -77,25 +74,23 @@ describe('Operations — KPI strip', () => {
 // 2. Alerts Feed — renders active alerts from context
 // ════════════════════════════════════════════════════════════════════
 describe('Operations — alerts feed', () => {
-  it('renders alerts panel heading (ops.alerts_title)', () => {
+  it('renders alerts panel heading', () => {
     renderOperations();
 
-    expect(screen.getByText('ops.alerts_title')).toBeTruthy();
+    expect(screen.getByText('Active Alerts Feed')).toBeTruthy();
   });
 
   it('renders the unresolved label somewhere in the document', () => {
     renderOperations();
 
-    // 'ops.unresolved' text may be split across sibling elements.
-    // Use a broader query: check the raw container text.
     const body = document.body.textContent;
-    expect(body).toContain('ops.unresolved');
+    expect(body).toContain('unresolved');
   });
 
   it('shows the trigger mock incident button', () => {
     renderOperations();
 
-    expect(screen.getByText('ops.trigger_mock')).toBeTruthy();
+    expect(screen.getByText('Trigger AI Incident Mock')).toBeTruthy();
   });
 });
 
@@ -106,8 +101,6 @@ describe('Operations — resolve alert', () => {
   it('renders Resolve buttons for active unresolved alerts', () => {
     renderOperations();
 
-    // INITIAL_ALERTS from mockData has some unresolved alerts
-    // AlertList renders Resolve buttons for unresolved ones
     const resolveButtons = screen.queryAllByText('Resolve');
     // At least some buttons exist (there are 5 initial alerts, some unresolved)
     expect(resolveButtons.length).toBeGreaterThanOrEqual(0);
@@ -127,7 +120,6 @@ describe('Operations — resolve alert', () => {
     const initialCount = resolveButtons.length;
     await user.click(resolveButtons[0]);
 
-    // After resolve, the corresponding button should be gone
     await waitFor(() => {
       const remaining = screen.queryAllByText('Resolve');
       expect(remaining.length).toBeLessThanOrEqual(initialCount);
@@ -142,21 +134,21 @@ describe('Operations — AI recommendation panel', () => {
   it('renders the incident description textarea', () => {
     renderOperations();
 
-    const textarea = screen.getByPlaceholderText('ops.describe_placeholder');
+    const textarea = screen.getByPlaceholderText(/Turnstiles at Gate D/i);
     expect(textarea).toBeTruthy();
   });
 
   it('renders the Get Recommendation button', () => {
     renderOperations();
 
-    const btn = screen.getByText('ops.get_recommendation');
+    const btn = screen.getByRole('button', { name: /get ai recommendation/i });
     expect(btn).toBeTruthy();
   });
 
   it('Get Recommendation button is disabled when description is empty', () => {
     renderOperations();
 
-    const btn = screen.getByText('ops.get_recommendation').closest('button');
+    const btn = screen.getByRole('button', { name: /get ai recommendation/i });
     expect(btn).toBeDisabled();
   });
 
@@ -164,27 +156,26 @@ describe('Operations — AI recommendation panel', () => {
     const user = userEvent.setup();
     renderOperations();
 
-    const textarea = screen.getByPlaceholderText('ops.describe_placeholder');
+    const textarea = screen.getByPlaceholderText(/Turnstiles at Gate D/i);
     await user.type(textarea, 'Fan crowd surge');
 
-    const btn = screen.getByText('ops.get_recommendation').closest('button');
+    const btn = screen.getByRole('button', { name: /get ai recommendation/i });
     expect(btn).not.toBeDisabled();
   });
 
   it('shows AI output (ops.ai_strategy_generated) after successful API call', async () => {
     const user = userEvent.setup();
 
-    // aiHelper.callClaude is already mocked at top of this file
     renderOperations();
 
-    const textarea = screen.getByPlaceholderText('ops.describe_placeholder');
+    const textarea = screen.getByPlaceholderText(/Turnstiles at Gate D/i);
     await user.type(textarea, 'Overcrowding event at south gate entrance area');
 
-    const btn = screen.getByText('ops.get_recommendation').closest('button');
+    const btn = screen.getByRole('button', { name: /get ai recommendation/i });
     await user.click(btn);
 
     await waitFor(() => {
-      expect(screen.getByText('ops.ai_strategy_generated')).toBeTruthy();
+      expect(screen.getByText('AI Strategy Generated')).toBeTruthy();
     }, { timeout: 5000 });
   });
 });
@@ -212,7 +203,7 @@ describe('Operations — chart rendering', () => {
     const tabs = screen.getAllByRole('tab');
     const selectedTab = tabs.find(t => t.getAttribute('aria-selected') === 'true');
     expect(selectedTab).toBeTruthy();
-    expect(selectedTab.textContent).toBe('ops.chart_tabs_telemetry');
+    expect(selectedTab.textContent).toBe('Telemetry View');
   });
 
   it('switching to logistics tab shows throughput heading', async () => {
@@ -220,11 +211,11 @@ describe('Operations — chart rendering', () => {
     renderOperations();
 
     const tabs = screen.getAllByRole('tab');
-    const logisticsTab = tabs.find(t => t.textContent === 'ops.chart_tabs_logistics');
+    const logisticsTab = tabs.find(t => t.textContent === 'Logistics Desk');
     await user.click(logisticsTab);
 
     await waitFor(() => {
-      expect(screen.getByText('ops.throughput_title')).toBeTruthy();
+      expect(screen.getByText('Gate Throughput Rates')).toBeTruthy();
     });
   });
 
@@ -233,11 +224,11 @@ describe('Operations — chart rendering', () => {
     renderOperations();
 
     const tabs = screen.getAllByRole('tab');
-    const efficiencyTab = tabs.find(t => t.textContent === 'ops.chart_tabs_efficiency');
+    const efficiencyTab = tabs.find(t => t.textContent === 'Efficiency Radar');
     await user.click(efficiencyTab);
 
     await waitFor(() => {
-      expect(screen.getByText('ops.radar_title')).toBeTruthy();
+      expect(screen.getByText('Staff Shift Efficiency Comparison')).toBeTruthy();
     });
   });
 

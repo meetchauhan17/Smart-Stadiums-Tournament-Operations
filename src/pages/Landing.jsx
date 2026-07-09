@@ -1,254 +1,72 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { useTranslation } from 'react-i18next';
-import {
-  Users, Monitor, Briefcase, Leaf,
-  ArrowRight, ChevronDown, Zap, Globe,
-  BarChart3, Shield, Activity, Radio,
-} from 'lucide-react';
+import { Users, Monitor, Briefcase, Leaf, Zap, Globe, ArrowRight } from 'lucide-react';
 import { useStadium } from '../context/StadiumContext';
+import PageTransition from '../components/PageTransition';
 
 // ═══════════════════════════════════════════════════════════════════
-//  HERO SECTION
+//  HERO SECTION (bg-blue-600, min-h-screen)
 // ═══════════════════════════════════════════════════════════════════
-
 function HeroSection() {
-  const { t } = useTranslation();
-
-  const QUICK_STATS = [
-    { label: t('landing.capacity'),         value: '82,500',  icon: Users },
-    { label: t('landing.ai_modules'),       value: '4',       icon: Zap },
-    { label: t('landing.languages'),        value: '5',       icon: Globe },
-    { label: t('landing.real_time_analytics'), value: 'Live',  icon: Activity },
-  ];
-
   return (
-    <section className="relative w-full min-h-screen flex flex-col items-center justify-center overflow-hidden px-4 bg-white">
-      {/* ── Flat Poster Geometric Decorations ── */}
-      <div className="absolute top-[10%] left-[5%] w-96 h-96 bg-[#EFF6FF] rounded-full -z-10 pointer-events-none opacity-80" />
-      <div className="absolute bottom-[10%] right-[-5%] w-[450px] h-[450px] bg-[#ECFDF5] rounded-lg rotate-12 -z-10 pointer-events-none opacity-80" />
-      <div className="absolute top-[30%] right-[10%] w-72 h-72 bg-[#FEF3C7] rounded-full -z-10 pointer-events-none opacity-60" />
-
-      {/* ── Content ── */}
-      <div className="relative z-10 flex flex-col items-center text-center max-w-4xl mx-auto mt-12">
-        {/* Top badge */}
-        <motion.div
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15, duration: 0.4 }}
-          className="inline-flex items-center gap-2 px-4 py-1.5 rounded border-2 border-[#3B82F6] bg-white mb-6"
-        >
-          <span className="relative flex h-2.5 w-2.5">
-            <span className="absolute inline-flex h-full w-full rounded-full bg-[#10B981] animate-ping opacity-75" />
-            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#10B981]" />
-          </span>
-          <span className="text-[10px] font-extrabold tracking-wider uppercase text-[#3B82F6]">
-            {t('landing.hero_tag')}
-          </span>
-        </motion.div>
-
-        {/* Main headline */}
-        <motion.h1
-          initial={{ opacity: 0, y: 25 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.25, duration: 0.5, ease: 'easeOut' }}
-          className="font-heading font-extrabold tracking-tight leading-[0.95] mb-6 text-[#111827]"
-          style={{ fontSize: 'clamp(3rem, 9vw, 6rem)' }}
-        >
-          STADIUM<span className="text-[#3B82F6]">IQ</span>
-          <span className="block text-[#3B82F6] mt-2 font-bold" style={{ fontSize: 'clamp(1.8rem, 5vw, 3.25rem)' }}>
-            2026
-          </span>
-        </motion.h1>
-
-        {/* Subheading */}
-        <motion.p
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.35, duration: 0.4 }}
-          className="text-[#6B7280] text-lg md:text-xl max-w-2xl leading-relaxed mb-8 font-semibold"
-        >
-          {t('landing.hero_subtitle')}
-        </motion.p>
-
-        {/* Quick stat pills */}
-        <motion.div
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.45, duration: 0.4 }}
-          className="flex flex-wrap justify-center gap-3 mb-10"
-        >
-          {QUICK_STATS.map(({ label, value, icon: Icon }, i) => (
-            <motion.div
-              key={label}
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.5 + i * 0.05 }}
-              className="flex items-center gap-2.5 px-4 py-2.5 rounded border-2 border-[#E5E7EB] bg-white"
-            >
-              <Icon size={14} className="text-[#3B82F6]" />
-              <span className="font-heading font-extrabold text-sm text-[#111827]">{value}</span>
-              <span className="text-[11px] text-[#6B7280] font-bold uppercase">{label}</span>
-            </motion.div>
-          ))}
-        </motion.div>
-
-        {/* CTA buttons */}
-        <motion.div
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.55, duration: 0.4 }}
-          className="flex flex-wrap items-center justify-center gap-4"
-        >
-          <Link to="/operations">
-            <button className="btn-primary text-base px-8 cursor-pointer">
-              <Radio size={18} />
-              {t('landing.cta_operations')}
-            </button>
-          </Link>
-          <Link to="/fan">
-            <button className="btn-ghost text-base px-8 cursor-pointer">
-              <Users size={18} />
-              {t('landing.cta_fan')}
-            </button>
-          </Link>
-        </motion.div>
+    <section className="relative bg-blue-600 min-h-screen flex flex-col justify-between overflow-hidden pt-20">
+      {/* Abstract geometric composition on the right */}
+      <div className="absolute right-0 top-1/2 -translate-y-1/2 w-full lg:w-1/2 h-[500px] pointer-events-none hidden lg:block select-none">
+        <div className="relative w-full h-full">
+          <div className="absolute right-20 top-10 w-[380px] h-[240px] bg-blue-500 border-4 border-white rotate-0 opacity-90 shadow-2xl" />
+          <div className="absolute right-32 top-24 w-[340px] h-[260px] bg-blue-400 border-4 border-white rotate-[15deg] opacity-95 shadow-2xl" />
+          <div className="absolute right-12 top-40 w-[360px] h-[220px] bg-blue-700 border-4 border-white -rotate-[10deg] opacity-90 shadow-2xl" />
+        </div>
       </div>
 
-      {/* ── Scroll indicator ── */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.9 }}
-        className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1.5 z-10"
-      >
-        <span className="text-[9px] uppercase tracking-wider text-[#6B7280] font-bold">{t('landing.explore')}</span>
-        <motion.div
-          animate={{ y: [0, 6, 0] }}
-          transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
-        >
-          <ChevronDown size={18} className="text-[#3B82F6]" />
-        </motion.div>
-      </motion.div>
-    </section>
-  );
-}
-
-// ═══════════════════════════════════════════════════════════════════
-//  FEATURE GRID
-// ═══════════════════════════════════════════════════════════════════
-
-function FeatureCard({ to, icon: Icon, title, description, color, bg, text, index }) {
-  const { t } = useTranslation();
-
-  return (
-    <Link to={to} className="block group cursor-pointer">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: '-40px' }}
-        transition={{ duration: 0.4, delay: index * 0.08 }}
-        whileHover={{ scale: 1.02 }}
-        className="relative h-full rounded-lg border-2 border-[#E5E7EB] bg-white p-6 md:p-8 transition-all duration-200 shadow-none flex flex-col justify-between"
-      >
-        <div>
-          <div
-            className="w-14 h-14 rounded-full flex items-center justify-center mb-5 border-2"
-            style={{ backgroundColor: bg, borderColor: color }}
+      {/* Main Hero Container */}
+      <div className="flex-1 max-w-7xl mx-auto px-6 flex items-center w-full z-10 py-16">
+        <div className="max-w-2xl text-left flex flex-col">
+          {/* Headline */}
+          <h1
+            className="font-black text-white tracking-tight uppercase"
+            style={{ fontSize: 'clamp(3.5rem, 9vw, 6.5rem)', letterSpacing: '-0.03em', lineHeight: '0.95' }}
           >
-            <Icon size={24} style={{ color }} />
+            THE FUTURE OF
+            <br />
+            STADIUM OPS
+          </h1>
+
+          {/* Subtext */}
+          <p className="mt-6 text-blue-100 text-lg md:text-xl font-medium max-w-lg leading-relaxed">
+            GenAI-Powered Platform for FIFA World Cup 2026
+          </p>
+
+          {/* CTA Buttons */}
+          <div className="flex flex-row flex-wrap gap-4 mt-10">
+            <Link to="/operations">
+              <button className="bg-white text-blue-600 font-bold px-8 py-4 rounded-none text-base border-2 border-white hover:bg-transparent hover:text-white transition-all cursor-pointer">
+                ENTER CONTROL ROOM
+              </button>
+            </Link>
+            <Link to="/fan">
+              <button className="bg-transparent text-white font-bold px-8 py-4 rounded-none text-base border-4 border-white hover:bg-white hover:text-blue-600 transition-all cursor-pointer">
+                FAN EXPERIENCE
+              </button>
+            </Link>
           </div>
-
-          <h3 className="font-heading font-extrabold text-[#111827] text-lg mb-2 leading-snug">
-            {title}
-          </h3>
-
-          <p className="text-[#6B7280] text-sm leading-relaxed mb-6 font-medium">
-            {description}
-          </p>
         </div>
+      </div>
 
-        <div
-          className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider mt-auto"
-          style={{ color }}
-        >
-          <span>{t('landing.explore')}</span>
-          <ArrowRight
-            size={14}
-            className="transition-transform duration-200 group-hover:translate-x-1.5"
-          />
-        </div>
-      </motion.div>
-    </Link>
-  );
-}
-
-function FeatureGrid() {
-  const { t } = useTranslation();
-
-  const FEATURES = [
-    {
-      to:          '/fan',
-      icon:        Users,
-      title:       t('landing.fan_title'),
-      description: t('landing.fan_desc'),
-      color:       '#3B82F6', // Blue 500
-      bg:          '#EFF6FF',
-      text:        '#3B82F6',
-    },
-    {
-      to:          '/operations',
-      icon:        Monitor,
-      title:       t('landing.ops_title'),
-      description: t('landing.ops_desc'),
-      color:       '#F59E0B', // Amber 500
-      bg:          '#FEF3C7',
-      text:        '#B45309',
-    },
-    {
-      to:          '/staff',
-      icon:        Briefcase,
-      title:       t('landing.staff_title'),
-      description: t('landing.staff_desc'),
-      color:       '#10B981', // Emerald 500
-      bg:          '#ECFDF5',
-      text:        '#047857',
-    },
-    {
-      to:          '/sustainability',
-      icon:        Leaf,
-      title:       t('landing.sustain_title'),
-      description: t('landing.sustain_desc'),
-      color:       '#059669',
-      bg:          '#ECFDF5',
-      text:        '#059669',
-    },
-  ];
-
-  return (
-    <section className="relative py-20 px-4 bg-[#F3F4F6]">
-      <div className="max-w-6xl mx-auto">
-        <motion.div
-          initial={{ opacity: 0, y: 15 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="text-center mb-14"
-        >
-          <span className="section-tag mb-3 block text-center justify-center">
-            <Zap size={12} /> {t('landing.modules_tag')}
-          </span>
-          <h2 className="font-heading font-extrabold text-3xl md:text-4xl text-[#111827] mb-3">
-            {t('landing.modules_title')}
-          </h2>
-          <p className="text-[#6B7280] max-w-xl mx-auto font-semibold">
-            {t('landing.modules_desc')}
-          </p>
-        </motion.div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {FEATURES.map((f, i) => (
-            <FeatureCard key={f.to} {...f} index={i} />
+      {/* Blue-700 strip at bottom of hero */}
+      <div className="bg-blue-700 border-t-4 border-gray-900 py-8 z-10">
+        <div className="max-w-7xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-6 text-center md:text-left">
+          {[
+            { value: '10 VENUES', label: 'WORLDWIDE STADIA' },
+            { value: '82,500', label: 'MAX CAPACITY' },
+            { value: '6 MODULES', label: 'GENAI POWERED' },
+            { value: '5 LANGUAGES', label: 'LIVE TRANSLATION' },
+          ].map((stat, idx) => (
+            <div key={idx} className="flex flex-col">
+              <span className="text-white text-3xl md:text-4xl font-black uppercase tracking-tight">{stat.value}</span>
+              <span className="text-blue-200 text-xs font-semibold uppercase tracking-widest mt-1">{stat.label}</span>
+            </div>
           ))}
         </div>
       </div>
@@ -257,94 +75,108 @@ function FeatureGrid() {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-//  STATISTICS SECTION (count-up on scroll)
+//  SECTION 2 — PLATFORM MODULES (bg-white, py-24)
 // ═══════════════════════════════════════════════════════════════════
-
-function CountUpStat({ value, suffix, label, icon: Icon, delay }) {
-  const [display, setDisplay] = useState(0);
-  const ref        = useRef(null);
-  const started    = useRef(false);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting && !started.current) {
-          started.current = true;
-          const duration = 1500;
-          let start;
-
-          const animate = (ts) => {
-            if (!start) start = ts;
-            const progress = Math.min((ts - start) / duration, 1);
-            const eased    = 1 - Math.pow(1 - progress, 3);
-            setDisplay(eased * value);
-            if (progress < 1) requestAnimationFrame(animate);
-          };
-
-          setTimeout(() => requestAnimationFrame(animate), delay);
-        }
-      },
-      { threshold: 0.3 }
-    );
-
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [value, delay]);
-
-  const formatted = value >= 1000
-    ? Math.floor(display).toLocaleString()
-    : Number.isInteger(value)
-    ? Math.floor(display).toString()
-    : display.toFixed(1);
-
-  return (
-    <div ref={ref} className="flex flex-col items-center text-center">
-      <div className="w-12 h-12 rounded-full bg-[#EFF6FF] border-2 border-[#3B82F6] flex items-center justify-center mb-4">
-        <Icon size={20} className="text-[#3B82F6]" />
-      </div>
-      <p className="font-heading font-extrabold text-4xl md:text-5xl text-[#111827] mb-1 tabular-nums">
-        {formatted}
-        <span className="text-[#3B82F6]">{suffix}</span>
-      </p>
-      <p className="text-[#6B7280] text-sm font-bold uppercase tracking-wide">{label}</p>
-    </div>
-  );
-}
-
-function StatsSection() {
-  const { t } = useTranslation();
-
-  const HERO_STATS = [
-    { value: 3,      suffix: '',     label: t('landing.stat_venues'), icon: Shield },
-    { value: 250000, suffix: '+',    label: t('landing.stat_fans'),   icon: Users },
-    { value: 99.9,   suffix: '%',    label: t('landing.stat_uptime'), icon: Activity },
-    { value: 40,     suffix: '%',    label: t('landing.stat_energy'), icon: Leaf },
+function PlatformModules() {
+  const MODULES = [
+    {
+      to: '/fan',
+      icon: Users,
+      name: 'Fan Experience Hub',
+      desc: 'AI-powered navigation, multilingual chat assistant, and live venue directions.',
+      accent: 'group-hover:bg-blue-600',
+      iconBg: 'bg-blue-100 text-blue-600',
+      textColorClass: 'text-blue-600 group-hover:text-white',
+      borderHover: 'hover:bg-blue-600',
+    },
+    {
+      to: '/operations',
+      icon: Monitor,
+      name: 'Operations Room',
+      desc: 'Real-time crowd flow maps, incident triggers, and AI decision systems.',
+      accent: 'group-hover:bg-amber-500',
+      iconBg: 'bg-amber-100 text-amber-600',
+      textColorClass: 'text-amber-600 group-hover:text-white',
+      borderHover: 'hover:bg-amber-500',
+    },
+    {
+      to: '/staff',
+      icon: Briefcase,
+      name: 'Staff & Volunteers',
+      desc: 'Roster deployment maps, status tracking, and volunteer coordinators.',
+      accent: 'group-hover:bg-green-600',
+      iconBg: 'bg-green-100 text-green-600',
+      textColorClass: 'text-green-600 group-hover:text-white',
+      borderHover: 'hover:bg-green-600',
+    },
+    {
+      to: '/sustainability',
+      icon: Leaf,
+      name: 'Sustainability Hub',
+      desc: 'Live solar metrics, water recycling gauges, and smart energy saving tips.',
+      accent: 'group-hover:bg-emerald-600',
+      iconBg: 'bg-emerald-100 text-emerald-600',
+      textColorClass: 'text-emerald-600 group-hover:text-white',
+      borderHover: 'hover:bg-emerald-600',
+    },
   ];
 
   return (
-    <section className="relative py-20 px-4 bg-white border-t-2 border-[#E5E7EB]">
-      <div className="max-w-5xl mx-auto">
-        <motion.div
-          initial={{ opacity: 0, y: 15 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="text-center mb-14"
-        >
-          <span className="section-tag mb-3 block text-center justify-center">
-            <BarChart3 size={12} /> {t('landing.stats_tag')}
-          </span>
-          <h2 className="font-heading font-extrabold text-3xl md:text-4xl text-[#111827]">
-            {t('landing.stats_title')}
+    <section className="bg-white py-24 px-6 border-t-2 border-gray-900">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="mb-16">
+          <p className="text-blue-600 text-xs uppercase tracking-widest font-extrabold">01. PLATFORM</p>
+          <h2 className="text-5xl md:text-6xl font-black text-gray-900 tracking-tight mt-2 leading-none">
+            One Platform.
+            <br />
+            Every Dimension.
           </h2>
-        </motion.div>
+        </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12">
-          {HERO_STATS.map((stat, i) => (
-            <CountUpStat key={stat.label} {...stat} delay={i * 100} />
-          ))}
+        {/* 2x2 Grid with thick borders */}
+        <div className="grid grid-cols-1 md:grid-cols-2 border-2 border-gray-900">
+          {MODULES.map((mod, idx) => {
+            const Icon = mod.icon;
+            // Alternating backgrounds (white and gray-100)
+            const isOddRow = Math.floor(idx / 2) % 2 === 1;
+            const isOddCol = idx % 2 === 1;
+            const bgClass = (idx === 1 || idx === 2) ? 'bg-gray-100' : 'bg-white';
+
+            return (
+              <Link
+                key={idx}
+                to={mod.to}
+                className={`group flex flex-col justify-between p-10 min-h-[320px] transition-all duration-150 cursor-pointer border-collapse border-gray-900 ${bgClass} ${mod.borderHover} hover:border-gray-900`}
+                style={{
+                  borderRightWidth: isOddCol ? '0px' : '2px',
+                  borderBottomWidth: idx < 2 ? '2px' : '0px',
+                }}
+              >
+                <div className="flex flex-col gap-6">
+                  {/* Icon circle */}
+                  <div className={`h-16 w-16 rounded-full flex items-center justify-center ${mod.iconBg} transition-colors group-hover:bg-white group-hover:text-gray-900`}>
+                    <Icon size={28} />
+                  </div>
+
+                  {/* Module Name */}
+                  <h3 className="text-2xl font-black uppercase tracking-tight text-gray-900 group-hover:text-white">
+                    {mod.name}
+                  </h3>
+
+                  {/* Description */}
+                  <p className="text-gray-600 text-sm leading-relaxed max-w-sm group-hover:text-blue-50">
+                    {mod.desc}
+                  </p>
+                </div>
+
+                {/* Explore Link */}
+                <div className={`flex items-center gap-1.5 text-sm font-bold uppercase tracking-wider mt-6 ${mod.textColorClass}`}>
+                  EXPLORE <ArrowRight size={14} className="transition-transform group-hover:translate-x-1" />
+                </div>
+              </Link>
+            );
+          })}
         </div>
       </div>
     </section>
@@ -352,68 +184,77 @@ function StatsSection() {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-//  LIVE TICKER
+//  SECTION 3 — LIVE STATS (bg-gray-900, py-20)
 // ═══════════════════════════════════════════════════════════════════
-
-function LiveTicker() {
-  const { t } = useTranslation();
-  const {
-    currentVenue,
-    currentOccupancy,
-    occupancyPercent,
-    unresolvedAlerts,
-    currentMatchAtVenue,
-    weatherData,
-  } = useStadium();
-
-  const items = [
-    `🏟️ ${currentVenue.name} — Occupancy: ${currentOccupancy.toLocaleString()} / ${currentVenue.capacity.toLocaleString()} (${occupancyPercent}%)`,
-    `🚨 Active Alerts: ${unresolvedAlerts.length}${unresolvedAlerts.length > 0 ? ` — ${unresolvedAlerts[0]?.message?.slice(0, 60)}…` : ' — All clear'}`,
-    `⚽ Next Match: ${currentMatchAtVenue.homeTeam.flag} ${currentMatchAtVenue.homeTeam.name} vs ${currentMatchAtVenue.awayTeam.name} ${currentMatchAtVenue.awayTeam.flag} — ${currentMatchAtVenue.date} at ${currentMatchAtVenue.kickoffTime}`,
-    `🌤️ Weather: ${weatherData.temp.value}°C, ${weatherData.condition}, Wind ${weatherData.windSpeed.value} km/h ${weatherData.windSpeed.direction}`,
-    `🎟️ ${currentMatchAtVenue.ticketsSold.toLocaleString()} tickets sold — ${currentMatchAtVenue.ticketsSold >= currentVenue.capacity ? 'SOLD OUT' : `${(currentVenue.capacity - currentMatchAtVenue.ticketsSold).toLocaleString()} remaining`}`,
-    `🌱 Solar: ${(1840).toLocaleString()} kWh today — 92% of daily target`,
+function LiveStats() {
+  const STATS = [
+    { val: '3', label: 'CONTINENTS', color: 'text-blue-400' },
+    { val: '48', label: 'MATCHES', color: 'text-amber-400' },
+    { val: '250K+', label: 'DAILY FANS', color: 'text-green-400' },
+    { val: '40%', label: 'ENERGY SAVED', color: 'text-purple-400' },
   ];
 
-  const doubled = [...items, ...items];
-
   return (
-    <section className="relative border-y-2 border-[#E5E7EB] bg-[#F3F4F6] overflow-hidden">
-      <div className="flex items-center h-11">
-        <div className="shrink-0 h-full flex items-center gap-2 px-5 bg-[#FFF5F5] border-r-2 border-[#FF3366] z-10">
-          <span className="relative flex h-2 w-2">
-            <span className="absolute inline-flex h-full w-full rounded-full bg-[#FF3366] animate-ping opacity-75" />
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-[#FF3366]" />
-          </span>
-          <span className="text-[10px] font-bold tracking-wider text-[#FF3366]">{t('common.live')}</span>
-        </div>
+    <section className="bg-gray-950 py-24 px-6 border-t-2 border-gray-900">
+      <div className="max-w-7xl mx-auto">
+        <h2 className="text-white text-4xl md:text-5xl font-black uppercase tracking-tight mb-16 max-w-md leading-none">
+          Numbers that move the world.
+        </h2>
 
-        <div className="flex-1 overflow-hidden whitespace-nowrap">
-          <motion.div
-            className="inline-flex gap-16 text-xs text-[#6B7280] font-semibold"
-            animate={{ x: ['0%', '-50%'] }}
-            transition={{
-              x: {
-                repeat: Infinity,
-                repeatType: 'loop',
-                duration: items.length * 9,
-                ease: 'linear',
-              },
-            }}
-          >
-            {doubled.map((item, i) => (
-              <span key={i} className="inline-flex items-center gap-1 shrink-0">
-                {item.split('—').map((part, pi) => (
-                  <span key={pi}>
-                    {pi > 0 && <span className="text-[#E5E7EB] mx-2">|</span>}
-                    <span className={pi === 0 ? 'text-[#111827] font-bold' : ''}>
-                      {part.trim()}
-                    </span>
-                  </span>
-                ))}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-10">
+          {STATS.map((stat, idx) => (
+            <div key={idx} className="flex flex-col">
+              <span className={`text-7xl md:text-8xl font-black tracking-tighter ${stat.color} leading-none`}>
+                {stat.val}
               </span>
+              <span className="text-gray-400 text-xs font-bold uppercase tracking-widest mt-4">
+                {stat.label}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  SECTION 4 — VENUE SELECTOR PREVIEW (bg-amber-400, py-20)
+// ═══════════════════════════════════════════════════════════════════
+function VenueSelectorPreview() {
+  const { stadiums, switchVenue } = useStadium();
+  const navigate = useNavigate();
+
+  const handleSelectVenue = (id) => {
+    switchVenue(id);
+    navigate('/operations');
+  };
+
+  return (
+    <section className="bg-amber-400 py-24 px-6 border-t-2 border-b-2 border-gray-900">
+      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+        {/* Left Headline */}
+        <div className="lg:col-span-5">
+          <h2 className="text-4xl md:text-5xl font-black text-gray-950 tracking-tight leading-none uppercase">
+            10 WORLD CUP VENUES.
+            <br />
+            ONE PLATFORM.
+          </h2>
+        </div>
+
+        {/* Right Scrollable horizontal list of stadium pills */}
+        <div className="lg:col-span-7 overflow-x-auto pb-4 scrollbar-thin select-none">
+          <div className="flex flex-wrap lg:flex-nowrap gap-3 min-w-max pr-6">
+            {(stadiums || []).map((s) => (
+              <button
+                key={s.id}
+                onClick={() => handleSelectVenue(s.id)}
+                className="px-6 py-3.5 bg-white border-2 border-gray-900 text-gray-950 font-extrabold text-sm uppercase tracking-wider rounded-none hover:bg-gray-950 hover:text-white transition-all cursor-pointer shrink-0"
+              >
+                {s.name}
+              </button>
             ))}
-          </motion.div>
+          </div>
         </div>
       </div>
     </section>
@@ -423,43 +264,58 @@ function LiveTicker() {
 // ═══════════════════════════════════════════════════════════════════
 //  FOOTER
 // ═══════════════════════════════════════════════════════════════════
-
 function Footer() {
-  const { t } = useTranslation();
-
   return (
-    <footer className="py-12 px-4 border-t-2 border-[#E5E7EB] bg-[#F3F4F6]">
-      <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-2">
-          <span className="font-heading font-extrabold text-sm text-[#111827]">
-            Stadium<span className="text-[#3B82F6]">IQ</span>
+    <footer className="bg-gray-950 py-16 px-6 border-t-2 border-gray-900">
+      <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-8">
+        {/* Left logo */}
+        <div className="flex items-center gap-1.5 select-none">
+          <span className="font-black text-xl tracking-tight text-white uppercase">
+            STADIUM<span className="text-blue-500">IQ</span>
           </span>
-          <span className="text-[#6B7280] text-xs font-bold">2026</span>
+          <span className="text-gray-500 text-xs font-bold uppercase tracking-widest ml-1">
+            2026
+          </span>
         </div>
-        <p className="text-[#6B7280] text-xs text-center font-medium">
-          {t('landing.footer_text')}
-        </p>
-        <p className="text-[#6B7280] text-[10px] font-bold uppercase tracking-wider">
-          {t('landing.footer_powered')}
+
+        {/* Center navigation links */}
+        <div className="flex flex-wrap justify-center gap-8">
+          <Link to="/" className="text-gray-400 hover:text-white text-xs font-bold uppercase tracking-widest">
+            Overview
+          </Link>
+          <Link to="/fan" className="text-gray-400 hover:text-white text-xs font-bold uppercase tracking-widest">
+            Fans
+          </Link>
+          <Link to="/operations" className="text-gray-400 hover:text-white text-xs font-bold uppercase tracking-widest">
+            Operations
+          </Link>
+          <Link to="/staff" className="text-gray-400 hover:text-white text-xs font-bold uppercase tracking-widest">
+            Staff
+          </Link>
+          <Link to="/sustainability" className="text-gray-400 hover:text-white text-xs font-bold uppercase tracking-widest">
+            Sustainability
+          </Link>
+        </div>
+
+        {/* Right text */}
+        <p className="text-gray-500 text-xs font-semibold uppercase tracking-wider">
+          Built for FIFA World Cup 2026
         </p>
       </div>
     </footer>
   );
 }
 
-import PageTransition from '../components/PageTransition';
-
 // ═══════════════════════════════════════════════════════════════════
 //  PAGE EXPORT
 // ═══════════════════════════════════════════════════════════════════
-
 export default function Landing() {
   return (
     <PageTransition>
       <HeroSection />
-      <LiveTicker />
-      <FeatureGrid />
-      <StatsSection />
+      <PlatformModules />
+      <LiveStats />
+      <VenueSelectorPreview />
       <Footer />
     </PageTransition>
   );

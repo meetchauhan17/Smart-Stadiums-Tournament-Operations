@@ -3,69 +3,62 @@ import { X, AlertTriangle, Zap, Info, CheckCircle, MapPin, Clock } from 'lucide-
 
 import { useStadium } from '../context/StadiumContext';
 
-// ─── Config (Flat Design Colors) ───────────────────────────────────
+// ─── Config (Dark Theme Colors) ────────────────────────────────────
 const SEVERITY = {
   critical: {
     icon:      Zap,
     color:     '#FF3366',
-    bg:        '#FFF5F5',
+    bg:        'rgba(255, 51, 102, 0.08)',
     border:    '#FF3366',
-    badge:     '#FFFFFF',
     badgeText: '#FF3366',
     label:     'CRITICAL',
   },
   high: {
     icon:      AlertTriangle,
     color:     '#FF8C42',
-    bg:        '#FFFBF7',
+    bg:        'rgba(255, 140, 66, 0.08)',
     border:    '#FF8C42',
-    badge:     '#FFFFFF',
     badgeText: '#FF8C42',
     label:     'HIGH',
   },
   warning: {
     icon:      AlertTriangle,
-    color:     '#F59E0B',
-    bg:        '#FEF3C7',
-    border:    '#F59E0B',
-    badge:     '#FFFFFF',
-    badgeText: '#B45309',
+    color:     '#FFB800',
+    bg:        'rgba(255, 184, 0, 0.08)',
+    border:    '#FFB800',
+    badgeText: '#FFB800',
     label:     'WARNING',
   },
   medium: {
     icon:      AlertTriangle,
-    color:     '#F59E0B',
-    bg:        '#FEF3C7',
-    border:    '#F59E0B',
-    badge:     '#FFFFFF',
-    badgeText: '#B45309',
+    color:     '#FFB800',
+    bg:        'rgba(255, 184, 0, 0.08)',
+    border:    '#FFB800',
+    badgeText: '#FFB800',
     label:     'MEDIUM',
   },
   info: {
     icon:      Info,
-    color:     '#3B82F6',
-    bg:        '#EFF6FF',
-    border:    '#3B82F6',
-    badge:     '#FFFFFF',
-    badgeText: '#1D4ED8',
+    color:     '#00D4FF',
+    bg:        'rgba(0, 212, 255, 0.06)',
+    border:    '#00D4FF',
+    badgeText: '#00D4FF',
     label:     'INFO',
   },
   low: {
     icon:      Info,
-    color:     '#6B7280',
-    bg:        '#F3F4F6',
-    border:    '#6B7280',
-    badge:     '#FFFFFF',
-    badgeText: '#6B7280',
+    color:     '#8892B0',
+    bg:        'rgba(136, 146, 176, 0.06)',
+    border:    '#8892B0',
+    badgeText: '#8892B0',
     label:     'LOW',
   },
   success: {
     icon:      CheckCircle,
-    color:     '#10B981',
-    bg:        '#ECFDF5',
-    border:    '#10B981',
-    badge:     '#FFFFFF',
-    badgeText: '#047857',
+    color:     '#00FF87',
+    bg:        'rgba(0, 255, 135, 0.06)',
+    border:    '#00FF87',
+    badgeText: '#00FF87',
     label:     'RESOLVED',
   },
 };
@@ -81,7 +74,7 @@ function formatTimestamp(ts) {
 }
 
 /**
- * AlertBanner — Flat Block Style
+ * AlertBanner — Dark Theme
  */
 export default function AlertBanner({
   alert,
@@ -111,19 +104,23 @@ export default function AlertBanner({
         layout:  { duration: 0.2 },
         default: { duration: 0.2, delay: index * 0.03, ease: 'easeOut' },
       }}
-      className={`relative overflow-hidden rounded-lg border-2 shadow-none ${compact ? 'p-3' : 'p-5'} ${
-        showUrgent ? 'border-[#FF3366] bg-[#FFF5F5] animate-pulse-slow' : ''
+      className={`relative overflow-hidden rounded-lg border shadow-none ${compact ? 'p-3' : 'p-5'} ${
+        showUrgent ? 'animate-pulse-slow' : ''
       }`}
       style={{
-        backgroundColor: showUrgent ? '#FFF5F5' : sev.bg,
-        borderColor: showUrgent ? '#FF3366' : '#E5E7EB',
-        borderLeft: `6px solid ${showUrgent ? '#FF3366' : sev.color}`,
+        backgroundColor: showUrgent ? 'rgba(255, 51, 102, 0.1)' : sev.bg,
+        borderColor: showUrgent ? '#FF3366' : 'rgba(0,212,255,0.12)',
+        borderLeft: `4px solid ${showUrgent ? '#FF3366' : sev.color}`,
       }}
     >
       <div className="flex items-start gap-4">
         {/* Icon Container */}
         <div
-          className={`${compact ? 'w-8 h-8' : 'w-10 h-10'} rounded-full flex items-center justify-center shrink-0 border border-[#E5E7EB] bg-white`}
+          className={`${compact ? 'w-8 h-8' : 'w-10 h-10'} rounded-full flex items-center justify-center shrink-0 border`}
+          style={{
+            backgroundColor: `${showUrgent ? 'rgba(255,51,102,0.15)' : sev.bg}`,
+            borderColor: showUrgent ? '#FF3366' : sev.color,
+          }}
         >
           <Icon
             size={compact ? 14 : 16}
@@ -137,33 +134,37 @@ export default function AlertBanner({
           {/* Top row: badges */}
           <div className="flex items-center flex-wrap gap-2 mb-1">
             <span
-              className="text-[9px] font-extrabold tracking-wider px-1.5 py-0.5 rounded border border-[#E5E7EB]"
-              style={{ backgroundColor: '#FFFFFF', color: showUrgent ? '#FF3366' : sev.badgeText }}
+              className="text-[9px] font-extrabold tracking-wider px-1.5 py-0.5 rounded border"
+              style={{
+                backgroundColor: 'rgba(0,0,0,0.3)',
+                borderColor: showUrgent ? '#FF3366' : sev.color,
+                color: showUrgent ? '#FF3366' : sev.badgeText,
+              }}
             >
               {showUrgent ? 'URGENT' : sev.label}
             </span>
 
             {alert.type && (
-              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-gray-200/50 text-[#6B7280] uppercase tracking-wider">
+              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-[#0D1B2E] text-[#8892B0] uppercase tracking-wider border border-[rgba(0,212,255,0.1)]">
                 {alert.type.replace(/_/g, ' ')}
               </span>
             )}
 
             {alert.isAIGenerated && (
-              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-[#3B82F6]/10 text-[#3B82F6] border border-[#3B82F6]/20">
+              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-[#00D4FF]/10 text-[#00D4FF] border border-[#00D4FF]/20">
                 ⚡ AI DETECTED
               </span>
             )}
           </div>
 
           {/* Message */}
-          <p className={`text-[#111827] font-semibold leading-snug ${compact ? 'text-xs' : 'text-sm'}`}>
+          <p className={`text-[#E8F4FD] font-semibold leading-snug ${compact ? 'text-xs' : 'text-sm'}`}>
             {alert.message}
           </p>
 
           {/* Suggested action */}
           {!compact && alert.suggestedAction && !alert.resolved && (
-            <p className="mt-1.5 text-[11px] text-[#6B7280] leading-snug font-semibold">
+            <p className="mt-1.5 text-[11px] text-[#8892B0] leading-snug font-semibold">
               <span style={{ color: showUrgent ? '#FF3366' : sev.color }}>Action Required:</span> {alert.suggestedAction}
             </p>
           )}
@@ -171,19 +172,19 @@ export default function AlertBanner({
           {/* Meta row */}
           <div className="flex items-center gap-3 mt-2 flex-wrap">
             {alert.zone && (
-              <span className="flex items-center gap-1 text-[10px] text-[#6B7280] font-bold uppercase">
+              <span className="flex items-center gap-1 text-[10px] text-[#8892B0] font-bold uppercase">
                 <MapPin size={10} />
                 Zone {alert.zone}
               </span>
             )}
             {alert.timestamp && (
-              <span className="flex items-center gap-1 text-[10px] text-[#6B7280] font-semibold">
+              <span className="flex items-center gap-1 text-[10px] text-[#8892B0] font-semibold">
                 <Clock size={10} />
                 {formatTimestamp(alert.timestamp)}
               </span>
             )}
             {alert.responseTime && (
-              <span className="text-[10px] text-[#10B981] font-bold">
+              <span className="text-[10px] text-[#00FF87] font-bold">
                 ✓ Resolved in {alert.responseTime}
               </span>
             )}
@@ -197,7 +198,7 @@ export default function AlertBanner({
               <button
                 onClick={() => onResolve(alert.id)}
                 aria-label={`Resolve alert: ${alert.message}`}
-                className="text-[10px] font-bold px-3 py-1.5 rounded border-2 border-[#10B981] bg-white text-[#10B981] hover:bg-[#ECFDF5] hover:scale-105 transition-all cursor-pointer"
+                className="text-[10px] font-bold px-3 py-1.5 rounded border border-[#00FF87] bg-[#00FF87]/10 text-[#00FF87] hover:bg-[#00FF87]/20 hover:scale-105 transition-all cursor-pointer"
               >
                 Resolve
               </button>
@@ -206,7 +207,7 @@ export default function AlertBanner({
               <button
                 onClick={() => onDismiss(alert.id)}
                 aria-label={`Dismiss alert: ${alert.message}`}
-                className="p-1.5 rounded hover:bg-gray-100 text-[#6B7280] hover:text-[#111827] transition-colors flex items-center justify-center cursor-pointer"
+                className="p-1.5 rounded hover:bg-[#0D1B2E] text-[#8892B0] hover:text-[#E8F4FD] transition-colors flex items-center justify-center cursor-pointer"
               >
                 <X size={14} />
               </button>
@@ -251,9 +252,9 @@ export function AlertList({
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="flex flex-col items-center justify-center py-10 text-[#6B7280]"
+          className="flex flex-col items-center justify-center py-10 text-[#8892B0]"
         >
-          <CheckCircle size={28} className="mb-2 text-[#10B981] opacity-75" />
+          <CheckCircle size={28} className="mb-2 text-[#00FF87] opacity-75" />
           <p className="text-sm font-semibold">All clear — no active alerts</p>
         </motion.div>
       )}
