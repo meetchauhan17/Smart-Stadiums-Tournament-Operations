@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
-import { callClaude, buildDefaultSystemPrompt } from '../utils/aiHelper';
+import { callAI, buildDefaultSystemPrompt } from '../utils/aiHelper';
 import { AI_FUNCTIONS } from '../utils/aiClient';
 
 // ─── Types ────────────────────────────────────────────────────────
@@ -38,7 +38,11 @@ export function useAI(systemPrompt) {
   // Not used internally but available to consumers wanting abort capability
   const abortRef = useRef(null);
 
-  const isConfigured = Boolean(localStorage.getItem('stadiumiq_claude_key'));
+  const isConfigured = Boolean(
+    localStorage.getItem('stadiumiq_ai_provider') === 'huggingface'
+      ? localStorage.getItem('stadiumiq_hf_token')
+      : localStorage.getItem('stadiumiq_claude_key')
+  );
 
   const sendMessage = useCallback(
     async (userText, overrideSystemPrompt) => {
@@ -57,7 +61,7 @@ export function useAI(systemPrompt) {
       let fullText = '';
 
       try {
-        await callClaude({
+        await callAI({
           prompt:       userText,
           messages:     history,
           systemPrompt: overrideSystemPrompt || systemPrompt || buildDefaultSystemPrompt(),

@@ -1,15 +1,43 @@
 // ─── Operations.test.jsx ─────────────────────────────────────────
 // Tests the Operations Control Room page.
 
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { BrowserRouter } from 'react-router-dom';
 import { StadiumProvider } from '../context/StadiumContext';
 import { ToastProvider } from '../components/Toast';
-import { http, HttpResponse } from 'msw';
 import { server, MOCK_CLAUDE_URL, mockClaudeSuccess } from '../test/mswServer';
 import Operations from './Operations';
+import * as realApis from '../utils/realApis';
+
+// Mock realApis to prevent background network state updates
+vi.mock('../utils/realApis', async (importOriginal) => {
+  const original = await importOriginal();
+  return {
+    ...original,
+    fetchAllVenueData: vi.fn().mockResolvedValue({
+      weather: {
+        temp: { value: 20, unit: '°C' },
+        feelsLike: { value: 20, unit: '°C' },
+        humidity: { value: 50, unit: '%' },
+        windSpeed: { value: 10, unit: 'km/h', direction: 'N' },
+        precipitation: { value: 0, unit: 'mm' },
+        condition: 'Clear',
+        icon: '☀️',
+        fanComfort: 90,
+        weatherCode: 0,
+        source: 'mock',
+        fetchedAt: new Date().toISOString(),
+      },
+      airQuality: { aqi: 42, level: 'Good', color: '#10B981' },
+      sunTimes: { sunrise: '06:00 AM', sunset: '08:00 PM', dayLengthStr: '14h 0m' },
+    }),
+    fetchStadiumWeather: vi.fn().mockResolvedValue({}),
+    fetchAirQuality: vi.fn().mockResolvedValue({}),
+    fetchTodaysMatches: vi.fn().mockResolvedValue([]),
+  };
+});
 
 // ─── Render helper ────────────────────────────────────────────────
 function renderOperations() {
@@ -26,12 +54,15 @@ function renderOperations() {
 
 // ─── aiHelper mock ───────────────────────────────────────────────
 vi.mock('../utils/aiHelper', async () => ({
-  callClaude: vi.fn().mockResolvedValue(
+  callAI: vi.fn().mockResolvedValue(
     JSON.stringify({
       actions: ['Deploy stewards', 'Redirect fans'],
       staff: 'Send 4 stewards to Zone E.',
       pa: 'Ladies and gentlemen, please follow steward directions.',
       time: '8 min',
+      reasoning: 'Crowd surge in Zone E requires immediate perimeter control to prevent escalation.',
+      confidence: 'High',
+      alternative: 'If primary deployment is insufficient, activate adjacent zone volunteers via PA.',
     })
   ),
   buildOperationsSystemPrompt: vi.fn().mockReturnValue('Mock system prompt'),
@@ -54,6 +85,10 @@ vi.mock('recharts', () => ({
 vi.mock('../components/ZoneMap', () => ({
   default: () => <div data-testid="zone-map">Mock ZoneMap</div>,
 }));
+
+beforeEach(() => {
+  vi.clearAllMocks();
+});
 
 // ════════════════════════════════════════════════════════════════════
 // 1. KPI Strip — 5 Flat Stats
@@ -144,29 +179,30 @@ describe('Operations — AI recommendation panel', () => {
   });
 
   it('enables Get Recommendation button after typing', async () => {
-    const user = userEvent.setup();
     renderOperations();
 
     const textarea = screen.getByPlaceholderText(/Describe turnstile failures, medical symptoms, crowd blockages/i);
-    await user.type(textarea, 'Fan crowd surge');
+    // Use fireEvent.change to directly trigger React's synthetic onChange on the controlled textarea
+    fireEvent.change(textarea, { target: { value: 'Fan crowd surge' } });
 
     const btn = screen.getByRole('button', { name: /get ai recommendation/i });
     expect(btn).not.toBeDisabled();
   });
 
   it('shows AI output after successful API call', async () => {
-    const user = userEvent.setup();
-
     renderOperations();
 
     const textarea = screen.getByPlaceholderText(/Describe turnstile failures, medical symptoms, crowd blockages/i);
-    await user.type(textarea, 'Overcrowding event at south gate entrance area');
+    // Use fireEvent.change to directly trigger React's synthetic onChange on the controlled textarea
+    fireEvent.change(textarea, { target: { value: 'Overcrowding event at south gate entrance area' } });
 
     const btn = screen.getByRole('button', { name: /get ai recommendation/i });
-    await user.click(btn);
+    expect(btn).not.toBeDisabled();
+    fireEvent.click(btn);
 
     await waitFor(() => {
-      expect(screen.getByText('AI Rationale')).toBeTruthy();
+      // AI panel now shows REASONING (amber) and Recommended Actions headers
+      expect(screen.getByText('REASONING')).toBeTruthy();
       expect(screen.getByText('Recommended Actions')).toBeTruthy();
     }, { timeout: 5000 });
   });

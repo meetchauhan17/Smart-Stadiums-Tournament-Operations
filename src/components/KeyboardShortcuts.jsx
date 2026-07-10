@@ -9,7 +9,7 @@ import { Keyboard, X, Users, Radio, Shield, Leaf, Home } from 'lucide-react';
 
 const SHORTCUTS = [
   { keys: ['F'], label: 'Fan Experience Hub',       icon: Users,   route: '/fan'          },
-  { keys: ['O'], label: 'Operations Control Room',  icon: Radio,   route: '/operations'   },
+  { keys: ['O'], label: 'Volunteer Co-Pilot',        icon: Radio,   route: '/operations'   },
   { keys: ['S'], label: 'Staff Command Center',     icon: Shield,  route: '/staff'        },
   { keys: ['G'], label: 'Sustainability Dashboard', icon: Leaf,    route: '/sustainability'},
   { keys: ['H'], label: 'Home / Landing',           icon: Home,    route: '/'             },

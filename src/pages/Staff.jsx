@@ -4,8 +4,10 @@ import {
   Shield, Users, Briefcase, Zap, Megaphone, Copy, Check, RefreshCw
 } from 'lucide-react';
 import { useStadium } from '../context/StadiumContext';
-import { callClaude } from '../utils/aiHelper';
+import { callAI } from '../utils/aiHelper';
 import PageTransition from '../components/PageTransition';
+import { validateInput } from '../utils/validateInput';
+
 
 const ROLE_ASSIGNMENTS = {
   Security: 'Zone E — South Upper Stand',
@@ -46,8 +48,15 @@ const PROTOCOL_SCENARIOS = {
   'Crowd too dense': '1. Report current bottleneck location to Operations Command.\n2. Open secondary bypass gates to divert incoming flow.\n3. Position stewards to guide fans into lower-density sectors.\n4. Defer queue entries until central concourse congestion decreases.',
   'Lost child': '1. Obtain child name, age, clothing description, and parent info.\n2. Notify Operations and Security Dispatchers immediately.\n3. Remain with child at current position for at least 10 minutes.\n4. Guide child to official Lost & Found post if parents are not located.',
   'Equipment failure': '1. Log ticket scanner or system code/location.\n2. Dispatch manual check-in stewards to affected gates immediately.\n3. Notify IT Operations Command to dispatch technician.\n4. Utilize physical ticket verification stamps if outage exceeds 5 minutes.',
+
   'Aggressive fan': '1. Avoid direct physical confrontation and maintain de-escalation stance.\n2. Call Security dispatcher for immediate backup.\n3. Observe and document fan clothing, zone seat number, and behavior.\n4. Maintain safety perimeter for adjacent spectators.',
 };
+
+const LOCAL_LANGS = [
+  { code: 'en', name: 'English' },
+  { code: 'es', name: 'Spanish' },
+  { code: 'fr', name: 'French' },
+];
 
 export default function Staff() {
   const { staffOnDuty, reassignStaff, updateStaffStatus } = useStadium();
@@ -98,14 +107,19 @@ export default function Staff() {
 
   // AI Protocol Fetcher
   const handleGetProtocol = async (preset = null) => {
-    const scenario = preset || guidanceScenario;
+    const rawScenario = preset || guidanceScenario;
+    if (!rawScenario.trim()) return;
+
+    // Validate and sanitize input scenario
+    const validated = validateInput(rawScenario, 'apiText');
+    const scenario = validated.value;
     if (!scenario.trim()) return;
 
     setGuidanceLoading(true);
     setGuidanceProtocol('');
 
     try {
-      const response = await callClaude({
+      const response = await callAI({
         systemPrompt: 'You are an expert FIFA World Cup 2026 Stadium Operations Director. Output a short 4-step emergency protocol. Short and concise.',
         prompt: `Provide a step-by-step security/operations protocol for this scenario: "${scenario}". Return exactly 4 numbered steps, each on its own line.`
       });
@@ -119,20 +133,30 @@ export default function Staff() {
 
   // AI PA Announcement Generator
   const handleGeneratePA = async () => {
-    if (!paSituation.trim()) return;
+    const rawSituation = paSituation || '';
+    if (!rawSituation.trim()) return;
+
+    // Validate target language
+    const langVal = validateInput(paLanguage, 'languageName');
+    if (!langVal.valid) return;
+
+    // Validate and sanitize custom situation text
+    const sitVal = validateInput(rawSituation, 'apiText');
+    const sanitizedSituation = sitVal.value;
+    if (!sanitizedSituation.trim()) return;
 
     setPaLoading(true);
     setPaOutput('');
     setPaCopied(false);
 
     try {
-      const response = await callClaude({
+      const response = await callAI({
         systemPrompt: `You are the chief stadium announcer at the FIFA World Cup 2026. Write a clear, professional public address announcement in the specified language. Keep it brief.`,
-        prompt: `Generate a PA announcement in ${paLanguage} for this situation: "${paSituation}". Do not include any greeting or preamble, just return the exact announcement text.`
+        prompt: `Generate a PA announcement in ${langVal.value} for this situation: "${sanitizedSituation}". Do not include any greeting or preamble, just return the exact announcement text.`
       });
       setPaOutput(response);
     } catch {
-      setPaOutput(`[PA ANNOUNCEMENT - ${paLanguage.toUpperCase()}]\nAttention all spectators. Please be advised that we are experiencing high congestion near Gate C. We kindly request fans to utilize Gate B or Gate D for faster entry. Thank you for your cooperation.`);
+      setPaOutput(`[PA ANNOUNCEMENT - ${langVal.value.toUpperCase()}]\nAttention all spectators. Please be advised that we are experiencing high congestion near Gate C. We kindly request fans to utilize Gate B or Gate D for faster entry. Thank you for your cooperation.`);
     } finally {
       setPaLoading(false);
     }

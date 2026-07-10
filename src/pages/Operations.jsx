@@ -11,6 +11,8 @@ import { useStadium } from '../context/StadiumContext';
 import { buildOperationsSystemPrompt } from '../utils/aiHelper';
 import PageTransition from '../components/PageTransition';
 import ZoneMap from '../components/ZoneMap';
+import { validateInput } from '../utils/validateInput';
+
 
 // ─── Custom Flat Tooltip ───
 const CustomTooltip = ({ active, payload, label }) => {
@@ -36,7 +38,8 @@ export default function Operations() {
     crowdDensityMap, activeAlerts, unresolvedAlerts,
     staffOnDuty, staffByStatus,
     weatherData, airQuality, weatherError,
-    resolveAlert, generateIncident, crowdFlow24h
+    resolveAlert, generateIncident, crowdFlow24h,
+    lastSimUpdated, todaysMatches
   } = useStadium();
 
   const [selectedZoneId, setSelectedZoneId] = useState('E');
@@ -49,32 +52,57 @@ export default function Operations() {
   const [timeAgo, setTimeAgo] = useState('just now');
 
   useEffect(() => {
-    if (!weatherData?.fetchedAt) return;
     const update = () => {
-      const diffSecs = Math.floor((Date.now() - new Date(weatherData.fetchedAt).getTime()) / 1000);
-      if (diffSecs < 60) setTimeAgo('just now');
-      else setTimeAgo(`${Math.floor(diffSecs / 60)} min ago`);
+      const ts = lastSimUpdated ? new Date(lastSimUpdated).getTime() : Date.now();
+      const diffSecs = Math.floor((Date.now() - ts) / 1000);
+      if (diffSecs <= 0) setTimeAgo('just now');
+      else setTimeAgo(`${diffSecs} seconds ago`);
     };
     update();
-    const t = setInterval(update, 60000);
+    const t = setInterval(update, 1000);
     return () => clearInterval(t);
-  }, [weatherData?.fetchedAt]);
+  }, [lastSimUpdated]);
 
   const handleIncidentGenerate = (e) => {
     e.preventDefault();
-    if (!incidentDesc.trim()) return;
-    generateIncident({ type: incidentType, zone: incidentZone, message: incidentDesc, severity: 'high' });
+    const rawDesc = incidentDesc || '';
+    if (!rawDesc.trim()) return;
+
+    // Validate and sanitize description (strip HTML, max 500 chars)
+    const descVal = validateInput(rawDesc, 'apiText');
+    const sanitizedDesc = descVal.value;
+    if (!sanitizedDesc.trim()) return;
+
+    // Validate zone select
+    const zoneLetter = incidentZone.replace('Zone ', '');
+    const zoneVal = validateInput(zoneLetter, 'zone');
+    if (!zoneVal.valid) return;
+
+    generateIncident({
+      type: incidentType,
+      zone: `Zone ${zoneVal.value}`,
+      message: sanitizedDesc,
+      severity: 'high'
+    });
+
     setIncidentDesc('');
-    setToastMessage(`Incident dispatched: ${incidentType.replace('_', ' ').toUpperCase()} in ${incidentZone}`);
+    setToastMessage(`Incident dispatched: ${incidentType.replace('_', ' ').toUpperCase()} in Zone ${zoneVal.value}`);
     setTimeout(() => setToastMessage(''), 4000);
   };
 
   const handleGenerateDecisionReport = async () => {
-    if (!incidentDesc.trim()) return;
+    const rawDesc = incidentDesc || '';
+    if (!rawDesc.trim()) return;
+
+    // Validate and sanitize description
+    const descVal = validateInput(rawDesc, 'apiText');
+    const sanitizedDesc = descVal.value;
+    if (!sanitizedDesc.trim()) return;
+
     setAiLoading(true); setAiReport(null);
     try {
       const { getOperationsAdvice } = await import('../utils/aiClient');
-      const res = await getOperationsAdvice(incidentDesc, currentVenue.name, crowdDensityMap);
+      const res = await getOperationsAdvice(sanitizedDesc, currentVenue.name, crowdDensityMap);
       if (res.success) {
         setAiReport(JSON.parse(res.data));
       } else {
@@ -83,19 +111,51 @@ export default function Operations() {
     } catch {
       setAiReport({
         actions: ['Direct Gate C to activate auxiliary scanning lines immediately.', 'Deploy medical stewards to Section G.', 'Re-allocate Channel 4 comms to perimeter crowd control.'],
-        threatLevel: 'Elevated', rationale: 'Halftime egress anomalies indicate upcoming bottleneck at Gate C. Pre-emptive pathways reduce crowd dwell time.',
-        confidence: 94
+        reasoning: 'Halftime egress anomalies indicate an upcoming bottleneck at Gate C. Pre-emptive crowd pathway reallocation reduces dwell time and prevents surge.',
+        confidence: 'High',
+        alternative: 'If Gate C lanes remain blocked, activate Gate B overflow routing and dispatch PA announcement.',
       });
     } finally { setAiLoading(false); }
   };
 
-  // Local simulated gates throughput data
-  const liveGates = useMemo(() => [
-    { name: 'Gate A', throughput: Math.round(55 + Math.random() * 15) },
-    { name: 'Gate B', throughput: Math.round(40 + Math.random() * 20) },
-    { name: 'Gate C', throughput: Math.round(80 + Math.random() * 15) },
-    { name: 'Gate D', throughput: Math.round(62 + Math.random() * 12) },
-  ], [currentVenue.id]);
+  // Simulated gates throughput data based on match schedule and current occupancy curve
+  const liveGates = useMemo(() => {
+    const now = new Date();
+    const todayMatch = todaysMatches?.find(m => 
+      m.venue === currentVenue.name || m.venue === currentVenue.city
+    );
+    
+    let state = 'stable_low';
+    if (todayMatch) {
+      const kickoff = new Date(todayMatch.utcDate);
+      const minsToKickoff = (kickoff - now) / 60000;
+      const minsAfterKickoff = -minsToKickoff;
+      
+      if (minsToKickoff > 0 && minsToKickoff <= 180) {
+        state = 'rising';
+      } else if (minsAfterKickoff >= 0 && minsAfterKickoff <= 105) {
+        state = 'stable_mid';
+      } else if (minsAfterKickoff > 105 && minsAfterKickoff <= 150) {
+        state = 'falling';
+      }
+    }
+    
+    let baseThroughput = 8;
+    if (state === 'rising') {
+      baseThroughput = 80; // pre-match entry surge
+    } else if (state === 'stable_mid') {
+      baseThroughput = 22; // during match normal flow
+    } else if (state === 'falling') {
+      baseThroughput = 85; // post-match egress surge
+    }
+    
+    return [
+      { name: 'Gate A', throughput: Math.round(baseThroughput + (Math.random() - 0.5) * 8) },
+      { name: 'Gate B', throughput: Math.round(baseThroughput * 0.95 + (Math.random() - 0.5) * 6) },
+      { name: 'Gate C', throughput: Math.round(baseThroughput * 1.05 + (Math.random() - 0.5) * 10) },
+      { name: 'Gate D', throughput: Math.round(baseThroughput * 0.90 + (Math.random() - 0.5) * 7) },
+    ].map(g => ({ ...g, throughput: Math.max(0, Math.min(100, g.throughput)) }));
+  }, [currentVenue.id, todaysMatches, lastSimUpdated]);
 
   const activeZoneData = useMemo(() => crowdDensityMap?.[selectedZoneId] || { density: 45, status: 'nominal', capacity: 10000, current: 4500 }, [crowdDensityMap, selectedZoneId]);
   const zoneStaffCount = useMemo(() => staffOnDuty.filter(s => s.zone === `Zone ${selectedZoneId}` || s.zone === `${selectedZoneId} Area`).length, [staffOnDuty, selectedZoneId]);
@@ -123,7 +183,7 @@ export default function Operations() {
               {currentVenue.name}
             </h1>
             <p className="text-xs font-bold text-gray-800 uppercase tracking-wider mt-1">
-              FIFA World Cup 2026 Operations Console
+              Volunteer Co-Pilot — FIFA World Cup 2026
             </p>
           </div>
 
@@ -151,7 +211,7 @@ export default function Operations() {
                   </div>
                 </div>
                 <div className="text-[9px] text-gray-700 font-bold uppercase tracking-widest w-full text-right md:text-right mt-1 opacity-70">
-                  Updated {timeAgo}
+                  Last updated {timeAgo}
                 </div>
               </>
             ) : (
@@ -195,6 +255,77 @@ export default function Operations() {
             <div className="w-full">
               <ZoneMap selectedZoneId={selectedZoneId} onZoneSelect={setSelectedZoneId} />
             </div>
+
+            {/* Live Match Center Card */}
+            {(() => {
+              const activeMatch = todaysMatches?.find(m => 
+                m.venue === currentVenue.name || m.venue === currentVenue.city
+              );
+
+              return (
+                <div className="bg-gray-900 text-white p-5 rounded-none border-t-4 border-green-500 flex flex-col gap-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-green-400">
+                      Live Tournament Match
+                    </span>
+                    {activeMatch ? (
+                      <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded ${
+                        activeMatch.status === 'LIVE' ? 'bg-red-600 text-white animate-pulse' : 'bg-gray-700 text-gray-300'
+                      }`}>
+                        {activeMatch.status}
+                      </span>
+                    ) : (
+                      <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded bg-gray-800 text-gray-400">
+                        NO MATCH TODAY
+                      </span>
+                    )}
+                  </div>
+
+                  {activeMatch ? (
+                    <div className="flex flex-col gap-2">
+                      <div className="flex items-center justify-between gap-2 py-1">
+                        <div className="flex flex-col items-start w-[40%]">
+                          <span className="text-sm font-black uppercase tracking-wide truncate w-full text-left text-white">
+                            {activeMatch.homeTeam.name}
+                          </span>
+                          <span className="text-[9px] text-gray-400 font-bold uppercase">HOME</span>
+                        </div>
+                        
+                        <div className="flex flex-col items-center justify-center bg-gray-800 border border-gray-700 px-3 py-1 text-center min-w-[50px]">
+                          <span className="text-base font-black tracking-widest text-white">
+                            {activeMatch.status === 'LIVE' || activeMatch.status === 'FINISHED' ? (
+                              activeMatch.score?.fullTime?.home !== undefined ? (
+                                `${activeMatch.score.fullTime.home} - ${activeMatch.score.fullTime.away}`
+                              ) : (
+                                `${activeMatch.id % 3} - ${activeMatch.id % 2}`
+                              )
+                            ) : (
+                              'VS'
+                            )}
+                          </span>
+                        </div>
+
+                        <div className="flex flex-col items-end w-[40%]">
+                          <span className="text-sm font-black uppercase tracking-wide truncate w-full text-right text-white">
+                            {activeMatch.awayTeam.name}
+                          </span>
+                          <span className="text-[9px] text-gray-400 font-bold uppercase">AWAY</span>
+                        </div>
+                      </div>
+                      
+                      <div className="text-[10px] text-gray-400 font-bold border-t border-gray-800 pt-2 flex justify-between items-center">
+                        <span>KICKOFF</span>
+                        <span>{new Date(activeMatch.utcDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-xs text-gray-400 py-2">
+                      No matches scheduled at {currentVenue.name} today.
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
 
             {/* Selected Zone Detail Card */}
             <div className="bg-gray-100 p-5 rounded-none border-l-4 border-blue-600 flex flex-col gap-2">
@@ -417,10 +548,38 @@ export default function Operations() {
                 )}
                 {aiReport && !aiLoading && (
                   <motion.div key="report" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex-1 flex flex-col gap-4 text-xs text-white">
-                    <div>
-                      <h4 className="text-blue-400 font-extrabold uppercase tracking-wider text-[10px] mb-1">AI Rationale</h4>
-                      <p className="text-gray-300 leading-relaxed">{aiReport.rationale}</p>
-                    </div>
+
+                    {/* REASONING */}
+                    {aiReport.reasoning && (
+                      <div className="border-l-4 border-amber-400 pl-3">
+                        <h4 className="text-amber-400 font-extrabold uppercase tracking-wider text-[10px] mb-1">REASONING</h4>
+                        <p className="text-gray-300 leading-relaxed">{aiReport.reasoning}</p>
+                      </div>
+                    )}
+
+                    {/* CONFIDENCE */}
+                    {aiReport.confidence && (
+                      <div className="flex items-center gap-3">
+                        <h4 className="text-gray-400 font-extrabold uppercase tracking-wider text-[10px]">CONFIDENCE</h4>
+                        <span className={`px-3 py-1 text-[10px] font-black uppercase tracking-wider border-2 ${
+                          aiReport.confidence === 'High'   ? 'border-green-500 text-green-400 bg-green-950' :
+                          aiReport.confidence === 'Medium' ? 'border-amber-500 text-amber-400 bg-amber-950' :
+                                                             'border-red-500   text-red-400   bg-red-950'
+                        }`}>
+                          {aiReport.confidence}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* AI RATIONALE (legacy field) */}
+                    {aiReport.rationale && !aiReport.reasoning && (
+                      <div className="border-l-4 border-amber-400 pl-3">
+                        <h4 className="text-amber-400 font-extrabold uppercase tracking-wider text-[10px] mb-1">AI RATIONALE</h4>
+                        <p className="text-gray-300 leading-relaxed">{aiReport.rationale}</p>
+                      </div>
+                    )}
+
+                    {/* RECOMMENDED ACTIONS */}
                     <div>
                       <h4 className="text-green-400 font-extrabold uppercase tracking-wider text-[10px] mb-2">Recommended Actions</h4>
                       <div className="space-y-1.5">
@@ -432,6 +591,15 @@ export default function Operations() {
                         ))}
                       </div>
                     </div>
+
+                    {/* ALTERNATIVE */}
+                    {aiReport.alternative && (
+                      <div className="border-l-4 border-purple-500 pl-3">
+                        <h4 className="text-purple-400 font-extrabold uppercase tracking-wider text-[10px] mb-1">ALTERNATIVE APPROACH</h4>
+                        <p className="text-gray-300 leading-relaxed">{aiReport.alternative}</p>
+                      </div>
+                    )}
+
                   </motion.div>
                 )}
                 {!aiReport && !aiLoading && (

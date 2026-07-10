@@ -6,7 +6,7 @@ import {
 } from 'recharts';
 import { Leaf, Sun, Droplets, Recycle, Wind, Check, Copy, RefreshCw, Award, TreePine } from 'lucide-react';
 import { useStadium } from '../context/StadiumContext';
-import { callClaude, buildSustainabilitySystemPrompt } from '../utils/aiHelper';
+import { callAI, buildSustainabilitySystemPrompt } from '../utils/aiHelper';
 
 // ─── Flat Tooltip ───
 const CustomTooltip = ({ active, payload, label }) => {
@@ -55,7 +55,7 @@ export default function Sustainability() {
   const handleGenerateReport = async () => {
     setAiLoading(true); setAiReport(null);
     try {
-      const raw = await callClaude({
+      const raw = await callAI({
         systemPrompt: sysPrompt,
         prompt: `Generate a sustainability performance report for ${currentVenue.name}. Metrics: Solar ${sustainabilityMetrics.solarGenerated.value} kWh, Water saved ${sustainabilityMetrics.waterSaved.value.toLocaleString()} L, Waste diverted ${sustainabilityMetrics.wasteRecycled.value}%, Carbon offset ${sustainabilityMetrics.carbonOffset.value} tCO2e.
 Return JSON only: {"performance":"Summary paragraph of current state","opportunities":["opp 1","opp 2","opp 3"],"impact":"projected improvement paragraph"}`,

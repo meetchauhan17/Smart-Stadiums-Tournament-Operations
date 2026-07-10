@@ -35,14 +35,14 @@ function HeroSection() {
 
           {/* Subtext */}
           <p className="mt-6 text-blue-100 text-lg md:text-xl font-medium max-w-lg leading-relaxed">
-            GenAI-Powered Platform for FIFA World Cup 2026
+            AI Co-Pilot for FIFA World Cup 2026 Volunteers &amp; Fans
           </p>
 
           {/* CTA Buttons */}
           <div className="flex flex-row flex-wrap gap-4 mt-10">
             <Link to="/operations">
               <button className="bg-white text-blue-600 font-bold px-8 py-4 rounded-none text-base border-2 border-white hover:bg-transparent hover:text-white transition-all cursor-pointer">
-                ENTER CONTROL ROOM
+                VOLUNTEER CO-PILOT
               </button>
             </Link>
             <Link to="/fan">
@@ -80,6 +80,16 @@ function HeroSection() {
 function PlatformModules() {
   const MODULES = [
     {
+      to: '/operations',
+      icon: Monitor,
+      name: 'Volunteer Co-Pilot',
+      desc: 'Real-time crowd intelligence, AI decision support, and incident command for on-ground volunteers.',
+      accent: 'group-hover:bg-amber-500',
+      iconBg: 'bg-amber-100 text-amber-600',
+      textColorClass: 'text-amber-600 group-hover:text-white',
+      borderHover: 'hover:bg-amber-500',
+    },
+    {
       to: '/fan',
       icon: Users,
       name: 'Fan Experience Hub',
@@ -90,20 +100,10 @@ function PlatformModules() {
       borderHover: 'hover:bg-blue-600',
     },
     {
-      to: '/operations',
-      icon: Monitor,
-      name: 'Operations Room',
-      desc: 'Real-time crowd flow maps, incident triggers, and AI decision systems.',
-      accent: 'group-hover:bg-amber-500',
-      iconBg: 'bg-amber-100 text-amber-600',
-      textColorClass: 'text-amber-600 group-hover:text-white',
-      borderHover: 'hover:bg-amber-500',
-    },
-    {
       to: '/staff',
       icon: Briefcase,
-      name: 'Staff & Volunteers',
-      desc: 'Roster deployment maps, status tracking, and volunteer coordinators.',
+      name: 'Crowd Intelligence',
+      desc: 'Crowd-aware deployment maps, volunteer status tracking, and real-time zone coordination.',
       accent: 'group-hover:bg-green-600',
       iconBg: 'bg-green-100 text-green-600',
       textColorClass: 'text-green-600 group-hover:text-white',
@@ -112,7 +112,7 @@ function PlatformModules() {
     {
       to: '/sustainability',
       icon: Leaf,
-      name: 'Sustainability Hub',
+      name: 'Sustainability Monitor',
       desc: 'Live solar metrics, water recycling gauges, and smart energy saving tips.',
       accent: 'group-hover:bg-emerald-600',
       iconBg: 'bg-emerald-100 text-emerald-600',

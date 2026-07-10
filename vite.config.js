@@ -4,6 +4,28 @@ import react from '@vitejs/plugin-react'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  server: {
+    proxy: {
+      '/hf-api': {
+        target: 'https://api-inference.huggingface.co',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/hf-api/, ''),
+        secure: true,
+      },
+      '/mistral-api': {
+        target: 'https://api.mistral.ai',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/mistral-api/, ''),
+        secure: true,
+      },
+      '/cohere-api': {
+        target: 'https://api.cohere.com',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/cohere-api/, ''),
+        secure: true,
+      },
+    },
+  },
   test: {
     // Use jsdom for DOM simulation in tests
     environment: 'jsdom',

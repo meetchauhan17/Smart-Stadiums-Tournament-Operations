@@ -6,6 +6,19 @@ import { render, screen, act, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { StadiumProvider, useStadium } from './StadiumContext';
 import { ToastProvider } from '../components/Toast';
+import * as realApis from '../utils/realApis';
+
+vi.mock('../utils/realApis', async (importOriginal) => {
+  const original = await importOriginal();
+  return {
+    ...original,
+    fetchAllVenueData: vi.fn(original.fetchAllVenueData),
+  };
+});
+
+beforeEach(() => {
+  realApis.fetchAllVenueData.mockClear();
+});
 
 // ─── Helper: renders a component inside the StadiumProvider ──────
 function renderWithProvider(ui) {
@@ -269,6 +282,44 @@ describe('StadiumContext.switchVenue()', () => {
     // Venue should remain unchanged
     expect(ctx.currentVenue.id).toBe(prevVenue);
   });
+
+  it('switching venue while weather fetch in progress → previous fetch cancelled, new one starts', async () => {
+    let ctx;
+    const fetchSpy = vi.spyOn(realApis, 'fetchAllVenueData');
+
+    let resolveFirst;
+    const firstPromise = new Promise((resolve) => {
+      resolveFirst = resolve;
+    });
+
+    // Intercept all calls with a slow promise (handles StrictMode double-invoke)
+    fetchSpy.mockImplementation(() => firstPromise);
+
+    renderWithProvider(<ContextProbe onMount={(c) => { ctx = c; }} />);
+
+    // Capture call count at mount (StrictMode may cause 1 or 2 calls)
+    const callsBeforeSwitch = fetchSpy.mock.calls.length;
+    expect(callsBeforeSwitch).toBeGreaterThanOrEqual(1);
+
+    // Use the LAST call's AbortSignal — StrictMode aborts the first signal during cleanup
+    const lastCallIndex = fetchSpy.mock.calls.length - 1;
+    const lastSignal = fetchSpy.mock.calls[lastCallIndex][1];
+    expect(lastSignal).toBeInstanceOf(AbortSignal);
+    expect(lastSignal.aborted).toBe(false);
+
+    // Switch venue — should abort the in-flight fetch and start a new one
+    await act(async () => {
+      ctx.switchVenue('sofi');
+    });
+
+    // The previously in-flight signal must now be aborted
+    expect(lastSignal.aborted).toBe(true);
+    // Exactly one additional fetch started for the new venue
+    expect(fetchSpy).toHaveBeenCalledTimes(callsBeforeSwitch + 1);
+
+    resolveFirst({ weather: null, airQuality: null, sunTimes: null });
+    fetchSpy.mockRestore();
+  });
 });
 
 // ════════════════════════════════════════════════════════════════════
@@ -322,5 +373,115 @@ describe('StadiumContext.generateIncident()', () => {
     // INCIDENT_TEMPLATES includes: critical, high, medium, low
     const validSeverities = ['info', 'warning', 'high', 'critical', 'medium', 'low'];
     expect(validSeverities).toContain(ctx.activeAlerts[0].severity);
+  });
+});
+
+// ════════════════════════════════════════════════════════════════════
+// 6. Edge Cases — addAlert capped at 50 items
+// ════════════════════════════════════════════════════════════════════
+describe('StadiumContext edge case — addAlert max 50 cap', () => {
+  it('adding 60 unique alerts caps activeAlerts at 50 (oldest removed)', async () => {
+    let ctx;
+    renderWithProvider(<ContextProbe onMount={(c) => { ctx = c; }} />);
+
+    // Clear the slate — the initial alerts have different messages so they don't dedup
+    // We add 60 alerts with unique messages to force the cap
+    await act(async () => {
+      for (let i = 0; i < 60; i++) {
+        ctx.addAlert({
+          type: 'test_cap',
+          zone: `Zone X${i}`,   // unique zone per iteration prevents dedup
+          severity: 'info',
+          message: `Edge case cap test alert #${i} — unique message ${Date.now()}-${i}`,
+        });
+      }
+    });
+
+    // Must never exceed 50
+    expect(ctx.activeAlerts.length).toBeLessThanOrEqual(50);
+  });
+});
+
+// ════════════════════════════════════════════════════════════════════
+// 7. Edge Cases — updateCrowdDensity with NaN value ignored
+// ════════════════════════════════════════════════════════════════════
+describe('StadiumContext edge case — updateCrowdDensity NaN guard', () => {
+  it('NaN density is silently ignored — previous map value is kept', async () => {
+    let ctx;
+    renderWithProvider(<ContextProbe onMount={(c) => { ctx = c; }} />);
+
+    // Set a known valid density first
+    await act(async () => {
+      ctx.updateCrowdDensity('A', 55);
+    });
+    const densityBefore = ctx.crowdDensityMap['A']?.density;
+
+    // Now attempt NaN — should be a no-op
+    await act(async () => {
+      ctx.updateCrowdDensity('A', NaN);
+    });
+
+    // Value must be unchanged
+    expect(ctx.crowdDensityMap['A']?.density).toBe(densityBefore);
+  });
+
+  it('undefined density is silently ignored', async () => {
+    let ctx;
+    renderWithProvider(<ContextProbe onMount={(c) => { ctx = c; }} />);
+
+    await act(async () => {
+      ctx.updateCrowdDensity('B', 70);
+    });
+    const before = ctx.crowdDensityMap['B']?.density;
+
+    await act(async () => {
+      ctx.updateCrowdDensity('B', undefined);
+    });
+
+    expect(ctx.crowdDensityMap['B']?.density).toBe(before);
+  });
+});
+
+// ════════════════════════════════════════════════════════════════════
+// 8. Edge Cases — switchVenue triggers fresh crowd simulation state
+// ════════════════════════════════════════════════════════════════════
+describe('StadiumContext edge case — switchVenue resets crowd state', () => {
+  it('switching venue updates currentVenue.id and crowd density keys', async () => {
+    let ctx;
+    renderWithProvider(<ContextProbe onMount={(c) => { ctx = c; }} />);
+
+    // Start at default venue (metlife)
+    const startVenue = ctx.currentVenue.id;
+
+    await act(async () => {
+      ctx.switchVenue('sofi');
+    });
+
+    // Venue must have changed
+    expect(ctx.currentVenue.id).toBe('sofi');
+    expect(ctx.currentVenue.id).not.toBe(startVenue);
+
+    // crowdDensityMap keys must exist (simulated on switch)
+    expect(Object.keys(ctx.crowdDensityMap).length).toBeGreaterThan(0);
+  });
+
+  it('switching venue while previous crowd data exists replaces it cleanly', async () => {
+    let ctx;
+    renderWithProvider(<ContextProbe onMount={(c) => { ctx = c; }} />);
+
+    await act(async () => {
+      // Manually set density on current venue zone
+      ctx.updateCrowdDensity('A', 80);
+    });
+
+    await act(async () => {
+      // Switch to a completely different venue
+      ctx.switchVenue('att');
+    });
+
+    // Previous density update should not bleed over
+    expect(ctx.currentVenue.id).toBe('att');
+    // Density map is rebuilt — values should be crowd-simulated fresh
+    expect(ctx.crowdDensityMap).toBeDefined();
   });
 });

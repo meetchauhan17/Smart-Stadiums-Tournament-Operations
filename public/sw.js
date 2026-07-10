@@ -34,11 +34,15 @@ self.addEventListener('activate', (e) => {
 
 // Fetch Event — Cache First / Network Fallback
 self.addEventListener('fetch', (e) => {
+  // Bypass caching on localhost during development
+  if (e.request.url.includes('localhost') || e.request.url.includes('127.0.0.1')) {
+    return;
+  }
+
   // Only cache GET requests and bypass external API calls
   if (e.request.method !== 'GET' || e.request.url.includes('api.anthropic.com')) {
     return;
   }
-
   e.respondWith(
     caches.match(e.request).then((cachedResponse) => {
       if (cachedResponse) {

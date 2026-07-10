@@ -214,7 +214,7 @@ function getWeatherIcon(code) {
  * Fetch current weather for a lat/lon using Open-Meteo.
  * Returns a normalized object compatible with the existing WeatherData shape.
  */
-export async function fetchStadiumWeather(lat, lon) {
+export async function fetchStadiumWeather(lat, lon, signal) {
   const url = [
     'https://api.open-meteo.com/v1/forecast',
     `?latitude=${lat}&longitude=${lon}`,
@@ -223,7 +223,7 @@ export async function fetchStadiumWeather(lat, lon) {
     '&wind_speed_unit=kmh&temperature_unit=celsius&timezone=auto',
   ].join('');
 
-  const res  = await fetch(url, { signal: AbortSignal.timeout(8000) });
+  const res  = await fetch(url, { signal: signal || AbortSignal.timeout(8000) });
   if (!res.ok) throw new Error(`Weather API error: ${res.status}`);
   const data = await res.json();
   const c    = data.current;
@@ -274,7 +274,7 @@ function aqiLevel(aqi) {
   return              { level: 'Hazardous',    color: '#7C3AED' };
 }
 
-export async function fetchAirQuality(lat, lon) {
+export async function fetchAirQuality(lat, lon, signal) {
   const url = [
     'https://air-quality-api.open-meteo.com/v1/air-quality',
     `?latitude=${lat}&longitude=${lon}`,
@@ -282,7 +282,7 @@ export async function fetchAirQuality(lat, lon) {
     '&timezone=auto',
   ].join('');
 
-  const res  = await fetch(url, { signal: AbortSignal.timeout(8000) });
+  const res  = await fetch(url, { signal: signal || AbortSignal.timeout(8000) });
   if (!res.ok) throw new Error(`Air quality API error: ${res.status}`);
   const data = await res.json();
   const c    = data.current;
@@ -307,10 +307,10 @@ export async function fetchAirQuality(lat, lon) {
 //    Docs: https://sunrise-sunset.org/api
 // ═══════════════════════════════════════════════════════════════
 
-export async function fetchSunTimes(lat, lon) {
+export async function fetchSunTimes(lat, lon, signal) {
   const url = `https://api.sunrise-sunset.org/json?lat=${lat}&lng=${lon}&formatted=0`;
 
-  const res  = await fetch(url, { signal: AbortSignal.timeout(8000) });
+  const res  = await fetch(url, { signal: signal || AbortSignal.timeout(8000) });
   if (!res.ok) throw new Error(`Sun-times API error: ${res.status}`);
   const data = await res.json();
 
@@ -333,63 +333,99 @@ export async function fetchSunTimes(lat, lon) {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// 5. CROWD SIMULATION — Realistic time-of-day based model
+// 5. CROWD SIMULATION & REAL MATCH DATA
 // ═══════════════════════════════════════════════════════════════
 
-const ZONE_NAMES = ['A','B','C','D','E','F','G','H'];
-
-/**
- * Generate realistic crowd density per zone based on the time of day
- * relative to a simulated match kickoff hour.
- *
- * @param {number} capacity  - Total stadium capacity
- * @param {boolean} matchDay - Is there a match today?
- * @param {number} [kickoffHour=19] - Kickoff hour in 24h (local time)
- * @returns {Object} zone → density (0-100)
- */
-export function generateRealisticCrowd(capacity, matchDay = true, kickoffHour = 19) {
-  const hour     = new Date().getHours();
-  const minBefore = (kickoffHour - hour) * 60;
-
-  let baseLoad;
-  if (!matchDay) {
-    // Non-match day: skeleton crew, 5-15% across zones
-    baseLoad = 0.05 + Math.random() * 0.10;
-  } else if (minBefore > 180) {
-    // >3h before kickoff: trickle arrivals
-    baseLoad = 0.08 + Math.random() * 0.10;
-  } else if (minBefore > 60) {
-    // 1-3h before: gates open, crowd building
-    baseLoad = 0.25 + (1 - minBefore / 180) * 0.40;
-  } else if (minBefore > -90) {
-    // Kickoff ± 90 min: match in progress, near capacity
-    baseLoad = 0.82 + Math.random() * 0.12;
-  } else if (minBefore > -105) {
-    // Halftime: small egress
-    baseLoad = 0.75 + Math.random() * 0.10;
-  } else {
-    // Post-match: rapid exit
-    const minsAfter = Math.abs(minBefore) - 90;
-    baseLoad = Math.max(0.05, 0.90 - minsAfter * 0.012);
+export const FALLBACK_MATCHES = [
+  {
+    id: 1001,
+    homeTeam: { name: 'USA' },
+    awayTeam: { name: 'England' },
+    utcDate: new Date(Date.now() + 60 * 60 * 1000).toISOString(), // Kickoff in 1 hour
+    venue: 'MetLife Stadium',
+    status: 'SCHEDULED'
+  },
+  {
+    id: 1002,
+    homeTeam: { name: 'Mexico' },
+    awayTeam: { name: 'Germany' },
+    utcDate: new Date(Date.now() - 45 * 60 * 1000).toISOString(), // Live (kickoff 45 min ago)
+    venue: 'Estadio Azteca',
+    status: 'LIVE'
+  },
+  {
+    id: 1003,
+    homeTeam: { name: 'Canada' },
+    awayTeam: { name: 'France' },
+    utcDate: new Date(Date.now() + 180 * 60 * 1000).toISOString(), // Kickoff in 3 hours
+    venue: 'BC Place',
+    status: 'SCHEDULED'
   }
+];
 
-  // Zone-specific variance: some zones fill faster (near gates, food courts)
-  const ZONE_BIAS = { A: 0.05, B: 0.02, C: -0.03, D: 0.08, E: 0.04, F: -0.05, G: 0.06, H: -0.02 };
+export async function fetchTodaysMatches() {
+  try {
+    const res = await fetch(
+      'https://api.football-data.org/v4/competitions/WC/matches?status=LIVE,SCHEDULED',
+      { headers: { 'X-Auth-Token': 'YOUR_FREE_KEY' } }
+    );
+    const data = await res.json();
+    return data.matches?.slice(0, 3) || [];
+  } catch (e) {
+    return FALLBACK_MATCHES;
+  }
+}
 
-  return ZONE_NAMES.reduce((acc, zone) => {
-    const bias    = ZONE_BIAS[zone] ?? 0;
-    const noise   = (Math.random() - 0.5) * 0.12;
-    const density = Math.round(Math.max(2, Math.min(99, (baseLoad + bias + noise) * 100)));
-    acc[zone] = {
-      density,
-      current: Math.round(capacity * density / 100 / 8), // per-zone fans
-      capacity: Math.round(capacity / 8),
-      status:
-        density >= 90 ? 'critical' :
-        density >= 75 ? 'warning'  : 'nominal',
-    };
-    return acc;
-  }, {});
+export function simulateCrowd(venue, weatherData, matchData) {
+  const now = new Date();
+  const todayMatch = matchData.find(m => 
+    m.venue === venue.name || m.venue === venue.city
+  );
+  
+  let baseOccupancy = 0.05; // empty stadium default
+  
+  if (todayMatch) {
+    const kickoff = new Date(todayMatch.utcDate);
+    const minsToKickoff = (kickoff - now) / 60000;
+    const minsAfterKickoff = -minsToKickoff;
+    
+    if (minsToKickoff > 180) baseOccupancy = 0.05; // pre-arrival
+    else if (minsToKickoff > 90) baseOccupancy = 0.15; // early arrivals
+    else if (minsToKickoff > 30) baseOccupancy = 0.55; // main wave
+    else if (minsToKickoff > 0) baseOccupancy = 0.88;  // pre-kickoff
+    else if (minsAfterKickoff < 45) baseOccupancy = 0.96; // first half
+    else if (minsAfterKickoff < 60) baseOccupancy = 0.85; // halftime
+    else if (minsAfterKickoff < 105) baseOccupancy = 0.94; // second half
+    else if (minsAfterKickoff < 150) baseOccupancy = 0.4;  // post-match exit
+    else baseOccupancy = 0.08; // cleared out
+  }
+  
+  // Weather modifier: rain reduces outdoor zone density
+  const weatherMod = weatherData?.weatherCode > 60 ? -0.12 : 0;
+  // Heat modifier: very hot weather increases shaded zone density
+  const heatMod = weatherData?.temp?.value > 35 ? 0.08 : 0;
+  
+  // Zone-specific distribution (realistic stadium patterns)
+  const zones = {
+    A: baseOccupancy + 0.05 + weatherMod,  // main stand, always fullest
+    B: baseOccupancy + 0.03,
+    C: baseOccupancy - 0.02 + heatMod,     // sunny side
+    D: baseOccupancy - 0.05 + heatMod,     // corner, always least full
+    E: baseOccupancy + 0.02,
+    F: baseOccupancy - 0.01,
+    G: baseOccupancy + 0.04,               // home end, passionate fans
+    H: baseOccupancy + weatherMod,
+  };
+  
+  // Add small random variance ±3% and clamp 0-100
+  return Object.fromEntries(
+    Object.entries(zones).map(([z, v]) => [
+      z,
+      Math.round(Math.max(0, Math.min(100, 
+        (v + (Math.random() - 0.5) * 0.06) * 100
+      )))
+    ])
+  );
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -401,13 +437,13 @@ export function generateRealisticCrowd(capacity, matchDay = true, kickoffHour = 
  * Individual failures are caught and replaced with null so the
  * rest of the app still works if one API is down.
  */
-export async function fetchAllVenueData(stadium) {
+export async function fetchAllVenueData(stadium, signal) {
   const { lat, lon } = stadium;
 
   const [weather, airQuality, sunTimes] = await Promise.allSettled([
-    fetchStadiumWeather(lat, lon),
-    fetchAirQuality(lat, lon),
-    fetchSunTimes(lat, lon),
+    fetchStadiumWeather(lat, lon, signal),
+    fetchAirQuality(lat, lon, signal),
+    fetchSunTimes(lat, lon, signal),
   ]);
 
   return {

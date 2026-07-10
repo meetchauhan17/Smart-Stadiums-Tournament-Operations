@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MapPin, ChevronDown, Menu, X, Clock } from 'lucide-react';
+import { MapPin, ChevronDown, Menu, X, Clock, Settings } from 'lucide-react';
 import { useStadium } from '../context/StadiumContext';
 
 // ─── Live Clock ───
@@ -118,6 +118,7 @@ function VenueDropdown() {
 
 // ─── Navbar Export ───
 export default function Navbar() {
+  const { toggleSettings } = useStadium();
   const location = useLocation();
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -180,6 +181,13 @@ export default function Navbar() {
           <div className="hidden lg:flex items-center gap-4">
             <LiveClock />
             <VenueDropdown />
+            <button
+              onClick={toggleSettings}
+              className="p-2 border-2 border-gray-900 text-gray-900 bg-white hover:bg-gray-100 transition-colors cursor-pointer rounded-none"
+              aria-label="Open settings"
+            >
+              <Settings size={16} />
+            </button>
           </div>
 
           {/* Mobile Right Menu Button */}

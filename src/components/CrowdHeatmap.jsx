@@ -58,8 +58,12 @@ export default function CrowdHeatmap({ zones = [], heatmapGrid = [], showLabels 
     return mid;
   };
 
+  // O(1) lookup via pre-indexed Map — optimized for 
+  // real-time crowd data processing at scale
+  const zonesMap = Object.fromEntries(zones.map(z => [z.id, z]));
+
   const getZoneData = (sectionId) =>
-    zones.find(z => z.id === sectionId) || { density: 0.5, status: 'moderate' };
+    zonesMap[sectionId] || { density: 0.5, status: 'moderate' };
 
   return (
     <div className="relative flex flex-col items-center">

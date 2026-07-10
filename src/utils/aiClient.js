@@ -12,9 +12,7 @@
  *  • Offline Retries    — Automatic single fallback retry on transient network errors.
  */
 
-const CLAUDE_API   = 'https://api.anthropic.com/v1/messages';
-const CLAUDE_MODEL = 'claude-sonnet-4-5';
-const LS_KEY       = 'stadiumiq_claude_key';
+// Providers and Models configured locally via Settings
 const RATE_LIMIT   = 10;
 const RATE_WINDOW  = 60000;
 
@@ -72,39 +70,95 @@ function checkSessionRateLimit() {
 }
 
 // ─── Core Fetch with Abort Timeout ───────────────────────────────
-async function _fetchClaude(systemPrompt, userMessage, maxTokens = 500, attempt = 1) {
-  const apiKey = localStorage.getItem(LS_KEY) || '';
 
-  if (!apiKey) {
-    return null; // Demomode fallback
-  }
+async function _fetchCohere(systemPrompt, userMessage, maxTokens = 500) {
+  const apiKey = localStorage.getItem('stadiumiq_cohere_key') || '';
+  if (!apiKey) return null;
 
-  // Enforce rate limiter
-  if (checkSessionRateLimit()) {
-    throw new Error('Rate limit reached (max 10 calls per minute). Please wait a moment before sending another request.');
-  }
-
-  // Setup AbortController for 10-second timeout
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 10000);
 
   try {
-    const body = JSON.stringify({
-      model:      CLAUDE_MODEL,
-      max_tokens: maxTokens,
-      system:     systemPrompt,
-      messages:   [{ role: 'user', content: userMessage }],
-    });
+    const cohereEndpoint = import.meta.env.MODE === 'development'
+      ? '/cohere-api/v2/chat'
+      : 'https://api.cohere.com/v2/chat';
 
-    const res = await fetch(CLAUDE_API, {
-      method:  'POST',
+    const res = await fetch(
+      cohereEndpoint,
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'command-r-08-2024',
+          max_tokens: maxTokens,
+          temperature: 0.7,
+          messages: [
+            ...(systemPrompt
+              ? [{ role: 'system', content: systemPrompt }]
+              : []),
+            { role: 'user', content: userMessage }
+          ],
+        }),
+        signal: controller.signal
+      }
+    );
+
+    clearTimeout(timeoutId);
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(
+        err?.message || `HTTP ${res.status}`
+      );
+    }
+
+    const data = await res.json();
+    // Cohere v2 response format
+    return data?.message?.content?.[0]?.text 
+      || data?.text 
+      || '';
+
+  } catch (error) {
+    clearTimeout(timeoutId);
+    if (error.name === 'AbortError') {
+      throw new Error('Request timed out after 10s');
+    }
+    throw error;
+  }
+}
+
+async function _fetchMistral(systemPrompt, userMessage, maxTokens = 500) {
+  const apiKey = localStorage.getItem('stadiumiq_mistral_key') || '';
+  if (!apiKey) return null;
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+  try {
+    const mistralEndpoint = import.meta.env.MODE === 'development'
+      ? '/mistral-api/v1/chat/completions'
+      : 'https://api.mistral.ai/v1/chat/completions';
+
+    const res = await fetch(mistralEndpoint, {
+      method: 'POST',
       headers: {
-        'Content-Type':    'application/json',
-        'x-api-key':       apiKey,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true',
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
       },
-      body,
+      body: JSON.stringify({
+        model: localStorage.getItem('stadiumiq_mistral_model') || 'mistral-small-latest',
+        max_tokens: maxTokens,
+        temperature: 0.7,
+        messages: [
+          ...(systemPrompt
+            ? [{ role: 'system', content: systemPrompt }]
+            : []),
+          { role: 'user', content: userMessage }
+        ],
+      }),
       signal: controller.signal
     });
 
@@ -112,25 +166,39 @@ async function _fetchClaude(systemPrompt, userMessage, maxTokens = 500, attempt 
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      const msg = err?.error?.message || `HTTP ${res.status}`;
-
-      if ((res.status === 529 || res.status === 503) && attempt === 1) {
-        await new Promise(r => setTimeout(r, 1500));
-        return _fetchClaude(systemPrompt, userMessage, maxTokens, 2);
-      }
-      throw new Error(msg);
+      throw new Error(err?.message || `HTTP ${res.status}`);
     }
 
     const data = await res.json();
-    return data?.content?.[0]?.text ?? '';
+    return data?.choices?.[0]?.message?.content || '';
 
   } catch (error) {
     clearTimeout(timeoutId);
     if (error.name === 'AbortError') {
-      throw new Error('AI Request timed out after 10 seconds. Retrying with offline system fallback.');
+      throw new Error('Request timed out after 10s');
     }
     throw error;
   }
+}
+
+async function _fetchAI(systemPrompt, userMessage, maxTokens = 500) {
+  const provider = localStorage.getItem('stadiumiq_ai_provider') || 'cohere';
+
+  // Rate limit check (keep existing logic)
+  if (checkSessionRateLimit()) {
+    throw new Error('Rate limit reached (10 calls/min). Please wait.');
+  }
+
+  if (provider === 'cohere') {
+    return _fetchCohere(systemPrompt, userMessage, maxTokens);
+  }
+  
+  if (provider === 'mistral') {
+    return _fetchMistral(systemPrompt, userMessage, maxTokens);
+  }
+
+  // Demo mode fallback
+  return null;
 }
 
 // ─── Wrapper — wraps any AI fn call into { success, data, error } ──
@@ -155,27 +223,55 @@ export async function getNavigationDirections(currentZone, destination, venueNam
   const cleanZone = sanitizeInput(currentZone, 100);
   const cleanDest = sanitizeInput(destination, 200);
 
-  const system = `You are a stadium navigation assistant for ${venueName || 'MetLife Stadium'}.
-Give 4-5 clear numbered walking directions from the fan's current position to their destination.
-Include an estimated walk time at the end. Use stadium terminology.
-Return ONLY valid JSON: {"time":"X min","steps":["step 1","step 2","step 3","step 4"]}`;
+  const system = `You are a crowd-aware stadium navigation AI for FIFA WC 2026 at ${venueName || 'MetLife Stadium'}.
+When giving directions, always explain WHY you chose that route based on current crowd conditions, distance, or accessibility.
+Format your response EXACTLY as:
+ROUTE:
+1. [step one]
+2. [step two]
+3. [step three]
+4. [step four]
+WHY THIS ROUTE: [1 sentence explaining crowd conditions, distance, or accessibility reason]
+ESTIMATED TIME: [X minutes walking]`;
 
   const user = `I am currently in ${cleanZone}. I need to get to: ${cleanDest}.`;
 
-  const fallback = () => JSON.stringify({
-    time: '4 min',
-    steps: [
+  const fallback = () => ({
+    route: [
       `Exit ${cleanZone} via the nearest concourse ramp.`,
       `Head toward the central corridor signage — follow blue wayfinding markers.`,
       `Pass Concession Stand Row B and continue 50 m straight.`,
       `Turn left at the first emergency post — ${cleanDest} is 20 m ahead on your right.`,
     ],
+    whyRoute: 'This route avoids the high-density North concourse and uses the less-crowded East corridor for faster transit.',
+    estimatedTime: '4 minutes walking',
     isMock: true,
   });
 
+  // Parse the structured text response into { route, whyRoute, estimatedTime }
+  const parseNavResponse = (text) => {
+    const routeMatch = text.match(/ROUTE:\s*([\s\S]*?)(?=WHY THIS ROUTE:|$)/i);
+    const whyMatch   = text.match(/WHY THIS ROUTE:\s*([\s\S]*?)(?=ESTIMATED TIME:|$)/i);
+    const timeMatch  = text.match(/ESTIMATED TIME:\s*([^\n]+)/i);
+
+    const routeLines = (routeMatch?.[1] || '').trim().split('\n')
+      .map(l => l.replace(/^\d+\.\s*/, '').trim())
+      .filter(Boolean);
+
+    return {
+      route: routeLines.length ? routeLines : fallback().route,
+      whyRoute: whyMatch?.[1]?.trim() || fallback().whyRoute,
+      estimatedTime: timeMatch?.[1]?.trim() || '4 minutes walking',
+    };
+  };
+
   return _wrap(
-    () => _fetchClaude(system, user, 300),
-    fallback,
+    async () => {
+      const text = await _fetchAI(system, user, 400);
+      if (text === null) return null;
+      return JSON.stringify(parseNavResponse(text));
+    },
+    () => JSON.stringify(fallback()),
   );
 }
 
@@ -190,25 +286,30 @@ export async function translateAndRespond(userMessage, targetLanguage, stadiumCo
   };
   const lang = langMap[targetLanguage] || targetLanguage || 'English';
 
-  const system = `You are a warm, helpful multilingual assistant for FIFA World Cup 2026.
-ALWAYS respond in ${lang} — regardless of what language the user wrote in.
+  const system = `You are a context-sensitive stadium assistant for FIFA World Cup 2026.
 Stadium context: ${stadiumContext || 'FIFA World Cup 2026 match day'}
+Detect the nature of the request and adjust your tone accordingly:
+- Medical/emergency: calm, direct, urgent
+- Navigation: friendly, clear, step-by-step
+- General info: conversational, warm
+ALWAYS respond in ${lang} — regardless of what language the user wrote in.
 Keep your answer under 100 words.
-If the question is an emergency, add "🚨 Please notify the nearest steward immediately." at the end.`;
+Start your response with [TONE: emergency] or [TONE: navigation] or [TONE: general] on its own line, then give your response.
+If medical/emergency, also add "🚨 Please notify the nearest steward immediately." at the end.`;
 
   const fallback = () => {
     const fallbacks = {
-      es: '¡Hola! Estoy aquí para ayudarte. Por favor, dirígete al puesto de asistencia más cercano para obtener apoyo inmediato.',
-      fr: 'Bonjour! Je suis là pour vous aider. Veuillez vous diriger vers le poste d\'assistance le plus proche.',
-      pt: 'Olá! Estou aqui para ajudá-lo. Dirija-se ao posto de assistência mais próximo.',
-      ar: 'مرحباً! أنا هنا لمساعدتك. يرجى التوجه إلى أقرب نقطة مساعدة.',
-      default: `Hello! I'm your FIFA World Cup 2026 stadium assistant. How can I help you today? For urgent needs, please find the nearest steward.`,
+      es: '[TONE: general]\n¡Hola! Estoy aquí para ayudarte. Por favor, dirígete al puesto de asistencia más cercano para obtener apoyo inmediato.',
+      fr: '[TONE: general]\nBonjour! Je suis là pour vous aider. Veuillez vous diriger vers le poste d\'assistance le plus proche.',
+      pt: '[TONE: general]\nOlá! Estou aqui para ajudá-lo. Dirija-se ao posto de assistência mais próximo.',
+      ar: '[TONE: general]\nمرحباً! أنا هنا لمساعدتك. يرجى التوجه إلى أقرب نقطة مساعدة.',
+      default: `[TONE: general]\nHello! I'm your FIFA World Cup 2026 stadium assistant. How can I help you today? For urgent needs, please find the nearest steward.`,
     };
     return fallbacks[targetLanguage] || fallbacks.default;
   };
 
   return _wrap(
-    () => _fetchClaude(system, cleanMsg, 300),
+    () => _fetchAI(system, cleanMsg, 350),
     fallback,
   );
 }
@@ -223,11 +324,23 @@ export async function getIncidentResponse(incidentType, zone, description) {
 
   const system = `You are an emergency operations AI for a FIFA World Cup 2026 stadium.
 Given an incident report, return a structured JSON response ONLY.
-Format: {"actions":["action 1","action 2","action 3"],"staff":"deployment instruction","pa":"PA announcement text","time":"X min"}
+Format:
+{
+  "actions": ["action 1", "action 2", "action 3"],
+  "staff": "deployment instruction",
+  "pa": "PA announcement text",
+  "time": "X min",
+  "reasoning": "Explain in 1-2 sentences WHY these specific actions were chosen based on incident type, zone density, and crowd dynamics",
+  "confidence": "High" or "Medium" or "Low — based on available data clarity",
+  "alternative": "If the primary approach doesn't work, describe a fallback strategy in 1 sentence"
+}
 Actions: 3-5 numbered immediate steps.
 Staff: specific deployment instruction.
 PA: calm 20-second public address announcement.
 Time: estimated resolution.
+Reasoning: data-driven explanation of your recommendation logic.
+Confidence: High if incident type is clear and zone data supports it; Medium if partial data; Low if description is ambiguous.
+Alternative: realistic fallback if primary actions fail.
 Prioritize fan safety.`;
 
   const user = `Incident type: ${cleanType}
@@ -244,11 +357,14 @@ Description: ${cleanDesc}`;
     staff: `Dispatch nearest 4 available personnel in ${cleanZone}. Medical team on standby.`,
     pa:   `Ladies and gentlemen, for your safety, please follow steward directions in the ${cleanZone} area.`,
     time: '8 min',
+    reasoning: `A ${cleanType} in ${cleanZone} requires immediate perimeter control to prevent escalation. Crowd redirection reduces secondary congestion risk while medical team assesses the situation.`,
+    confidence: 'Medium',
+    alternative: 'If primary steward deployment is insufficient, activate adjacent zone volunteers and request crowd dispersal via PA to Gate B overflow.',
     isMock: true,
   });
 
   return _wrap(
-    () => _fetchClaude(system, user, 500),
+    () => _fetchAI(system, user, 650),
     fallback,
   );
 }
@@ -273,7 +389,7 @@ Prioritize fan safety. Return 5-6 numbered steps. Under 150 words total.`;
 5. Document all actions taken with timestamps for the post-incident report.`;
 
   return _wrap(
-    () => _fetchClaude(system, user, 400),
+    () => _fetchAI(system, user, 400),
     fallback,
   );
 }
@@ -297,7 +413,7 @@ Rules:
   const fallback = () => `Ladies and gentlemen, your attention please. We kindly ask all guests to follow the directions of our steward team. For assistance, approach the nearest staff member. Thank you.`;
 
   return _wrap(
-    () => _fetchClaude(system, user, 200),
+    () => _fetchAI(system, user, 200),
     fallback,
   );
 }
@@ -325,7 +441,7 @@ Return ONLY valid JSON:
   });
 
   return _wrap(
-    () => _fetchClaude(system, user, 600),
+    () => _fetchAI(system, user, 600),
     fallback,
   );
 }
@@ -349,7 +465,7 @@ Write announcement text under 60 words. No quotes, return raw text.`;
   const fallback = () => `Ladies and gentlemen, welcome to the stadium for this FIFA World Cup 2026 match. Our staff are available to assist you. Enjoy the match!`;
 
   return _wrap(
-    () => _fetchClaude(system, user, 250),
+    () => _fetchAI(system, user, 250),
     fallback,
   );
 }

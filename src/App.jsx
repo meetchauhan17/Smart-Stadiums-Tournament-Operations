@@ -7,6 +7,7 @@ import { useLiveData } from './hooks/useLiveData';
 import Navbar from './components/Navbar';
 import LoadingSpinner from './components/LoadingSpinner';
 import KeyboardShortcuts from './components/KeyboardShortcuts';
+import SettingsModal from './components/SettingsModal';
 
 // Lazy load all page components for code-splitting and performance
 const Landing        = lazy(() => import('./pages/Landing'));
@@ -51,6 +52,9 @@ function AppContent() {
 
       {/* Keyboard shortcut overlay (press ?) */}
       <KeyboardShortcuts />
+
+      {/* Global Settings Modal */}
+      <SettingsModal />
 
       {/* Main Pages routes wrapped under accessible main and lazy Suspense */}
       <main id="main-content" tabIndex="-1" className="relative focus:outline-none">

@@ -84,44 +84,7 @@ export function useLiveData() {
     alertsRef.current = activeAlerts;
   }, [activeAlerts]);
 
-  // ═══════════════════════════════════════════════════════════════════
-  //  1. CROWD DENSITY SIMULATION
-  // ═══════════════════════════════════════════════════════════════════
-  useEffect(() => {
-    if (!isLiveMode) return;
 
-    const densityInterval = matchDayMode ? 3000 : 15000;
-
-    const interval = setInterval(() => {
-      const currentHour = new Date().getHours();
-      const isPeakHours = [12, 13, 14, 17, 18, 19, 20, 21, 22].includes(currentHour);
-
-      setCrowdDensityMap((prev) => {
-        const next = { ...prev };
-        Object.keys(next).forEach((zoneKey) => {
-          const zone = next[zoneKey];
-          const isNearGate = ['A', 'B', 'E', 'F', 'VIP', 'MEDIA'].includes(zoneKey);
-
-          const maxFluctuation = isNearGate && isPeakHours ? 8 : 4.5;
-          const delta = (Math.random() - 0.5) * 2 * maxFluctuation;
-          const nextDensity = Math.max(20, Math.min(100, Math.round(zone.density + delta)));
-
-          next[zoneKey] = {
-            ...zone,
-            density: nextDensity,
-            current: Math.round(zone.capacity * (nextDensity / 100)),
-          };
-        });
-
-        const totalOcc = Object.values(next).reduce((sum, z) => sum + z.current, 0);
-        setCurrentOccupancy(totalOcc);
-
-        return next;
-      });
-    }, densityInterval);
-
-    return () => clearInterval(interval);
-  }, [isLiveMode, matchDayMode, setCrowdDensityMap, setCurrentOccupancy]);
 
   // ═══════════════════════════════════════════════════════════════════
   //  2. ALERT GENERATION & AUTO-RESOLUTION

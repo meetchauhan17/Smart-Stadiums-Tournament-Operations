@@ -52,15 +52,13 @@ describe('ZoneMap — zone rendering', () => {
 
   it('renders the density color legend', () => {
     renderZoneMap();
-    expect(screen.getByText('<60% (Safe)')).toBeTruthy();
-    expect(screen.getByText('60-85% (Warning)')).toBeTruthy();
+    expect(screen.getByText('<50% (Low)')).toBeTruthy();
+    expect(screen.getByText('50-70% (Mod)')).toBeTruthy();
+    expect(screen.getByText('70-85% (High)')).toBeTruthy();
     expect(screen.getByText('>=85% (Critical)')).toBeTruthy();
   });
 });
 
-// ════════════════════════════════════════════════════════════════════
-// 2. Click interaction
-// ════════════════════════════════════════════════════════════════════
 describe('ZoneMap — click interaction', () => {
   it('calls onZoneSelect with the correct zone ID when clicking Zone A', async () => {
     const user = userEvent.setup();

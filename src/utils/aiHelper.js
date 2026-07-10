@@ -1,96 +1,124 @@
-// ─── AI Helper — Claude API fetch utilities ───────────────────────
+// ─── AI Helper — Cohere and Mistral fetch utilities ───────────────────────
 
-const CLAUDE_API_URL = 'https://api.anthropic.com/v1/messages';
-const CLAUDE_MODEL   = 'claude-opus-4-5';
+export async function callAI(params) {
+  const provider = localStorage.getItem('stadiumiq_ai_provider') || 'cohere';
+  
+  const { prompt, messages = [], systemPrompt, onStream } = params;
 
-// Retrieve API key from localStorage (user-configurable)
-const getApiKey = () => localStorage.getItem('stadiumiq_claude_key') || '';
-
-/**
- * Send a message to Claude and get a response.
- * @param {string} prompt - User or system prompt
- * @param {Array}  messages - Conversation history [{role, content}]
- * @param {string} systemPrompt - System prompt for context
- * @param {Function} onStream - Optional streaming callback (chunk) => void
- * @returns {Promise<string>} - Complete AI response text
- */
-export async function callClaude({ prompt, messages = [], systemPrompt, onStream }) {
-  const apiKey = getApiKey();
-
+  // Build messages array
   const builtMessages = [
+    ...(systemPrompt ? [{ role: 'system', content: systemPrompt }] : []),
     ...messages,
-    { role: 'user', content: prompt },
+    { role: 'user', content: prompt }
   ];
 
-  const body = {
-    model: CLAUDE_MODEL,
-    max_tokens: 1024,
-    system: systemPrompt || buildDefaultSystemPrompt(),
-    messages: builtMessages,
-    stream: !!onStream,
-  };
-
-  if (!apiKey) {
-    // Return mock response if no API key configured
-    return getMockResponse(prompt);
-  }
-
   try {
-    const response = await fetch(CLAUDE_API_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true',
-      },
-      body: JSON.stringify(body),
-    });
+    let resultText = '';
+    
+    if (provider === 'cohere') {
+      const apiKey = localStorage.getItem('stadiumiq_cohere_key') || '';
+      if (!apiKey) {
+        const mock = getMockResponse(prompt);
+        simulateMockStream(mock, onStream);
+        return mock;
+      }
+      
+      const cohereEndpoint = import.meta.env.MODE === 'development'
+        ? '/cohere-api/v2/chat'
+        : 'https://api.cohere.com/v2/chat';
 
-    if (!response.ok) {
-      const err = await response.json();
-      throw new Error(err.error?.message || `HTTP ${response.status}`);
-    }
+      const res = await fetch(cohereEndpoint, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'command-r-08-2024',
+          max_tokens: 1024,
+          temperature: 0.7,
+          messages: builtMessages,
+        })
+      });
 
-    if (onStream) {
-      return await handleStreamResponse(response, onStream);
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err?.message || `HTTP ${res.status}`);
+      }
+      const data = await res.json();
+      resultText = data?.message?.content?.[0]?.text || data?.text || '';
+      
+    } else if (provider === 'mistral') {
+      const apiKey = localStorage.getItem('stadiumiq_mistral_key') || '';
+      if (!apiKey) {
+        const mock = getMockResponse(prompt);
+        simulateMockStream(mock, onStream);
+        return mock;
+      }
+      
+      const mistralEndpoint = import.meta.env.MODE === 'development'
+        ? '/mistral-api/v1/chat/completions'
+        : 'https://api.mistral.ai/v1/chat/completions';
+
+      const res = await fetch(mistralEndpoint, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: localStorage.getItem('stadiumiq_mistral_model') || 'mistral-small-latest',
+          max_tokens: 1024,
+          temperature: 0.7,
+          messages: builtMessages,
+        })
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err?.message || `HTTP ${res.status}`);
+      }
+      const data = await res.json();
+      resultText = data?.choices?.[0]?.message?.content || '';
     } else {
-      const data = await response.json();
-      return data.content?.[0]?.text || '';
+      // Demo Mode
+      const mock = getMockResponse(prompt);
+      simulateMockStream(mock, onStream);
+      return mock;
     }
+
+    // Stream the final text artificially so the UI feels responsive
+    simulateMockStream(resultText, onStream);
+    return resultText;
+
   } catch (error) {
     console.error('[StadiumIQ AI] Error:', error);
-    return getMockResponse(prompt);
+    const mock = getMockResponse(prompt);
+    simulateMockStream(mock, onStream);
+    return mock;
   }
 }
 
-async function handleStreamResponse(response, onStream) {
-  const reader = response.body.getReader();
-  const decoder = new TextDecoder();
-  let fullText = '';
-
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-
-    const chunk = decoder.decode(value);
-    const lines = chunk.split('\n').filter(l => l.startsWith('data: '));
-
-    for (const line of lines) {
-      try {
-        const data = JSON.parse(line.slice(6));
-        if (data.type === 'content_block_delta' && data.delta?.text) {
-          fullText += data.delta.text;
-          onStream(data.delta.text);
-        }
-      } catch {
-        // Skip malformed SSE lines
+function simulateMockStream(mock, onStream) {
+  if (!onStream) return;
+  const isTest = typeof process !== 'undefined' && process.env?.NODE_ENV === 'test';
+  if (isTest) {
+    onStream(mock);
+  } else {
+    const words = mock.split(' ');
+    let currentIdx = 0;
+    const interval = setInterval(() => {
+      if (currentIdx >= words.length) {
+        clearInterval(interval);
+        return;
       }
-    }
+      onStream((currentIdx === 0 ? '' : ' ') + words[currentIdx]);
+      currentIdx++;
+    }, 45);
   }
-
-  return fullText;
 }
+
+// Removed handleStreamResponse as it was specific to Anthropic SSE
 
 // ─── System Prompts ───────────────────────────────────────────────
 
@@ -161,9 +189,12 @@ function getMockResponse(prompt) {
     pool = MOCK_RESPONSES.default;
   }
 
-  // Add a note about API key
   const response = pool[Math.floor(Math.random() * pool.length)];
-  return `${response}\n\n_[Demo mode — add your Claude API key in settings for live AI responses]_`;
+  const provider = localStorage.getItem('stadiumiq_ai_provider') || 'cohere';
+  const hint = provider === 'mistral'
+    ? 'add your Mistral token in settings for live AI responses'
+    : 'add your Cohere API key in settings for live AI responses';
+  return `${response}\n\n_[Demo mode — ${hint}]_`;
 }
 
 // ─── Prompt Builders ──────────────────────────────────────────────
