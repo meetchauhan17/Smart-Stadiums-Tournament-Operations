@@ -1,139 +1,176 @@
-# 🏟️ StadiumIQ 2026 — GenAI-Powered Smart Stadium Platform
+<div align="center">
 
-**StadiumIQ 2026** is a premium, real-time AI co-pilot platform designed for the **FIFA World Cup 2026**. Built with React, Vite, Tailwind CSS, Recharts, and Framer Motion, it features a bold, modern **Flat Design** aesthetic and advanced Generative AI capabilities powered by **Cohere** and **Mistral AI**.
+# 🏟️ StadiumIQ 2026
 
----
+**The Definitive GenAI-Powered Smart Stadium Operations Platform**
 
-## 🎯 Problem Statement
+[![React](https://img.shields.io/badge/React-19.2-blue?style=for-the-badge&logo=react)](https://react.dev)
+[![Vite](https://img.shields.io/badge/Vite-8.1-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
+[![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-3.4-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
+[![Cohere](https://img.shields.io/badge/AI-Cohere_Command_R-purple?style=for-the-badge)](https://cohere.com/)
+[![Mistral](https://img.shields.io/badge/AI-Mistral_7B-orange?style=for-the-badge)](https://mistral.ai/)
 
-StadiumIQ focuses on two understated but critical personas: **Volunteers** who need real-time crowd intelligence to assist 80,000+ attendees, and **Fans** who face navigation, language, and accessibility barriers in an unfamiliar stadium environment.
+*A premium, real-time AI co-pilot designed to orchestrate 80,000+ attendees and 10,000+ volunteers across the official FIFA World Cup 2026 venues.*
 
-| Persona | Challenge | StadiumIQ Solution |
-|---|---|---|
-| **Volunteer (Primary)** | Coordinating 10,000+ volunteers across 10 venues with zero real-time situational awareness | Volunteer Co-Pilot — AI incident command, crowd-aware zone maps, multilingual briefings |
-| **Fan (Secondary)** | Navigation, language barriers, and accessibility gaps in an 82,500-capacity venue | Fan Experience Hub — AI wayfinding, 5-language assistant, live crowd-aware routing |
-
----
-
-## 🌟 Key Features & Hubs
-
-### 1. Volunteer Co-Pilot & Operations Desk
-*   **Live KPI Strip:** Monitor occupancy rates, unresolved alerts, volunteer count, response times, and real-time Air Quality Index (AQI).
-*   **Interactive ZoneMap (`<ZoneMap />`):** SVG-based interactive map displaying zone density levels (nominal, warning, critical) — crowd-aware so volunteers know exactly where to go.
-*   **Crowd Flow Heatmap:** Custom Recharts AreaChart showing historical and predictive crowd density per zone over a 24-hour cycle.
-*   **Tactical AI Coordinator:** Type incident details and immediately generate complex mitigation protocols (PA announcements, volunteer reassignments) using Cohere or Mistral models.
-*   **Real-time Weather & AQI:** Uses free Open-Meteo APIs to stream live conditions to the operations desk, caching intelligently every 10–15 minutes to preserve network bandwidth.
-
-### 2. Fan Experience Hub
-*   **Crowd-Aware Wayfinding:** Choose from restrooms, merchandise stalls, first-aid posts, or gates, and receive structured walking paths and estimated walking times — routes dynamically adapt to live crowd density data.
-*   **Multilingual AI Assistant (Tone & Context Aware):** Instantly translate user questions in 5 languages (English, Español, Français, Português, العربية) and generate replies with safety alerts, adjusting tone for urgency vs. casual queries. Supports RTL (Right-to-Left) rendering for Arabic.
-*   **Global Venue Switching:** Dropdown in the top navigation instantly switches context across 10 official FIFA 2026 venues, instantly recalculating timezones, max capacities, and fetching local live weather.
-
-### 3. Crowd Intelligence & Staffing
-*   **Volunteer Roster Table:** A virtualized, accessible list of security, medical, and volunteer personnel displaying status, active zones, and average response times.
-*   **Crowd-Aware Deployment:** Instantly reassign volunteers to high-density zones based on real-time crowd flow simulations.
-*   **AI Pre-match Briefings:** Generate briefing instructions for crowd management, medical hazards, or evacuations — tailored per venue layout and current expected capacity.
-
-### 4. Sustainability Dashboard
-*   **Real AQI Data:** Pulls live PM2.5, PM10, CO, and NO2 data to accurately assess stadium environmental health against WHO standards.
-*   **Composed Energy Chart:** Dual-Axis Recharts comparing energy production (solar generation) vs grid draw with brush-based zoom sliders for micro-analysis.
-*   **AI Energy Report:** Generate actionable optimization strategies for HVAC scaling and water reclamation based on live capacity and weather forecasts.
+</div>
 
 ---
 
-## 🏗️ Architecture & Folder Structure
+## 📖 Table of Contents
+- [🎯 The Vision](#-the-vision)
+- [✨ Core Modules](#-core-modules)
+- [🏗️ System Architecture](#-system-architecture)
+- [🔌 AI & Data Integrations](#-ai--data-integrations)
+- [🛡️ Security & Performance](#️-security--performance)
+- [🚦 Getting Started](#-getting-started)
+- [🧪 Testing Suite](#-testing-suite)
+- [🚀 Deployment](#-deployment)
 
-The project follows a standard Vite/React layout, heavily reliant on standard React Context for state management and an abstracted AI transport layer.
+---
 
+## 🎯 The Vision
+
+Mega-events like the FIFA World Cup present unprecedented logistical challenges. **StadiumIQ** bridges the gap between raw stadium data and actionable intelligence by focusing on the two most critical personas:
+
+| Persona | The Bottleneck | The StadiumIQ Solution |
+| :--- | :--- | :--- |
+| 🛡️ **Volunteer Commanders** | Managing 10,000+ staff with radio delays and fragmented data | **Volunteer Co-Pilot:** Instant AI incident command, predictive crowd-aware zone maps, and localized staff deployment. |
+| 🎫 **Global Fans** | Extreme navigation friction, language barriers, and accessibility gaps | **Fan Experience Hub:** Dynamic crowd-aware wayfinding and a context-aware 5-language AI assistant. |
+
+---
+
+## ✨ Core Modules
+
+### 🧭 1. Volunteer Co-Pilot (Operations Desk)
+The nerve center for stadium security and crowd management.
+*   **Live KPI Telemetry:** Monitor real-time occupancy rates, unresolved security alerts, and live Air Quality Index (AQI) thresholds.
+*   **Tactical Interactive ZoneMap (`<ZoneMap />`):** A responsive SVG map displaying live zone density states (Nominal, Warning, Critical). Volunteers instantly know where crowd crushing is likely to occur.
+*   **Predictive Crowd Heatmap:** A custom `Recharts` AreaChart charting historical data and predicting crowd density surges over a 24-hour cycle.
+*   **GenAI Tactical Coordinator:** Input an incident (e.g., "Medical emergency at Gate B") and the AI instantly generates a 5-step mitigation protocol, radio deployment instructions, and PA scripts.
+
+### 🎪 2. Fan Experience Hub
+A mobile-first interface designed to remove friction for attendees.
+*   **Crowd-Aware Wayfinding:** Fans request routes (e.g., "Nearest restrooms") and receive dynamic walking paths that route *around* highly congested concourses.
+*   **Polyglot AI Assistant:** Instantly translates and responds to queries in **English, Español, Français, Português, and العربية**. Tone dynamically shifts from conversational (for food queries) to urgent and direct (for medical alerts).
+*   **Global Venue Switching:** A universal dropdown instantly shifts the application's context across all 10 official FIFA 2026 venues, recalculating timezones, max capacities, and fetching localized weather.
+
+### 👥 3. Crowd Intelligence & Staffing
+*   **Dynamic Roster Table:** A virtualized list of security, medical, and volunteer personnel displaying active zones, status, and historical response times.
+*   **AI Pre-Match Briefings:** The AI generates tailored, context-specific briefings for staff based on the specific venue layout, anticipated capacity, and weather conditions.
+
+### 🌱 4. Sustainability Dashboard
+*   **Environmental Telemetry:** Pulls live PM2.5, PM10, CO, and NO2 data to assess stadium health against WHO standards.
+*   **Composed Energy Analytics:** Dual-Axis `Recharts` comparing solar energy generation versus grid draw, complete with brush-based zoom sliders for micro-analysis.
+*   **AI Optimization Engine:** Generates actionable strategies for HVAC scaling and water reclamation based on live capacity and local weather forecasts.
+
+---
+
+## 🏗️ System Architecture
+
+Built on a robust React + Vite foundation, utilizing the Context API for seamless global state management.
+
+```mermaid
+graph TD
+    A[App Router] --> B(StadiumContext)
+    B --> C{Core Hubs}
+    C -->|Fan UI| D[Fan.jsx]
+    C -->|Ops Desk| E[Operations.jsx]
+    C -->|Staffing| F[Staff.jsx]
+    C -->|Green| G[Sustainability.jsx]
+    
+    H[aiHelper.js Router] -->|Development| I[Vite Local Proxy]
+    H -->|Production| J[Direct Secure Fetch]
+    
+    I --> K((Cohere Command R))
+    I --> L((Mistral 7B))
+```
+
+### Directory Structure
 ```text
 src/
-├── components/          # Reusable UI components (Navbar, ZoneMap, SettingsModal)
+├── components/          # Reusable, accessible UI components (Navbar, ZoneMap, SettingsModal)
 ├── context/             # Global State Management (StadiumContext)
 ├── hooks/               # Custom React hooks (useAI, useLiveData)
-├── pages/               # Primary application routes (Operations, Fan, Staff, Sustainability)
-├── test/                # Test utilities, MSW configuration, and setup scripts
-├── utils/               # AI helper logic, API wrappers, validation logic
-├── App.jsx              # Main router configuration
-├── i18n.js              # Localization (i18next) setup
+├── pages/               # Primary application routes
+├── test/                # MSW configurations, Vitest setup, and unit tests
+├── utils/               # AI transport layer, sanitization, and API wrappers
+├── App.jsx              # Main routing configuration
 └── index.css            # Tailwind directives and core CSS variables
 ```
 
 ---
 
-## 🔌 AI Integrations & API Architecture
+## 🔌 AI & Data Integrations
 
-*   **Generative AI Providers:** Dynamically switchable between **Cohere (`command-r-08-2024`)** and **Mistral AI (`open-mistral-7b`, `mistral-small-latest`)** via the global settings panel. 
-*   **Vite Proxies for CORS Bypass:** In local development, AI `fetch()` requests are seamlessly routed through Vite proxies (`/cohere-api` and `/mistral-api`) to securely bypass strict browser CORS policies without requiring a custom backend.
-*   **10 Official Venues Data:** Hardcoded database of MetLife, SoFi, AT&T, Azteca, etc., including capacity, coordinates, and timezone logic.
-*   **Open-Meteo Weather API:** Provides live temperature, wind speed/direction, and humidity without requiring an API key.
-*   **Open-Meteo Air Quality API:** Provides current AQI metrics for environmental dashboards.
-*   **Sunrise-Sunset.org API:** Calculates precise day length and solar noon for sustainability modeling.
+StadiumIQ operates entirely on client-side requests, utilizing Vite Proxies to eliminate backend overhead while maintaining security.
 
----
-
-## 🛡️ Security Hardening & Robustness
-*   **Input Sanitization:** Custom `sanitizeInput` utilities strip HTML tag elements from all text inputs and enforce strict length caps to prevent Cross-Site Scripting (XSS).
-*   **Session Rate Limiting:** Enforces a maximum of 10 AI API calls per minute per user session (persisted securely in `sessionStorage`) to protect your API keys from abuse.
-*   **Timeout & Fallbacks:** Uses `AbortController` to force a strict 10-second timeout on all AI API requests. If a request fails or times out, the app seamlessly serves a realistic, structured mock fallback model.
-*   **Graceful Degradation:** Free public APIs (weather, sunset) are wrapped in robust `try/catch` logic. If an endpoint rate-limits or fails, the UI falls back to "Data unavailable" without crashing the React tree.
+*   **Generative AI Pipeline:** Seamlessly switches between **Cohere (`command-r-08-2024`)** and **Mistral AI (`open-mistral-7b`, `mistral-small-latest`)** via a unified `useAI` hook. 
+*   **CORS Bypass:** In local development, all AI `fetch()` requests are transparently routed through Vite proxies (`/cohere-api` and `/mistral-api`), completely bypassing strict browser CORS policies.
+*   **Live Weather & AQI:** Integrates with the free **Open-Meteo API** for live temperature, wind telemetry, and Air Quality Index without requiring authentication.
+*   **Solar Telemetry:** Uses the **Sunrise-Sunset.org API** to calculate precise day length and solar noon for sustainability modeling.
 
 ---
 
-## 🚀 Accessibility (a11y) & UX Polish
-*   **Keyboard Accessibility:** Pressing `?` toggles the global flat design keyboard shortcut overlay. Pressing `O`, `F`, `S`, or `G` navigates directly to the core application hubs.
-*   **Screen Reader Parity:** Visually hidden (`sr-only`) data tables are actively mapped to all visual Recharts, ensuring complete screen reader parity for visually impaired users.
-*   **Page Transitions:** Implemented slide-in-from-right transitions on navigation routing using `AnimatePresence` and `framer-motion`.
-*   **Global Toasts:** A global toast provider pushes flat design notifications to the bottom right for AI completions, resolved incidents, and stadium context switches.
+## 🛡️ Security & Performance
+
+*   **Strict Input Sanitization:** Custom utility functions aggressively strip HTML entities and cap string lengths on all user inputs, preventing Cross-Site Scripting (XSS).
+*   **Client-Side Rate Limiting:** Enforces a hard cap of 10 AI API calls per minute per session (persisted via `sessionStorage`) to protect personal API keys from exhaustion.
+*   **Network Timeouts:** Utilizes `AbortController` to enforce a strict 10-second timeout on all AI requests.
+*   **Graceful Degradation:** If an API endpoint times out, rate-limits, or fails, the application automatically falls back to an offline, realistic Mock Response generation engine, ensuring the UI never crashes.
 
 ---
 
-## 🛠️ Local Development & Scripts
+## 🚦 Getting Started
 
 ### Prerequisites
-*   Node.js (v18+)
-*   npm (v9+)
+*   [Node.js](https://nodejs.org/en/) (v18 or higher)
+*   npm (v9 or higher)
 
-### Installation
+### 1. Clone the Repository
 ```bash
-# Clone the repository and install dependencies
 git clone https://github.com/meetchauhan17/Smart-Stadiums-Tournament-Operations.git
 cd smart-stadiums-operations
+```
+
+### 2. Install Dependencies
+```bash
 npm install
 ```
 
-### Starting the Dev Server
+### 3. Start the Development Server
 ```bash
-# Start the local development server (with HMR and Vite CORS proxies)
+# Starts Vite with HMR and active CORS proxies
 npm run dev
 ```
 
-### Testing Suite
-We use **Vitest** for unit and component testing, alongside **MSW (Mock Service Worker)** to intercept network requests to Cohere and Mistral AI, ensuring tests are fast and deterministic.
+---
+
+## 🧪 Testing Suite
+
+StadiumIQ boasts a rigorous test suite powered by **Vitest** and **MSW (Mock Service Worker)** to intercept and mock complex AI network requests deterministically.
 
 ```bash
-# Run the Vitest test suite with MSW network interception
+# Run the complete test suite
 npm run test
 
-# Run tests with real-time watch mode
+# Run tests in continuous watch mode
 npm run test:watch
 
-# Run tests with comprehensive coverage reporting
+# Generate a comprehensive V8 coverage report
 npm run test:coverage
 ```
 
-### Production Build
-```bash
-# Compile and optimize the application into the /dist directory
-npm run build
-```
-
 ---
 
-## 🌐 Deployment
-This application is fully optimized for **Vercel** or **Netlify** deployments:
-1.  Configure the build command: `npm run build`
-2.  Configure the output directory: `dist`
-3.  Add your AI API keys via the in-app settings modal (keys are stored safely in your browser's `localStorage`). No server-side `.env` variables are strictly required since this is a client-heavy architecture.
+## 🚀 Deployment
+
+The project is highly optimized for Edge deployments on **Vercel** or **Netlify**.
+
+1.  **Build Command:** `npm run build`
+2.  **Output Directory:** `dist`
+3.  **API Keys:** Because this is a client-heavy architecture, users securely input their Cohere or Mistral API keys directly into the app's Settings Modal. Keys are stored safely in the browser's `localStorage` — no server-side `.env` configuration is strictly necessary to host the UI!
 
 ---
-*Created for the GenAI FIFA World Cup Hackathon 2026.*
+<div align="center">
+  <i>Engineered for the GenAI FIFA World Cup Hackathon 2026.</i>
+</div>
