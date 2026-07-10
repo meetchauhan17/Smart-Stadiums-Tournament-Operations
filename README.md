@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🏟️ StadiumIQ 2026
+# StadiumIQ 2026
 
 **The Definitive GenAI-Powered Smart Stadium Operations Platform**
 
@@ -16,56 +16,56 @@
 
 ---
 
-## 📖 Table of Contents
-- [🎯 The Vision](#-the-vision)
-- [✨ Core Modules](#-core-modules)
-- [🏗️ System Architecture](#-system-architecture)
-- [🔌 AI & Data Integrations](#-ai--data-integrations)
-- [🛡️ Security & Performance](#️-security--performance)
-- [🚦 Getting Started](#-getting-started)
-- [🧪 Testing Suite](#-testing-suite)
-- [🚀 Deployment](#-deployment)
+## Table of Contents
+- [The Vision](#the-vision)
+- [Core Modules](#core-modules)
+- [System Architecture](#system-architecture)
+- [AI & Data Integrations](#ai--data-integrations)
+- [Security & Performance](#security--performance)
+- [Getting Started](#getting-started)
+- [Testing Suite](#testing-suite)
+- [Deployment](#deployment)
 
 ---
 
-## 🎯 The Vision
+## ![The Vision](https://img.shields.io/badge/Concept-The_Vision-111827?style=for-the-badge)
 
 Mega-events like the FIFA World Cup present unprecedented logistical challenges. **StadiumIQ** bridges the gap between raw stadium data and actionable intelligence by focusing on the two most critical personas:
 
 | Persona | The Bottleneck | The StadiumIQ Solution |
 | :--- | :--- | :--- |
-| 🛡️ **Volunteer Commanders** | Managing 10,000+ staff with radio delays and fragmented data | **Volunteer Co-Pilot:** Instant AI incident command, predictive crowd-aware zone maps, and localized staff deployment. |
-| 🎫 **Global Fans** | Extreme navigation friction, language barriers, and accessibility gaps | **Fan Experience Hub:** Dynamic crowd-aware wayfinding and a context-aware 5-language AI assistant. |
+| **Volunteer Commanders** | Managing 10,000+ staff with radio delays and fragmented data | **Volunteer Co-Pilot:** Instant AI incident command, predictive crowd-aware zone maps, and localized staff deployment. |
+| **Global Fans** | Extreme navigation friction, language barriers, and accessibility gaps | **Fan Experience Hub:** Dynamic crowd-aware wayfinding and a context-aware 5-language AI assistant. |
 
 ---
 
-## ✨ Core Modules
+## ![Core Modules](https://img.shields.io/badge/Features-Core_Modules-3B82F6?style=for-the-badge)
 
-### 🧭 1. Volunteer Co-Pilot (Operations Desk)
+### ![Volunteer](https://img.shields.io/badge/Module-Volunteer_Co--Pilot-blue?style=flat-square)
 The nerve center for stadium security and crowd management.
 *   **Live KPI Telemetry:** Monitor real-time occupancy rates, unresolved security alerts, and live Air Quality Index (AQI) thresholds.
 *   **Tactical Interactive ZoneMap (`<ZoneMap />`):** A responsive SVG map displaying live zone density states (Nominal, Warning, Critical). Volunteers instantly know where crowd crushing is likely to occur.
 *   **Predictive Crowd Heatmap:** A custom `Recharts` AreaChart charting historical data and predicting crowd density surges over a 24-hour cycle.
 *   **GenAI Tactical Coordinator:** Input an incident (e.g., "Medical emergency at Gate B") and the AI instantly generates a 5-step mitigation protocol, radio deployment instructions, and PA scripts.
 
-### 🎪 2. Fan Experience Hub
+### ![Fan Hub](https://img.shields.io/badge/Module-Fan_Experience_Hub-F59E0B?style=flat-square)
 A mobile-first interface designed to remove friction for attendees.
 *   **Crowd-Aware Wayfinding:** Fans request routes (e.g., "Nearest restrooms") and receive dynamic walking paths that route *around* highly congested concourses.
 *   **Polyglot AI Assistant:** Instantly translates and responds to queries in **English, Español, Français, Português, and العربية**. Tone dynamically shifts from conversational (for food queries) to urgent and direct (for medical alerts).
 *   **Global Venue Switching:** A universal dropdown instantly shifts the application's context across all 10 official FIFA 2026 venues, recalculating timezones, max capacities, and fetching localized weather.
 
-### 👥 3. Crowd Intelligence & Staffing
+### ![Staffing](https://img.shields.io/badge/Module-Crowd_Intelligence-10B981?style=flat-square)
 *   **Dynamic Roster Table:** A virtualized list of security, medical, and volunteer personnel displaying active zones, status, and historical response times.
 *   **AI Pre-Match Briefings:** The AI generates tailored, context-specific briefings for staff based on the specific venue layout, anticipated capacity, and weather conditions.
 
-### 🌱 4. Sustainability Dashboard
+### ![Sustainability](https://img.shields.io/badge/Module-Sustainability_Dashboard-10B981?style=flat-square)
 *   **Environmental Telemetry:** Pulls live PM2.5, PM10, CO, and NO2 data to assess stadium health against WHO standards.
 *   **Composed Energy Analytics:** Dual-Axis `Recharts` comparing solar energy generation versus grid draw, complete with brush-based zoom sliders for micro-analysis.
 *   **AI Optimization Engine:** Generates actionable strategies for HVAC scaling and water reclamation based on live capacity and local weather forecasts.
 
 ---
 
-## 🏗️ System Architecture
+## ![System Architecture](https://img.shields.io/badge/Technical-System_Architecture-8B5CF6?style=for-the-badge)
 
 Built on a robust React + Vite foundation, utilizing the Context API for seamless global state management.
 
@@ -100,7 +100,7 @@ src/
 
 ---
 
-## 🔌 AI & Data Integrations
+## ![AI Integrations](https://img.shields.io/badge/Network-AI_Integrations-EC4899?style=for-the-badge)
 
 StadiumIQ operates entirely on client-side requests, utilizing Vite Proxies to eliminate backend overhead while maintaining security.
 
@@ -111,7 +111,7 @@ StadiumIQ operates entirely on client-side requests, utilizing Vite Proxies to e
 
 ---
 
-## 🛡️ Security & Performance
+## ![Security](https://img.shields.io/badge/Ops-Security_&_Performance-EF4444?style=for-the-badge)
 
 *   **Strict Input Sanitization:** Custom utility functions aggressively strip HTML entities and cap string lengths on all user inputs, preventing Cross-Site Scripting (XSS).
 *   **Client-Side Rate Limiting:** Enforces a hard cap of 10 AI API calls per minute per session (persisted via `sessionStorage`) to protect personal API keys from exhaustion.
@@ -120,7 +120,7 @@ StadiumIQ operates entirely on client-side requests, utilizing Vite Proxies to e
 
 ---
 
-## 🚦 Getting Started
+## ![Getting Started](https://img.shields.io/badge/Dev-Getting_Started-14B8A6?style=for-the-badge)
 
 ### Prerequisites
 *   [Node.js](https://nodejs.org/en/) (v18 or higher)
@@ -145,7 +145,7 @@ npm run dev
 
 ---
 
-## 🧪 Testing Suite
+## ![Testing Suite](https://img.shields.io/badge/CI-Testing_Suite-F97316?style=for-the-badge)
 
 StadiumIQ boasts a rigorous test suite powered by **Vitest** and **MSW (Mock Service Worker)** to intercept and mock complex AI network requests deterministically.
 
@@ -162,7 +162,7 @@ npm run test:coverage
 
 ---
 
-## 🚀 Deployment
+## ![Deployment](https://img.shields.io/badge/Cloud-Deployment-black?style=for-the-badge&logo=vercel)
 
 The project is highly optimized for Edge deployments on **Vercel** or **Netlify**.
 
