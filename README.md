@@ -1,6 +1,6 @@
 # 🏟️ StadiumIQ 2026 — GenAI-Powered Smart Stadium Platform
 
-**StadiumIQ 2026** is a premium, real-time AI co-pilot platform designed for the **FIFA World Cup 2026**. Built with React, Vite, Tailwind CSS, Recharts, and Framer Motion, it features a bold, modern **Flat Design** aesthetic and advanced Generative AI capabilities powered by Anthropic's Claude API.
+**StadiumIQ 2026** is a premium, real-time AI co-pilot platform designed for the **FIFA World Cup 2026**. Built with React, Vite, Tailwind CSS, Recharts, and Framer Motion, it features a bold, modern **Flat Design** aesthetic and advanced Generative AI capabilities powered by **Cohere** and **Mistral AI**.
 
 ---
 
@@ -11,7 +11,7 @@ StadiumIQ focuses on two understated but critical personas: **Volunteers** who n
 | Persona | Challenge | StadiumIQ Solution |
 |---|---|---|
 | **Volunteer (Primary)** | Coordinating 10,000+ volunteers across 10 venues with zero real-time situational awareness | Volunteer Co-Pilot — AI incident command, crowd-aware zone maps, multilingual briefings |
-| **Fan (Secondary)** | Navigation, language barriers, and accessibility gaps in a 82,500-capacity venue | Fan Experience Hub — AI wayfinding, 5-language assistant, live crowd-aware routing |
+| **Fan (Secondary)** | Navigation, language barriers, and accessibility gaps in an 82,500-capacity venue | Fan Experience Hub — AI wayfinding, 5-language assistant, live crowd-aware routing |
 
 ---
 
@@ -41,8 +41,9 @@ StadiumIQ focuses on two understated but critical personas: **Volunteers** who n
 
 ---
 
-## 🔌 Free Real API Integrations
+## 🔌 API Integrations & Architecture
 
+*   **Generative AI Providers:** Dynamically switchable between **Cohere (command-r-08-2024)** and **Mistral AI (open-mistral-7b, mistral-small-latest)** via the settings panel. Uses direct API integrations routed through Vite proxies in development to securely bypass browser CORS restrictions.
 *   **10 Official Venues Data:** Hardcoded database of MetLife, SoFi, AT&T, Azteca, etc., including capacity, coordinates, and timezone logic.
 *   **Open-Meteo Weather API:** Provides live temperature, wind speed/direction, and humidity without requiring an API key.
 *   **Open-Meteo Air Quality API:** Provides current AQI metrics for environmental dashboards.
@@ -51,10 +52,10 @@ StadiumIQ focuses on two understated but critical personas: **Volunteers** who n
 ---
 
 ## 🛡️ Security Hardening & Robustness
-*   **Input Sanitization:** Strips HTML tag elements from all text inputs and enforces strict length caps.
-*   **Session Rate Limiting:** Enforces a maximum of 10 Claude API calls per minute per user session (persisted in `sessionStorage`).
-*   **Timeout & Fallbacks:** Uses `AbortController` to force a 10-second timeout on Anthropic API requests. If a request fails or times out, the app seamlessly serves a realistic, structured fallback model.
-*   **Graceful Degradation:** Free public APIs are wrapped in `try/catch` logic. If an endpoint fails, the UI falls back to "Data unavailable" without crashing the react tree.
+*   **Input Sanitization:** Strips HTML tag elements from all text inputs and enforces strict length caps to prevent XSS.
+*   **Session Rate Limiting:** Enforces a maximum of 10 API calls per minute per user session (persisted in `sessionStorage`) to protect API keys.
+*   **Timeout & Fallbacks:** Uses `AbortController` to force a 10-second timeout on AI API requests. If a request fails or times out, the app seamlessly serves a realistic, structured mock fallback model.
+*   **Graceful Degradation:** Free public APIs are wrapped in `try/catch` logic. If an endpoint fails, the UI falls back to "Data unavailable" without crashing the React tree.
 
 ---
 
@@ -86,6 +87,15 @@ npm install
 npm run dev
 ```
 
+### Testing Suite
+```bash
+# Run Vitest test suite with MSW (Mock Service Worker) for network interception
+npm run test
+
+# Run tests with coverage reporting
+npm run test:coverage
+```
+
 ### Production Build
 ```bash
 # Compile and optimize the application
@@ -98,7 +108,7 @@ npm run build
 This application is fully optimized for **Vercel** deployment:
 1.  Configure the build command: `npm run build`
 2.  Configure the output directory: `dist`
-3.  Inject the Anthropic Claude API Key if desired as environment variables, or enter it directly via the app settings.
+3.  Add your API keys via the in-app settings (stored safely in `localStorage`).
 
 ---
 *Created for the GenAI FIFA World Cup Hackathon 2026.*
