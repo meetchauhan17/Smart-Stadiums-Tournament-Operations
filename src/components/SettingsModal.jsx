@@ -209,7 +209,9 @@ export default function SettingsModal() {
     setFbTesting(true);
     setFbTestStatus(null);
     try {
-      const endpoint = '/football-api/v4/competitions/WC';
+      const endpoint = (typeof process !== 'undefined' && process.env.NODE_ENV === 'test')
+        ? 'https://api.football-data.org/v4/competitions/WC'
+        : '/api/football?path=/competitions/WC';
       const res = await fetch(endpoint, {
         headers: { 'X-Auth-Token': fbKey.trim() },
         signal: AbortSignal.timeout(8000),

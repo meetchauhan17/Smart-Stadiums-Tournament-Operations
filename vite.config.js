@@ -1,9 +1,57 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
+const localFootballProxy = () => ({
+  name: 'local-football-proxy',
+  configureServer(server) {
+    server.middlewares.use(async (req, res, next) => {
+      if (req.url && req.url.startsWith('/api/football')) {
+        const urlObj = new URL(req.url, 'http://localhost');
+        const pathParam = urlObj.searchParams.get('path');
+        if (!pathParam) {
+          res.statusCode = 400;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify({ error: 'Missing path' }));
+          return;
+        }
+        const cleanPath = pathParam.startsWith('/') ? pathParam : `/${pathParam}`;
+        const targetUrl = `https://api.football-data.org/v4${cleanPath}`;
+
+        const token = req.headers['x-auth-token'] || process.env.VITE_FOOTBALL_API_KEY;
+
+        try {
+          const fbRes = await fetch(targetUrl, {
+            headers: {
+              'X-Auth-Token': token || '',
+              'User-Agent': 'Mozilla/5.0'
+            }
+          });
+
+          const avail = fbRes.headers.get('x-requests-available');
+          const reset = fbRes.headers.get('x-requestcounter-reset');
+          if (avail) res.setHeader('x-requests-available', avail);
+          if (reset) res.setHeader('x-requestcounter-reset', reset);
+
+          res.statusCode = fbRes.status;
+          res.setHeader('Content-Type', 'application/json');
+
+          const bodyText = await fbRes.text();
+          res.end(bodyText);
+        } catch (err) {
+          res.statusCode = 500;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify({ error: err.message }));
+        }
+        return;
+      }
+      next();
+    });
+  }
+});
+
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), localFootballProxy()],
   optimizeDeps: {
     include: [
       'react',
@@ -72,14 +120,6 @@ export default defineConfig({
         target: 'https://api.cohere.com',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/cohere-api/, ''),
-        secure: true,
-      },
-      // football-data.org proxy — avoids CORS in dev, also passes response
-      // headers (X-Requests-Available, X-RequestCounter-Reset) through correctly
-      '/football-api': {
-        target: 'https://api.football-data.org',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/football-api/, ''),
         secure: true,
       },
     },
