@@ -79,7 +79,7 @@ async function _fetchCohere(systemPrompt, userMessage, maxTokens = 500) {
   const timeoutId = setTimeout(() => controller.abort(), 10000);
 
   try {
-    const cohereEndpoint = (typeof process !== 'undefined' && process.env.NODE_ENV === 'test')
+    const cohereEndpoint = import.meta.env.MODE === 'test'
       ? 'https://api.cohere.com/v2/chat'
       : '/cohere-api/v2/chat';
 
@@ -138,7 +138,7 @@ async function _fetchMistral(systemPrompt, userMessage, maxTokens = 500) {
   const timeoutId = setTimeout(() => controller.abort(), 10000);
 
   try {
-    const mistralEndpoint = (typeof process !== 'undefined' && process.env.NODE_ENV === 'test')
+    const mistralEndpoint = import.meta.env.MODE === 'test'
       ? 'https://api.mistral.ai/v1/chat/completions'
       : '/mistral-api/v1/chat/completions';
 

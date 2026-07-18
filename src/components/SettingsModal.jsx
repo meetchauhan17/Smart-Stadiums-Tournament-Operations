@@ -105,7 +105,7 @@ export default function SettingsModal() {
     setTestStatus(null);
     try {
       if (provider === 'cohere') {
-        const cohereEndpoint = (typeof process !== 'undefined' && process.env.NODE_ENV === 'test')
+        const cohereEndpoint = import.meta.env.MODE === 'test'
           ? 'https://api.cohere.com/v2/chat'
           : '/cohere-api/v2/chat';
           
@@ -134,7 +134,7 @@ export default function SettingsModal() {
           setTestStatus({ success: false, message: `Failed: Unexpected response: ${reply}` });
         }
       } else if (provider === 'mistral') {
-        const mistralEndpoint = (typeof process !== 'undefined' && process.env.NODE_ENV === 'test')
+        const mistralEndpoint = import.meta.env.MODE === 'test'
           ? 'https://api.mistral.ai/v1/chat/completions'
           : '/mistral-api/v1/chat/completions';
           
@@ -163,7 +163,7 @@ export default function SettingsModal() {
           setTestStatus({ success: false, message: `Failed: Unexpected response: ${reply}` });
         }
       } else if (provider === 'huggingface') {
-        const hfEndpoint = (typeof process !== 'undefined' && process.env.NODE_ENV === 'test')
+        const hfEndpoint = import.meta.env.MODE === 'test'
           ? 'https://api-inference.huggingface.co/v1/chat/completions'
           : '/hf-api/v1/chat/completions';
           
@@ -209,7 +209,7 @@ export default function SettingsModal() {
     setFbTesting(true);
     setFbTestStatus(null);
     try {
-      const endpoint = (typeof process !== 'undefined' && process.env.NODE_ENV === 'test')
+      const endpoint = import.meta.env.MODE === 'test'
         ? 'https://api.football-data.org/v4/competitions/WC'
         : '/api/football?path=/competitions/WC';
       const res = await fetch(endpoint, {

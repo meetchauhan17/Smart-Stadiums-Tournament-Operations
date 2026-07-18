@@ -372,7 +372,7 @@ export const getFbKey = () =>
     || '';
 
 // ─── football-data.org base URL proxy-aware ──────────────────────
-const FB_BASE = (typeof process !== 'undefined' && process.env.NODE_ENV === 'test')
+const FB_BASE = import.meta.env.MODE === 'test'
   ? 'https://api.football-data.org/v4'
   : '/api/football?path=';
 
