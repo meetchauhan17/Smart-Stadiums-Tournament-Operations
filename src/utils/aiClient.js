@@ -79,9 +79,9 @@ async function _fetchCohere(systemPrompt, userMessage, maxTokens = 500) {
   const timeoutId = setTimeout(() => controller.abort(), 10000);
 
   try {
-    const cohereEndpoint = import.meta.env.MODE === 'development'
-      ? '/cohere-api/v2/chat'
-      : 'https://api.cohere.com/v2/chat';
+    const cohereEndpoint = (typeof process !== 'undefined' && process.env.NODE_ENV === 'test')
+      ? 'https://api.cohere.com/v2/chat'
+      : '/cohere-api/v2/chat';
 
     const res = await fetch(
       cohereEndpoint,
@@ -138,9 +138,9 @@ async function _fetchMistral(systemPrompt, userMessage, maxTokens = 500) {
   const timeoutId = setTimeout(() => controller.abort(), 10000);
 
   try {
-    const mistralEndpoint = import.meta.env.MODE === 'development'
-      ? '/mistral-api/v1/chat/completions'
-      : 'https://api.mistral.ai/v1/chat/completions';
+    const mistralEndpoint = (typeof process !== 'undefined' && process.env.NODE_ENV === 'test')
+      ? 'https://api.mistral.ai/v1/chat/completions'
+      : '/mistral-api/v1/chat/completions';
 
     const res = await fetch(mistralEndpoint, {
       method: 'POST',

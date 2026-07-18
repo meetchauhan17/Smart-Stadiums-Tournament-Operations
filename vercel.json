@@ -1,6 +1,22 @@
 {
   "rewrites": [
     {
+      "source": "/football-api/:path*",
+      "destination": "https://api.football-data.org/:path*"
+    },
+    {
+      "source": "/cohere-api/:path*",
+      "destination": "https://api.cohere.com/:path*"
+    },
+    {
+      "source": "/mistral-api/:path*",
+      "destination": "https://api.mistral.ai/:path*"
+    },
+    {
+      "source": "/hf-api/:path*",
+      "destination": "https://api-inference.huggingface.co/:path*"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

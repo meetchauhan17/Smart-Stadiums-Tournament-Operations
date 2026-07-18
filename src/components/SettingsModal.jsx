@@ -105,9 +105,9 @@ export default function SettingsModal() {
     setTestStatus(null);
     try {
       if (provider === 'cohere') {
-        const cohereEndpoint = import.meta.env.MODE === 'development'
-          ? '/cohere-api/v2/chat'
-          : 'https://api.cohere.com/v2/chat';
+        const cohereEndpoint = (typeof process !== 'undefined' && process.env.NODE_ENV === 'test')
+          ? 'https://api.cohere.com/v2/chat'
+          : '/cohere-api/v2/chat';
           
         const res = await fetch(cohereEndpoint, {
           method: 'POST',
@@ -134,9 +134,9 @@ export default function SettingsModal() {
           setTestStatus({ success: false, message: `Failed: Unexpected response: ${reply}` });
         }
       } else if (provider === 'mistral') {
-        const mistralEndpoint = import.meta.env.MODE === 'development'
-          ? '/mistral-api/v1/chat/completions'
-          : 'https://api.mistral.ai/v1/chat/completions';
+        const mistralEndpoint = (typeof process !== 'undefined' && process.env.NODE_ENV === 'test')
+          ? 'https://api.mistral.ai/v1/chat/completions'
+          : '/mistral-api/v1/chat/completions';
           
         const res = await fetch(mistralEndpoint, {
           method: 'POST',
@@ -163,9 +163,9 @@ export default function SettingsModal() {
           setTestStatus({ success: false, message: `Failed: Unexpected response: ${reply}` });
         }
       } else if (provider === 'huggingface') {
-        const hfEndpoint = import.meta.env.MODE === 'development'
-          ? '/hf-api/v1/chat/completions'
-          : 'https://api-inference.huggingface.co/v1/chat/completions';
+        const hfEndpoint = (typeof process !== 'undefined' && process.env.NODE_ENV === 'test')
+          ? 'https://api-inference.huggingface.co/v1/chat/completions'
+          : '/hf-api/v1/chat/completions';
           
         const res = await fetch(hfEndpoint, {
           method: 'POST',
@@ -209,9 +209,7 @@ export default function SettingsModal() {
     setFbTesting(true);
     setFbTestStatus(null);
     try {
-      const endpoint = import.meta.env.MODE === 'development'
-        ? '/football-api/v4/competitions/WC'
-        : 'https://api.football-data.org/v4/competitions/WC';
+      const endpoint = '/football-api/v4/competitions/WC';
       const res = await fetch(endpoint, {
         headers: { 'X-Auth-Token': fbKey.trim() },
         signal: AbortSignal.timeout(8000),

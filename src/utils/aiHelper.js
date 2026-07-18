@@ -28,9 +28,9 @@ export async function callAI(params) {
         return mock;
       }
       
-      const cohereEndpoint = import.meta.env.MODE === 'development'
-        ? '/cohere-api/v2/chat'
-        : 'https://api.cohere.com/v2/chat';
+      const cohereEndpoint = (typeof process !== 'undefined' && process.env.NODE_ENV === 'test')
+        ? 'https://api.cohere.com/v2/chat'
+        : '/cohere-api/v2/chat';
 
       const res = await fetch(cohereEndpoint, {
         method: 'POST',
@@ -61,9 +61,9 @@ export async function callAI(params) {
         return mock;
       }
       
-      const mistralEndpoint = import.meta.env.MODE === 'development'
-        ? '/mistral-api/v1/chat/completions'
-        : 'https://api.mistral.ai/v1/chat/completions';
+      const mistralEndpoint = (typeof process !== 'undefined' && process.env.NODE_ENV === 'test')
+        ? 'https://api.mistral.ai/v1/chat/completions'
+        : '/mistral-api/v1/chat/completions';
 
       const res = await fetch(mistralEndpoint, {
         method: 'POST',
@@ -93,9 +93,9 @@ export async function callAI(params) {
         return mock;
       }
 
-      const hfEndpoint = import.meta.env.MODE === 'development'
-        ? '/hf-api/v1/chat/completions'
-        : 'https://api-inference.huggingface.co/v1/chat/completions';
+      const hfEndpoint = (typeof process !== 'undefined' && process.env.NODE_ENV === 'test')
+        ? 'https://api-inference.huggingface.co/v1/chat/completions'
+        : '/hf-api/v1/chat/completions';
 
       const res = await fetch(hfEndpoint, {
         method: 'POST',

@@ -372,10 +372,9 @@ export const getFbKey = () =>
     || '';
 
 // ─── football-data.org base URL proxy-aware ──────────────────────
-const FB_BASE =
-  typeof import.meta !== 'undefined' && import.meta.env?.MODE === 'development'
-    ? '/football-api/v4'
-    : 'https://api.football-data.org/v4';
+const FB_BASE = (typeof process !== 'undefined' && process.env.NODE_ENV === 'test')
+  ? 'https://api.football-data.org/v4'
+  : '/football-api/v4';
 
 // ─── Rate-limit throttle guard (per Daniel's recommendation) ─────
 // Reads X-Requests-Available & X-RequestCounter-Reset response headers
