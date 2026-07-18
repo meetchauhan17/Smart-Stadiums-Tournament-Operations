@@ -5,13 +5,14 @@ import {
   CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
 import {
-  AlertTriangle, Check, RefreshCw, Send, Siren
+  AlertTriangle, Check, RefreshCw, Send, Siren, Clock, DollarSign
 } from 'lucide-react';
 import { useStadium } from '../context/StadiumContext';
 import { buildOperationsSystemPrompt } from '../utils/aiHelper';
 import PageTransition from '../components/PageTransition';
 import ZoneMap from '../components/ZoneMap';
 import { validateInput } from '../utils/validateInput';
+import { getVenueLocalTime, fetchExchangeRates } from '../utils/realApis';
 
 
 // ─── Custom Flat Tooltip ───
@@ -50,6 +51,8 @@ export default function Operations() {
   const [aiLoading, setAiLoading] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [timeAgo, setTimeAgo] = useState('just now');
+  const [venueTime, setVenueTime] = useState(() => getVenueLocalTime(currentVenue?.timezone));
+  const [exchangeRates, setExchangeRates] = useState(null);
 
   useEffect(() => {
     const update = () => {
@@ -62,6 +65,19 @@ export default function Operations() {
     const t = setInterval(update, 1000);
     return () => clearInterval(t);
   }, [lastSimUpdated]);
+
+  // ── Venue local clock — updates every second ────────────────
+  useEffect(() => {
+    const tick = () => setVenueTime(getVenueLocalTime(currentVenue?.timezone));
+    tick();
+    const t = setInterval(tick, 1000);
+    return () => clearInterval(t);
+  }, [currentVenue?.timezone]);
+
+  // ── Exchange rates — fetched once, cached 30 min ────────────
+  useEffect(() => {
+    fetchExchangeRates().then(rates => { if (rates) setExchangeRates(rates); });
+  }, []);
 
   const handleIncidentGenerate = (e) => {
     e.preventDefault();
@@ -162,7 +178,7 @@ export default function Operations() {
 
   return (
     <PageTransition>
-      <div className="pt-20 bg-gray-50 min-h-screen">
+      <div className="pt-28 bg-gray-50 min-h-screen">
         {/* Toast alerts */}
         <AnimatePresence>
           {toastMessage && (
@@ -195,19 +211,35 @@ export default function Operations() {
               <>
                 <div className="flex flex-wrap items-center gap-6 md:gap-8">
                   <div className="flex items-center gap-2">
-                    <span className="text-4xl font-black">{weatherData.temp?.value}°</span>
+                    <span className="text-4xl font-black">
+                      {typeof weatherData.temp === 'number' ? weatherData.temp : (weatherData.temp?.value ?? '--')}°
+                    </span>
                     <div className="flex flex-col">
                       <span className="text-xs uppercase font-extrabold text-gray-800">{weatherData.condition}</span>
-                      <span className="text-[10px] text-gray-700">Feels like {weatherData.feelsLike?.value}°</span>
+                      <span className="text-[10px] text-gray-700">
+                        Feels like {typeof weatherData.feelsLike === 'number' ? weatherData.feelsLike : (weatherData.feelsLike?.value ?? '--')}°
+                      </span>
                     </div>
                   </div>
                   <div className="flex flex-col">
                     <span className="text-[10px] text-gray-600 uppercase font-bold">WIND</span>
-                    <span className="text-xs font-extrabold">{weatherData.windSpeed?.value} {weatherData.windSpeed?.unit} {weatherData.windSpeed?.direction}</span>
+                    <span className="text-xs font-extrabold">
+                      {typeof weatherData.windSpeed === 'number' ? weatherData.windSpeed : (weatherData.windSpeed?.value ?? '--')} km/h
+                    </span>
                   </div>
                   <div className="flex flex-col">
                     <span className="text-[10px] text-gray-600 uppercase font-bold">HUMIDITY</span>
-                    <span className="text-xs font-extrabold">{weatherData.humidity?.value}%</span>
+                    <span className="text-xs font-extrabold">
+                      {typeof weatherData.humidity === 'number' ? weatherData.humidity : (weatherData.humidity?.value ?? '--')}%
+                    </span>
+                  </div>
+                  {/* Venue Local Time — Intl built-in, no API call */}
+                  <div className="flex flex-col items-center border-l-2 border-gray-900/20 pl-5">
+                    <span className="text-[10px] text-gray-600 uppercase font-bold flex items-center gap-1">
+                      <Clock size={9} /> LOCAL TIME
+                    </span>
+                    <span className="text-base font-black tabular-nums">{venueTime.time}</span>
+                    <span className="text-[9px] text-gray-600 font-semibold">{venueTime.offset}</span>
                   </div>
                 </div>
                 <div className="text-[9px] text-gray-700 font-bold uppercase tracking-widest w-full text-right md:text-right mt-1 opacity-70">
@@ -215,10 +247,54 @@ export default function Operations() {
                 </div>
               </>
             ) : (
-              <span className="text-xs font-bold text-gray-700 animate-pulse">Loading live weather...</span>
+              /* Weather Shimmer Skeleton — matches exact loaded layout to prevent CLS */
+              <div className="flex items-center gap-6 animate-pulse py-1">
+                <div className="flex items-center gap-2">
+                  <div className="w-12 h-8 bg-gray-900/10 rounded" />
+                  <div className="flex flex-col gap-1">
+                    <div className="w-16 h-3 bg-gray-900/10 rounded" />
+                    <div className="w-20 h-2 bg-gray-900/10 rounded" />
+                  </div>
+                </div>
+                <div className="hidden md:flex flex-col gap-1">
+                  <div className="w-8 h-2 bg-gray-900/10 rounded" />
+                  <div className="w-12 h-3 bg-gray-900/10 rounded" />
+                </div>
+                <div className="hidden md:flex flex-col gap-1">
+                  <div className="w-12 h-2 bg-gray-900/10 rounded" />
+                  <div className="w-8 h-3 bg-gray-900/10 rounded" />
+                </div>
+                <div className="flex flex-col items-center border-l-2 border-gray-900/10 pl-5 gap-1">
+                  <div className="w-14 h-2 bg-gray-900/10 rounded" />
+                  <div className="w-16 h-4 bg-gray-900/10 rounded" />
+                </div>
+              </div>
             )}
           </div>
         </div>
+
+        {/* Exchange Rate Ticker — Always rendered with fixed height to prevent CLS */}
+        <div className="bg-gray-900 border-b border-gray-700 py-2 px-8 overflow-hidden h-9 flex items-center select-none">
+          <div className="w-full flex items-center gap-2">
+            <span className="text-[9px] text-gray-400 font-black uppercase tracking-widest shrink-0 flex items-center gap-1">
+              <DollarSign size={9} /> FX RATES
+            </span>
+            {exchangeRates ? (
+              <div className="flex gap-4 overflow-x-auto scrollbar-hide text-[10px] font-bold whitespace-nowrap">
+                {Object.entries(exchangeRates).map(([cur, rate]) => (
+                  <span key={cur} className="text-gray-300 shrink-0">
+                    <span className="text-gray-500">USD/</span>{cur}{' '}
+                    <span className="text-green-400">{rate.toFixed(4)}</span>
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <div className="h-2.5 bg-gray-800 rounded w-48 animate-pulse shrink-0" />
+            )}
+            <span className="text-[8px] text-gray-600 shrink-0 ml-auto">Live · Frankfurter API</span>
+          </div>
+        </div>
+
 
         {/* KPI strip bg-gray-900 */}
         <div className="bg-gray-950 border-b-2 border-gray-900 py-6 px-8">
@@ -230,7 +306,7 @@ export default function Operations() {
               { label: 'RESPONSE TIME', value: '2.3 min', color: 'text-amber-400' },
               { label: 'AIR QUALITY (AQI)', value: airQuality?.aqi ?? 45, color: airQuality?.color ? `text-[${airQuality.color}]` : 'text-purple-400' }
             ].map((kpi, idx) => (
-              <div key={idx} className="flex flex-col">
+              <div key={idx} className={`flex flex-col ${idx === 4 ? 'col-span-2 md:col-span-1' : ''}`}>
                 <span className={`text-3xl font-black ${kpi.color}`}>
                   {kpi.value}
                 </span>
@@ -247,9 +323,9 @@ export default function Operations() {
           
           {/* COLUMN 1 — ZONE MAP */}
           <div className="flex flex-col gap-6">
-            <h3 className="text-lg font-black uppercase tracking-wider text-gray-900 border-b-2 border-gray-900 pb-2">
+            <h2 className="text-lg font-black uppercase tracking-wider text-gray-900 border-b-2 border-gray-900 pb-2">
               Crowd Status Map
-            </h3>
+            </h2>
 
             {/* Stadium Map */}
             <div className="w-full">
@@ -329,7 +405,7 @@ export default function Operations() {
 
             {/* Selected Zone Detail Card */}
             <div className="bg-gray-100 p-5 rounded-none border-l-4 border-blue-600 flex flex-col gap-2">
-              <h4 className="text-sm font-black text-gray-900 uppercase">ZONE {selectedZoneId} SUMMARY</h4>
+              <h3 className="text-sm font-black text-gray-900 uppercase">ZONE {selectedZoneId} SUMMARY</h3>
               <div className="grid grid-cols-2 gap-4 mt-2 text-xs">
                 <div>
                   <span className="text-gray-500 block uppercase font-bold text-[9px]">DENSITY</span>
@@ -355,13 +431,13 @@ export default function Operations() {
 
           {/* COLUMN 2 — LIVE CHARTS */}
           <div className="flex flex-col gap-6">
-            <h3 className="text-lg font-black uppercase tracking-wider text-gray-900 border-b-2 border-gray-900 pb-2">
+            <h2 className="text-lg font-black uppercase tracking-wider text-gray-900 border-b-2 border-gray-900 pb-2">
               Live Logistics
-            </h3>
+            </h2>
 
             {/* Card 1: Crowd Flow */}
             <div className="bg-gray-100 p-4 border border-gray-200">
-              <h4 className="font-black text-xs text-gray-900 uppercase tracking-wider mb-3">CROWD FLOW — 24H</h4>
+              <h3 className="font-black text-xs text-gray-900 uppercase tracking-wider mb-3">CROWD FLOW — 24H</h3>
               <div style={{ height: '180px' }} className="w-full">
                 <ResponsiveContainer width="100%" height={180}>
                   <AreaChart data={crowdFlow24h} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
@@ -377,7 +453,7 @@ export default function Operations() {
 
             {/* Card 2: Entry Rate */}
             <div className="bg-gray-100 p-4 border border-gray-200">
-              <h4 className="font-black text-xs text-gray-900 uppercase tracking-wider mb-3">ENTRY RATE BY GATE</h4>
+              <h3 className="font-black text-xs text-gray-900 uppercase tracking-wider mb-3">ENTRY RATE BY GATE</h3>
               <div style={{ height: '180px' }} className="w-full">
                 <ResponsiveContainer width="100%" height={180}>
                   <BarChart data={liveGates} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
@@ -394,12 +470,12 @@ export default function Operations() {
 
           {/* COLUMN 3 — ALERTS FEED */}
           <div className="flex flex-col gap-6">
-            <h3 className="text-lg font-black uppercase tracking-wider text-gray-900 border-b-2 border-gray-900 pb-2 flex items-center justify-between">
+            <h2 className="text-lg font-black uppercase tracking-wider text-gray-900 border-b-2 border-gray-900 pb-2 flex items-center justify-between">
               <span>ACTIVE ALERTS</span>
               <span className="bg-red-600 text-white rounded-full text-xs font-extrabold px-2.5 py-0.5">
                 {unresolvedAlerts.length}
               </span>
-            </h3>
+            </h2>
 
             <div className="flex flex-col gap-3 max-h-[460px] overflow-y-auto pr-1">
               <AnimatePresence>
@@ -471,15 +547,16 @@ export default function Operations() {
             {/* Left half: form inputs */}
             <div className="flex flex-col gap-6">
               <div>
-                <h3 className="text-xl font-black text-white uppercase tracking-tight">AI DECISION HELPER</h3>
+                <h2 className="text-xl font-black text-white uppercase tracking-tight">AI DECISION HELPER</h2>
                 <p className="text-xs text-gray-400 mt-1">Specify incident metadata or custom description for GenAI deployment plans.</p>
               </div>
 
               <form onSubmit={handleIncidentGenerate} className="flex flex-col gap-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Incident Type</label>
+                    <label htmlFor="incident-type-select" className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Incident Type</label>
                     <select
+                      id="incident-type-select"
                       value={incidentType}
                       onChange={(e) => setIncidentType(e.target.value)}
                       className="bg-gray-900 text-white border-0 border-b-2 border-gray-700 focus:border-blue-400 p-3 text-xs font-semibold"
@@ -493,8 +570,9 @@ export default function Operations() {
                   </div>
 
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Zone</label>
+                    <label htmlFor="incident-zone-select" className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Zone</label>
                     <select
+                      id="incident-zone-select"
                       value={incidentZone}
                       onChange={(e) => setIncidentZone(e.target.value)}
                       className="bg-gray-900 text-white border-0 border-b-2 border-gray-700 focus:border-blue-400 p-3 text-xs font-semibold"
@@ -552,7 +630,7 @@ export default function Operations() {
                     {/* REASONING */}
                     {aiReport.reasoning && (
                       <div className="border-l-4 border-amber-400 pl-3">
-                        <h4 className="text-amber-400 font-extrabold uppercase tracking-wider text-[10px] mb-1">REASONING</h4>
+                        <h3 className="text-amber-400 font-extrabold uppercase tracking-wider text-[10px] mb-1">REASONING</h3>
                         <p className="text-gray-300 leading-relaxed">{aiReport.reasoning}</p>
                       </div>
                     )}
@@ -560,7 +638,7 @@ export default function Operations() {
                     {/* CONFIDENCE */}
                     {aiReport.confidence && (
                       <div className="flex items-center gap-3">
-                        <h4 className="text-gray-400 font-extrabold uppercase tracking-wider text-[10px]">CONFIDENCE</h4>
+                        <h3 className="text-gray-400 font-extrabold uppercase tracking-wider text-[10px]">CONFIDENCE</h3>
                         <span className={`px-3 py-1 text-[10px] font-black uppercase tracking-wider border-2 ${
                           aiReport.confidence === 'High'   ? 'border-green-500 text-green-400 bg-green-950' :
                           aiReport.confidence === 'Medium' ? 'border-amber-500 text-amber-400 bg-amber-950' :
@@ -574,14 +652,14 @@ export default function Operations() {
                     {/* AI RATIONALE (legacy field) */}
                     {aiReport.rationale && !aiReport.reasoning && (
                       <div className="border-l-4 border-amber-400 pl-3">
-                        <h4 className="text-amber-400 font-extrabold uppercase tracking-wider text-[10px] mb-1">AI RATIONALE</h4>
+                        <h3 className="text-amber-400 font-extrabold uppercase tracking-wider text-[10px] mb-1">AI RATIONALE</h3>
                         <p className="text-gray-300 leading-relaxed">{aiReport.rationale}</p>
                       </div>
                     )}
 
                     {/* RECOMMENDED ACTIONS */}
                     <div>
-                      <h4 className="text-green-400 font-extrabold uppercase tracking-wider text-[10px] mb-2">Recommended Actions</h4>
+                      <h3 className="text-green-400 font-extrabold uppercase tracking-wider text-[10px] mb-2">Recommended Actions</h3>
                       <div className="space-y-1.5">
                         {aiReport.actions?.map((act, i) => (
                           <div key={i} className="flex gap-2 items-start text-gray-300">
@@ -595,7 +673,7 @@ export default function Operations() {
                     {/* ALTERNATIVE */}
                     {aiReport.alternative && (
                       <div className="border-l-4 border-purple-500 pl-3">
-                        <h4 className="text-purple-400 font-extrabold uppercase tracking-wider text-[10px] mb-1">ALTERNATIVE APPROACH</h4>
+                        <h3 className="text-purple-400 font-extrabold uppercase tracking-wider text-[10px] mb-1">ALTERNATIVE APPROACH</h3>
                         <p className="text-gray-300 leading-relaxed">{aiReport.alternative}</p>
                       </div>
                     )}
@@ -617,7 +695,7 @@ export default function Operations() {
         <div className="bg-white p-8 max-w-screen-2xl mx-auto">
           <div className="flex justify-between items-center mb-6">
             <div>
-              <h3 className="text-xl font-black text-gray-900 uppercase tracking-tight">Active Duty Steward Roster</h3>
+              <h2 className="text-xl font-black text-gray-900 uppercase tracking-tight">Active Duty Steward Roster</h2>
               <p className="text-xs text-gray-400 mt-0.5">Real-time status of the 8 nearest on-duty stewards.</p>
             </div>
           </div>

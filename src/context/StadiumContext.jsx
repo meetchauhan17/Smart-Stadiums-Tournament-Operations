@@ -34,6 +34,7 @@ import {
   fetchTodaysMatches,
   simulateCrowd,
   FALLBACK_MATCHES,
+  getFbKey,
 } from '../utils/realApis';
 
 const StadiumContext = createContext(null);
@@ -41,12 +42,21 @@ const StadiumContext = createContext(null);
 // ─── Constants ────────────────────────────────────────────────────
 const DEFAULT_VENUE_ID     = 'metlife';
 const LS_VENUE_KEY         = 'stadiumiq_venue_v2';
-const LS_API_KEY           = 'stadiumiq_cohere_key'; // Default to Cohere
+const LS_API_KEY           = 'stadiumiq_cohere_key';
 const LS_AI_PROVIDER       = 'stadiumiq_ai_provider';
 const LS_MISTRAL_KEY       = 'stadiumiq_mistral_key';
 const LS_MISTRAL_MODEL     = 'stadiumiq_mistral_model';
+const LS_FOOTBALL_KEY      = 'stadiumiq_football_key';
+const LS_HF_KEY            = 'stadiumiq_hf_key';
+const LS_HF_MODEL          = 'stadiumiq_hf_model';
 const WEATHER_REFRESH_MS   = 10 * 60 * 1000; // 10 minutes
 const AQI_REFRESH_MS       = 10 * 60 * 1000; // 10 minutes
+
+// ─── Env-first key readers ────────────────────────────────────────
+// Priority: .env (VITE_*) → localStorage → empty string
+// This allows setting keys once in .env without using the Settings modal.
+const envKey = (envVar, lsKey) =>
+  import.meta.env[envVar] || localStorage.getItem(lsKey) || '';
 const MATCH_REFRESH_MS     = 2 * 60 * 1000;  // 2 minutes
 const CROWD_REFRESH_MS     = 30 * 1000;      // 30 seconds
 
@@ -112,7 +122,8 @@ export function StadiumProvider({ children }) {
 
   // ── Venue & Occupancy ──────────────────────────────────────────
   const savedVenueId = localStorage.getItem(LS_VENUE_KEY) || DEFAULT_VENUE_ID;
-  const [currentVenueId, setCurrentVenueId] = useState(savedVenueId);
+  const verifiedVenueId = ALL_VENUES[savedVenueId] ? savedVenueId : DEFAULT_VENUE_ID;
+  const [currentVenueId, setCurrentVenueId] = useState(verifiedVenueId);
 
   const initialVenue    = ALL_VENUES[savedVenueId] || ALL_VENUES[DEFAULT_VENUE_ID];
   const [currentOccupancy, setCurrentOccupancy] = useState(
@@ -122,15 +133,19 @@ export function StadiumProvider({ children }) {
   // ── Crowd Density ──────────────────────────────────────────────
   const [crowdDensityMap, setCrowdDensityMap] = useState(INITIAL_CROWD_DENSITY);
 
-  // ── Alerts ─────────────────────────────────────────────────────
-  const [activeAlerts, setActiveAlerts] = useState(INITIAL_ALERTS);
+  // ── Alerts — start empty, only generated during active match phases ──
+  const [activeAlerts, setActiveAlerts] = useState([]);
 
   // ── Staff ──────────────────────────────────────────────────────
-  const [staffOnDuty, setStaffOnDuty] = useState(STAFF_MEMBERS);
+  const [staffOnDuty, setStaffOnDuty] = useState(
+    // Initially set all staff to off-shift — will be updated once todaysMatches loads
+    STAFF_MEMBERS.map(s => ({ ...s, status: 'off-shift' }))
+  );
 
   // ── Match Schedule ─────────────────────────────────────────────
   const [matchSchedule] = useState(MATCH_SCHEDULE);
   const [todaysMatches, setTodaysMatches] = useState(FALLBACK_MATCHES);
+  const [matchPhase, setMatchPhase] = useState('no-match');
   const [lastSimUpdated, setLastSimUpdated] = useState(new Date());
 
   // ── Sustainability ─────────────────────────────────────────────
@@ -161,10 +176,14 @@ export function StadiumProvider({ children }) {
   const [matchDayMode, setMatchDayMode] = useState(false);
 
   // ── API Configurations ──────────────────────────────────────────
-  const [cohereKey, setCohereKey] = useState(() => localStorage.getItem(LS_API_KEY) || '');
-  const [aiProvider, setAiProvider] = useState(() => localStorage.getItem(LS_AI_PROVIDER) || 'cohere');
-  const [mistralKey, setMistralKey] = useState(() => localStorage.getItem(LS_MISTRAL_KEY) || '');
-  const [mistralModel, setMistralModel] = useState(() => localStorage.getItem(LS_MISTRAL_MODEL) || 'mistral-small-latest');
+  // Env-first: reads from .env first, then localStorage, then default
+  const [cohereKey, setCohereKey] = useState(() => envKey('VITE_COHERE_API_KEY', LS_API_KEY));
+  const [aiProvider, setAiProvider] = useState(() => envKey('VITE_AI_PROVIDER', LS_AI_PROVIDER) || 'cohere');
+  const [mistralKey, setMistralKey] = useState(() => envKey('VITE_MISTRAL_API_KEY', LS_MISTRAL_KEY));
+  const [mistralModel, setMistralModel] = useState(() => envKey('VITE_MISTRAL_MODEL', LS_MISTRAL_MODEL) || 'mistral-small-latest');
+  const [footballApiKey, setFootballApiKey] = useState(() => envKey('VITE_FOOTBALL_API_KEY', LS_FOOTBALL_KEY) || getFbKey());
+  const [hfKey, setHfKey] = useState(() => envKey('VITE_HF_API_KEY', LS_HF_KEY));
+  const [hfModel, setHfModel] = useState(() => envKey('VITE_HF_MODEL', LS_HF_MODEL) || 'Qwen/Qwen2.5-72B-Instruct');
 
   // ── Notifications ──────────────────────────────────────────────
   const [notifications, setNotifications] = useState([
@@ -274,6 +293,9 @@ export function StadiumProvider({ children }) {
     return () => {
       if (weatherTimerRef.current) clearInterval(weatherTimerRef.current);
       if (aqiTimerRef.current) clearInterval(aqiTimerRef.current);
+      if (weatherAbortControllerRef.current) {
+        weatherAbortControllerRef.current.abort();
+      }
     };
   }, [currentVenueId, loadVenueRealData]);
   const addAlert = useCallback((alert) => {
@@ -326,15 +348,30 @@ export function StadiumProvider({ children }) {
   const crowdTimerRef = useRef(null);
   const lastAutoSelectedMatchIdRef = useRef(null);
 
-  const runCrowdSimulation = useCallback((venue, weather, matches) => {
+  const runCrowdSimulation = useCallback((venue, weather, matches, matchPhase) => {
     if (!venue) return;
+
+    // ── No match / post-match-done: stadium is empty ────────────────
+    // Zero-out crowd density and skip all incident generation.
+    if (matchPhase === 'no-match' || matchPhase === 'post-match-done') {
+      const emptyMap = {};
+      const zoneCapacity = Math.round(venue.capacity / 8);
+      ['A','B','C','D','E','F','G','H'].forEach(zone => {
+        // 0-2% = maintenance/cleaning crew only, no spectators
+        const density = Math.floor(Math.random() * 3);
+        emptyMap[zone] = { density, current: Math.round(zoneCapacity * density / 100), capacity: zoneCapacity, status: 'nominal' };
+      });
+      setCrowdDensityMap(emptyMap);
+      setCurrentOccupancy(Object.values(emptyMap).reduce((s, z) => s + z.current, 0));
+      setLastSimUpdated(new Date());
+      return; // ← no alerts, no simulation
+    }
+
     const densities = simulateCrowd(venue, weather, matches);
     
     let totalOccupancy = 0;
     const nextMap = {};
 
-    // O(n) single-pass zone processing — optimized for
-    // real-time crowd data processing at scale.
     const entries = Object.entries(densities);
     const zoneCapacity = Math.round(venue.capacity / 8);
     for (const [zone, density] of entries) {
@@ -352,8 +389,13 @@ export function StadiumProvider({ children }) {
     setCurrentOccupancy(totalOccupancy);
     setLastSimUpdated(new Date());
 
-    // INCIDENT PROBABILITY (based on crowd density)
-    // 1. If any zone > 85% density -> 40% chance of generating warning alert
+    // ── Incident generation: only during active match phases ───────────
+    // No crowd = no incidents. Incidents only make sense when spectators
+    // are physically present in the stadium.
+    const isActivePhase = matchPhase === 'match-day' || matchPhase === 'pre-match' || matchPhase === 'post-match';
+    if (!isActivePhase) return;
+
+    // 1. High-density crowd surge warning (only if zone > 85% AND match is active)
     for (const [zone, density] of entries) {
       if (density > 85) {
         if (Math.random() < 0.40) {
@@ -368,7 +410,7 @@ export function StadiumProvider({ children }) {
       }
     }
 
-    // 2. If weather code > 60 (rain) -> 20% chance of "Wet conditions" safety alert
+    // 2. Wet conditions safety alert (only during match phases with spectators)
     if (weather?.weatherCode > 60) {
       if (Math.random() < 0.20) {
         addAlert({
@@ -400,6 +442,118 @@ export function StadiumProvider({ children }) {
       if (matchTimerRef.current) clearInterval(matchTimerRef.current);
     };
   }, []);
+
+  // ── Match-aware staff deployment ─────────────────────────────
+  // Staff should only be on duty when there is a match at this venue.
+  // Phase logic:
+  //   'no-match'       → No match today → all staff off-shift
+  //   'pre-match-early'→ Match is 4+ hours away → supervisors only active
+  //   'pre-match'      → Match within 1–4 hours → security/ops/medical deploy
+  //   'match-day'      → Match live or within 1 hour → full deployment
+  //   'post-match'     → Match ended, within 2 hours → wind-down staff
+  //   'post-match-done'→ More than 2h after final whistle → all off-shift
+  useEffect(() => {
+    if (!todaysMatches || todaysMatches.length === 0) {
+      setStaffOnDuty(STAFF_MEMBERS.map(s => ({ ...s, status: 'off-shift' })));
+      setMatchPhase('no-match');
+      return;
+    }
+
+    const now = Date.now();
+
+    // Find the most relevant match: LIVE first, then closest upcoming, then latest finished
+    const liveMatch = todaysMatches.find(m => m.status === 'LIVE');
+    const upcomingMatches = todaysMatches
+      .filter(m => m.status === 'SCHEDULED' && new Date(m.utcDate).getTime() > now)
+      .sort((a, b) => new Date(a.utcDate).getTime() - new Date(b.utcDate).getTime());
+    const finishedMatches = todaysMatches
+      .filter(m => m.status === 'FINISHED')
+      .sort((a, b) => new Date(b.utcDate).getTime() - new Date(a.utcDate).getTime());
+
+    const referenceMatch = liveMatch || upcomingMatches[0] || finishedMatches[0];
+
+    if (!referenceMatch) {
+      setStaffOnDuty(STAFF_MEMBERS.map(s => ({ ...s, status: 'off-shift' })));
+      setMatchPhase('no-match');
+      return;
+    }
+
+    const matchTime    = new Date(referenceMatch.utcDate).getTime();
+    const hoursToMatch = (matchTime - now) / (1000 * 60 * 60);
+    const matchStatus  = referenceMatch.status;
+
+    // Determine deployment phase
+    let phase;
+    if (matchStatus === 'LIVE') {
+      phase = 'match-day';
+    } else if (matchStatus === 'FINISHED') {
+      const hoursSinceKickoff = (now - matchTime) / (1000 * 60 * 60);
+      // Assume match lasts ~2h, so "finished" is kickoff + ~2h
+      const hoursSinceEnd = hoursSinceKickoff - 2;
+      phase = hoursSinceEnd < 2 ? 'post-match' : 'post-match-done';
+    } else if (hoursToMatch <= 1) {
+      phase = 'match-day';          // match imminent — full deployment
+    } else if (hoursToMatch <= 4) {
+      phase = 'pre-match';          // 1–4h out — security/ops/medical
+    } else if (hoursToMatch <= 8) {
+      phase = 'pre-match-early';    // 4–8h out — supervisors only
+    } else {
+      phase = 'no-match';           // match is tomorrow or far away
+    }
+
+    setMatchPhase(phase);
+
+    // Role + shift weights per phase
+    // Returns { status, visible } for each staff member
+    const getStaffStatus = (member) => {
+      const { role, shift } = member;
+      switch (phase) {
+        case 'no-match':
+        case 'post-match-done':
+          return 'off-shift';
+
+        case 'pre-match-early':
+          // Only lead supervisors in the building (Level 3 certs or badge ending in -001/-002)
+          const isSupervisor = member.badge.endsWith('-001') || member.badge.endsWith('-002') ||
+            member.certifications?.some(c => c.includes('Level 3') || c.includes('MD'));
+          return isSupervisor ? 'active' : 'off-shift';
+
+        case 'pre-match':
+          // Security, medical, operations are active; volunteers arriving
+          if (role === 'Security' || role === 'Medical' || role === 'Operations') {
+            return shift === 'Relief' ? 'standby' : 'active';
+          }
+          if (role === 'Volunteer' && shift === 'Morning') return 'active';
+          return 'off-shift';
+
+        case 'match-day':
+          // Full deployment — use realistic spread from original weights
+          if (shift === 'Relief') return 'standby';
+          // Spread: mostly active, some on break or responding
+          const idx = STAFF_MEMBERS.findIndex(s => s.id === member.id);
+          const spread = ['active','active','active','active','break','responding','active'];
+          return spread[idx % spread.length];
+
+        case 'post-match':
+          // Wind down — security active for crowd exit, others finishing
+          if (role === 'Security' || role === 'Operations') return 'active';
+          if (role === 'Medical') return 'standby';
+          return 'off-shift';
+
+        default:
+          return 'off-shift';
+      }
+    };
+
+    setStaffOnDuty(
+      STAFF_MEMBERS.map(member => ({
+        ...member,
+        status: getStaffStatus(member),
+        matchPhase: phase,
+        lastUpdate: new Date().toISOString(),
+      }))
+    );
+  }, [todaysMatches]);
 
   // Auto-select venue based on match schedule
   useEffect(() => {
@@ -440,10 +594,43 @@ export function StadiumProvider({ children }) {
     const venue = ALL_VENUES[currentVenueId];
     if (!venue) return;
 
-    runCrowdSimulation(venue, weatherData, todaysMatches);
+    // Compute match phase for crowd + alert gating
+    const computePhase = (matches) => {
+      if (!matches?.length) return 'no-match';
+      const now = Date.now();
+      const live = matches.find(m => m.status === 'LIVE');
+      if (live) return 'match-day';
+      const upcoming = matches
+        .filter(m => m.status === 'SCHEDULED' && new Date(m.utcDate).getTime() > now)
+        .sort((a, b) => new Date(a.utcDate).getTime() - new Date(b.utcDate).getTime())[0];
+      if (upcoming) {
+        const h = (new Date(upcoming.utcDate).getTime() - now) / 3600000;
+        if (h <= 1)  return 'match-day';
+        if (h <= 4)  return 'pre-match';
+        if (h <= 8)  return 'pre-match-early';
+        return 'no-match';
+      }
+      const finished = matches.filter(m => m.status === 'FINISHED')
+        .sort((a, b) => new Date(b.utcDate).getTime() - new Date(a.utcDate).getTime())[0];
+      if (finished) {
+        const hSince = (now - new Date(finished.utcDate).getTime()) / 3600000 - 2;
+        return hSince < 2 ? 'post-match' : 'post-match-done';
+      }
+      return 'no-match';
+    };
+
+    const phase = computePhase(todaysMatches);
+
+    // Clear all pre-seeded/stale incidents when stadium is empty
+    if (phase === 'no-match' || phase === 'post-match-done') {
+      setActiveAlerts([]);
+    }
+
+    runCrowdSimulation(venue, weatherData, todaysMatches, phase);
 
     crowdTimerRef.current = setInterval(() => {
-      runCrowdSimulation(venue, weatherData, todaysMatches);
+      const currentPhase = computePhase(todaysMatches);
+      runCrowdSimulation(venue, weatherData, todaysMatches, currentPhase);
     }, CROWD_REFRESH_MS);
 
     return () => {
@@ -461,23 +648,42 @@ export function StadiumProvider({ children }) {
     setCurrentOccupancy(Math.round(venue.capacity * OCCUPANCY_SEED_PCT));
     localStorage.setItem(LS_VENUE_KEY, venueId);
 
-    // Regenerate crowd density using realistic model
-    const newCrowd = simulateCrowd(venue, weatherData, todaysMatches);
-    const newCrowdDensityMap = Object.fromEntries(
-      Object.entries(newCrowd).map(([zone, density]) => {
-        const zoneCapacity = Math.round(venue.capacity / 8);
-        return [
+    // Compute phase for the newly selected venue
+    const now = Date.now();
+    const live = todaysMatches?.find(m => m.status === 'LIVE');
+    const upcoming = (todaysMatches || [])
+      .filter(m => m.status === 'SCHEDULED' && new Date(m.utcDate).getTime() > now)
+      .sort((a, b) => new Date(a.utcDate).getTime() - new Date(b.utcDate).getTime())[0];
+    const hoursToNext = upcoming ? (new Date(upcoming.utcDate).getTime() - now) / 3600000 : Infinity;
+    const venuePhase = live ? 'match-day'
+      : hoursToNext <= 1 ? 'match-day'
+      : hoursToNext <= 4 ? 'pre-match'
+      : hoursToNext <= 8 ? 'pre-match-early'
+      : 'no-match';
+
+    const zoneCapacity = Math.round(venue.capacity / 8);
+
+    if (venuePhase === 'no-match' || venuePhase === 'post-match-done') {
+      // Empty stadium: 0-2% density, clear all stale incidents
+      const emptyMap = {};
+      ['A','B','C','D','E','F','G','H'].forEach(zone => {
+        const density = Math.floor(Math.random() * 3);
+        emptyMap[zone] = { density, current: Math.round(zoneCapacity * density / 100), capacity: zoneCapacity, status: 'nominal' };
+      });
+      setCrowdDensityMap(emptyMap);
+      setCurrentOccupancy(Object.values(emptyMap).reduce((s, z) => s + z.current, 0));
+      setActiveAlerts([]);
+    } else {
+      // Match venue: run full crowd simulation
+      const newCrowd = simulateCrowd(venue, weatherData, todaysMatches);
+      const newCrowdDensityMap = Object.fromEntries(
+        Object.entries(newCrowd).map(([zone, density]) => [
           zone,
-          {
-            density,
-            current: Math.round(zoneCapacity * (density / 100)),
-            capacity: zoneCapacity,
-            status: density >= 85 ? 'critical' : density >= 60 ? 'warning' : 'nominal'
-          }
-        ];
-      })
-    );
-    setCrowdDensityMap(newCrowdDensityMap);
+          { density, current: Math.round(zoneCapacity * (density / 100)), capacity: zoneCapacity, status: density >= 85 ? 'critical' : density >= 60 ? 'warning' : 'nominal' }
+        ])
+      );
+      setCrowdDensityMap(newCrowdDensityMap);
+    }
   }, [weatherData, todaysMatches, toast]);
 
 
@@ -537,7 +743,7 @@ export function StadiumProvider({ children }) {
     localStorage.setItem(LS_API_KEY, key.trim());
   }, []);
 
-  const saveSettings = useCallback(({ provider, cohereKeyVal, mistralKeyVal, mistralModelVal }) => {
+  const saveSettings = useCallback(({ provider, cohereKeyVal, mistralKeyVal, mistralModelVal, hfKeyVal, hfModelVal }) => {
     if (provider) {
       setAiProvider(provider);
       localStorage.setItem(LS_AI_PROVIDER, provider);
@@ -554,6 +760,20 @@ export function StadiumProvider({ children }) {
       setMistralModel(mistralModelVal);
       localStorage.setItem(LS_MISTRAL_MODEL, mistralModelVal.trim());
     }
+    if (hfKeyVal !== undefined) {
+      setHfKey(hfKeyVal);
+      localStorage.setItem(LS_HF_KEY, hfKeyVal.trim());
+    }
+    if (hfModelVal !== undefined) {
+      setHfModel(hfModelVal);
+      localStorage.setItem(LS_HF_MODEL, hfModelVal.trim());
+    }
+  }, []);
+
+  const saveFootballApiKey = useCallback((key) => {
+    const trimmed = (key || '').trim();
+    setFootballApiKey(trimmed);
+    localStorage.setItem(LS_FOOTBALL_KEY, trimmed);
   }, []);
 
   const toggleSidebar      = useCallback(() => setSidebarOpen(v  => !v), []);
@@ -600,6 +820,7 @@ export function StadiumProvider({ children }) {
     matchSchedule,
     currentMatchAtVenue,
     todaysMatches,
+    matchPhase,
     lastSimUpdated,
 
     // ── Sustainability ──
@@ -644,8 +865,18 @@ export function StadiumProvider({ children }) {
     aiProvider,
     mistralKey,
     mistralModel,
+    hfKey,
+    hfModel,
     saveSettings,
-    isAIConfigured: Boolean(aiProvider === 'mistral' ? mistralKey : (aiProvider === 'cohere' ? cohereKey : false)),
+    isAIConfigured: Boolean(
+      aiProvider === 'mistral' ? mistralKey : 
+      aiProvider === 'huggingface' ? hfKey : 
+      aiProvider === 'cohere' ? cohereKey : false
+    ),
+
+    // ── Football API ──
+    footballApiKey,
+    saveFootballApiKey,
 
     // ── Actions ──
     switchVenue,

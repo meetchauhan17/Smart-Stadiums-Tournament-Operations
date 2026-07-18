@@ -4,7 +4,57 @@ import react from '@vitejs/plugin-react'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  optimizeDeps: {
+    include: [
+      'react',
+      'react-dom',
+      'react-router-dom',
+      'recharts',
+      'framer-motion',
+      'lucide-react',
+      'i18next',
+      'react-i18next'
+    ],
+  },
+  css: {
+    devSourcemap: false
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router-dom')) {
+              return 'vendor-react';
+            }
+            if (id.includes('recharts') || id.includes('d3')) {
+              return 'vendor-charts';
+            }
+            if (id.includes('framer-motion')) {
+              return 'vendor-motion';
+            }
+            return 'vendor-others';
+          }
+        }
+      }
+    }
+  },
   server: {
+    warmup: {
+      clientFiles: [
+        './src/main.jsx',
+        './src/App.jsx',
+        './src/pages/LiveMatches.jsx',
+        './src/pages/Operations.jsx',
+        './src/pages/Staff.jsx',
+        './src/pages/Sustainability.jsx',
+        './src/pages/Fan.jsx'
+      ]
+    },
+    watch: {
+      usePolling: false,
+      ignored: ['**/node_modules/**', '**/.git/**']
+    },
     proxy: {
       '/hf-api': {
         target: 'https://api-inference.huggingface.co',
@@ -22,6 +72,14 @@ export default defineConfig({
         target: 'https://api.cohere.com',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/cohere-api/, ''),
+        secure: true,
+      },
+      // football-data.org proxy — avoids CORS in dev, also passes response
+      // headers (X-Requests-Available, X-RequestCounter-Reset) through correctly
+      '/football-api': {
+        target: 'https://api.football-data.org',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/football-api/, ''),
         secure: true,
       },
     },

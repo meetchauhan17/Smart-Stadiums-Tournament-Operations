@@ -15,6 +15,7 @@ const Fan            = lazy(() => import('./pages/Fan'));
 const Operations     = lazy(() => import('./pages/Operations'));
 const Staff          = lazy(() => import('./pages/Staff'));
 const Sustainability = lazy(() => import('./pages/Sustainability'));
+const LiveMatches    = lazy(() => import('./pages/LiveMatches'));
 
 // ─── Animated Routes ──────────────────────────────────────────────
 function AnimatedRoutes() {
@@ -28,6 +29,7 @@ function AnimatedRoutes() {
         <Route path="/operations"    element={<Operations />}     />
         <Route path="/staff"         element={<Staff />}          />
         <Route path="/sustainability" element={<Sustainability />} />
+        <Route path="/live-matches"  element={<LiveMatches />}    />
       </Routes>
     </AnimatePresence>
   );

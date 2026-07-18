@@ -735,14 +735,14 @@ export const FAN_SATISFACTION_BREAKDOWN = {
 // 13. LIVE TICKER ITEMS
 // ═══════════════════════════════════════════════════════════════
 export const LIVE_TICKER_ITEMS = [
-  '🏟️ MetLife Stadium — Brazil vs Argentina | Kickoff in 2:34:00',
-  '🎟️ 82,500 tickets sold — SOLD OUT',
-  '⚡ AI Alert: Gate D throughput at 104% — 3 additional stewards deployed',
-  '🌱 Solar generation today: 1,840 kWh — 92% of daily target',
-  '🍔 Fastest queue: Concourse 1 Stand A2 — est. 2 min wait',
-  '🚗 Parking Lots P3 & P5 FULL — P7 at 60% capacity',
-  '🌡️ Current temp: 24°C | Partly Cloudy | Wind: 14 km/h SW',
-  '📱 Download the FIFA 2026 App for live updates and AR wayfinding',
-  '♿ Accessibility shuttle running every 8 min from Gate D',
-  '🏥 Medical posts at Gates B, D, F — staffed 24/7',
+  '[VENUE] MetLife Stadium — Brazil vs Argentina | Kickoff in 2:34:00',
+  '[TICKET] 82,500 tickets sold — SOLD OUT',
+  '[AI ALERT] Gate D throughput at 104% — 3 additional stewards deployed',
+  '[SOLAR] Solar generation today: 1,840 kWh — 92% of daily target',
+  '[FOOD] Fastest queue: Concourse 1 Stand A2 — est. 2 min wait',
+  '[PARKING] Parking Lots P3 & P5 FULL — P7 at 60% capacity',
+  '[WEATHER] Current temp: 24°C | Partly Cloudy | Wind: 14 km/h SW',
+  '[MOBILE] Download the FIFA 2026 App for live updates and AR wayfinding',
+  '[ACCESS] Accessibility shuttle running every 8 min from Gate D',
+  '[MEDICAL] Medical posts at Gates B, D, F — staffed 24/7',
 ];

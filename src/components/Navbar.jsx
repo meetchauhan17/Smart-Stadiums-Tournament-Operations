@@ -118,10 +118,13 @@ function VenueDropdown() {
 
 // ─── Navbar Export ───
 export default function Navbar() {
-  const { toggleSettings } = useStadium();
+  const { toggleSettings, todaysMatches, tickerItems } = useStadium();
   const location = useLocation();
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  // Derive live match indicator
+  const hasLiveMatch = (todaysMatches || []).some(m => m.status === 'LIVE');
 
   useEffect(() => {
     setMobileOpen(false);
@@ -133,24 +136,42 @@ export default function Navbar() {
   };
 
   const NAV_LINKS = [
-    { to: '/', label: 'Overview' },
-    { to: '/fan', label: 'Fans' },
-    { to: '/operations', label: 'Operations' },
-    { to: '/staff', label: 'Staff' },
-    { to: '/sustainability', label: 'Sustainability' },
+    { to: '/',             label: 'Overview' },
+    { to: '/fan',          label: 'Fans' },
+    { to: '/operations',   label: 'Operations' },
+    { to: '/staff',        label: 'Staff' },
+    { to: '/sustainability',label: 'Sustainability' },
+    { to: '/live-matches', label: 'Live Matches', isLive: true },
   ];
 
   return (
     <>
+      {/* Styles for scrolling marquee */}
+      <style>{`
+        @keyframes marquee-scroll {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
+        }
+        .animate-marquee-scroll {
+          display: flex;
+          width: max-content;
+          animation: marquee-scroll 45s linear infinite;
+        }
+        .animate-marquee-scroll:hover {
+          animation-play-state: paused;
+        }
+      `}</style>
+
+      {/* Main Top Nav */}
       <nav className="fixed top-0 left-0 right-0 z-50 h-[72px] bg-white border-b-2 border-gray-900">
         <div className="h-full max-w-screen-2xl mx-auto px-6 flex items-center justify-between">
           
           {/* Left: Logo */}
           <Link to="/" className="flex items-center gap-1.5 shrink-0 select-none">
             <span className="font-black text-2xl tracking-tight text-gray-950 uppercase">
-              STADIUM<span className="text-blue-600">IQ</span>
+              STADIUM<span className="text-blue-700">IQ</span>
             </span>
-            <span className="bg-blue-600 text-white text-xs font-bold px-2 py-0.5 rounded-sm ml-1">
+            <span className="bg-blue-700 text-white text-xs font-bold px-2 py-0.5 rounded-sm ml-1">
               2026
             </span>
           </Link>
@@ -158,19 +179,22 @@ export default function Navbar() {
           {/* Center: Desktop Nav Links (Hidden on mobile) */}
           <div className="hidden lg:flex items-center justify-center flex-1 h-full">
             <nav className="flex items-center h-full gap-1">
-              {NAV_LINKS.map(({ to, label }) => {
+              {NAV_LINKS.map(({ to, label, isLive }) => {
                 const active = isActive(to);
                 return (
                   <Link
                     key={to}
                     to={to}
-                    className={`relative flex items-center justify-center px-5 h-full text-sm font-semibold tracking-wider uppercase transition-colors duration-150 ${
+                    className={`relative flex items-center justify-center gap-1.5 px-5 h-full text-sm font-semibold tracking-wider uppercase transition-colors duration-150 ${
                       active
-                        ? 'text-blue-600 border-b-2 border-blue-600'
+                        ? 'text-blue-700 border-b-2 border-blue-700'
                         : 'text-gray-600 hover:text-gray-900'
                     }`}
                   >
                     {label}
+                    {isLive && hasLiveMatch && (
+                      <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse shrink-0" />
+                    )}
                   </Link>
                 );
               })}
@@ -202,6 +226,26 @@ export default function Navbar() {
         </div>
       </nav>
 
+      {/* Infinite scrolling ticker below navbar */}
+      <div className="fixed top-[72px] left-0 right-0 z-40 h-8 bg-gray-900 border-b-2 border-gray-900 overflow-hidden flex items-center select-none">
+        <div className="animate-marquee-scroll flex gap-16 text-white font-black text-[10px] uppercase tracking-wider items-center">
+          {/* First loop */}
+          {tickerItems?.map((item, idx) => (
+            <div key={`t1-${idx}`} className="flex items-center gap-3 shrink-0">
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
+              <span>{item}</span>
+            </div>
+          ))}
+          {/* Second loop (for seamless infinite crawl) */}
+          {tickerItems?.map((item, idx) => (
+            <div key={`t2-${idx}`} className="flex items-center gap-3 shrink-0">
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
+              <span>{item}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* Mobile Menu Dropdown */}
       <AnimatePresence>
         {mobileOpen && (
@@ -221,20 +265,23 @@ export default function Navbar() {
               className="fixed top-[72px] left-0 right-0 z-50 bg-white border-b-2 border-gray-900 flex flex-col p-6 gap-4"
             >
               <div className="flex flex-col gap-2">
-                {NAV_LINKS.map(({ to, label }) => {
+                {NAV_LINKS.map(({ to, label, isLive }) => {
                   const active = isActive(to);
                   return (
                     <Link
                       key={to}
                       to={to}
                       onClick={() => setMobileOpen(false)}
-                      className={`px-4 py-3 text-sm font-bold uppercase tracking-wider border-2 border-gray-900 ${
+                      className={`px-4 py-3 text-sm font-bold uppercase tracking-wider border-2 border-gray-900 flex items-center justify-between ${
                         active
-                          ? 'bg-blue-600 text-white border-blue-700'
+                          ? 'bg-blue-700 text-white border-blue-800'
                           : 'text-gray-900 bg-gray-50 hover:bg-gray-100'
                       }`}
                     >
                       {label}
+                      {isLive && hasLiveMatch && (
+                        <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse" />
+                      )}
                     </Link>
                   );
                 })}

@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Key, ShieldCheck, ShieldAlert, Cpu, Sliders } from 'lucide-react';
+import { X, Key, ShieldCheck, ShieldAlert, Cpu, Sliders, Wifi, WifiOff, Trophy } from 'lucide-react';
 import { useStadium } from '../context/StadiumContext';
 import { useState, useEffect } from 'react';
 
@@ -18,12 +18,22 @@ export default function SettingsModal() {
     mistralKey: ctxMistralKey,
     mistralModel: ctxMistralModel,
     saveSettings,
+    footballApiKey: ctxFootballKey,
+    saveFootballApiKey,
+    hfKey: ctxHfKey,
+    hfModel: ctxHfModel,
   } = useStadium();
 
   const [provider, setProvider] = useState(ctxAiProvider || 'cohere');
   const [cohereKey, setCohereKey] = useState(ctxCohereKey || '');
   const [mistralKey, setMistralKey] = useState(ctxMistralKey || '');
   const [mistralModel, setMistralModel] = useState(ctxMistralModel || 'mistral-small-latest');
+  const [fbKey, setFbKey] = useState(ctxFootballKey || '');
+  const [fbTestStatus, setFbTestStatus] = useState(null);
+  const [fbTesting, setFbTesting] = useState(false);
+
+  const [hfKey, setHfKey] = useState(ctxHfKey || '');
+  const [hfModel, setHfModel] = useState(ctxHfModel || 'Qwen/Qwen2.5-72B-Instruct');
 
   const [testStatus, setTestStatus] = useState(null);
   const [isTesting, setIsTesting] = useState(false);
@@ -35,9 +45,13 @@ export default function SettingsModal() {
       setCohereKey(ctxCohereKey || '');
       setMistralKey(ctxMistralKey || '');
       setMistralModel(ctxMistralModel || 'mistral-small-latest');
+      setFbKey(ctxFootballKey || '');
+      setHfKey(ctxHfKey || '');
+      setHfModel(ctxHfModel || 'Qwen/Qwen2.5-72B-Instruct');
       setTestStatus(null);
+      setFbTestStatus(null);
     }
-  }, [settingsOpen, ctxAiProvider, ctxCohereKey, ctxMistralKey, ctxMistralModel]);
+  }, [settingsOpen, ctxAiProvider, ctxCohereKey, ctxMistralKey, ctxMistralModel, ctxFootballKey, ctxHfKey, ctxHfModel]);
 
   if (!settingsOpen) return null;
 
@@ -51,6 +65,9 @@ export default function SettingsModal() {
     } else if (provider === 'mistral') {
       localStorage.setItem('stadiumiq_mistral_key', mistralKey);
       localStorage.setItem('stadiumiq_mistral_model', mistralModel);
+    } else if (provider === 'huggingface') {
+      localStorage.setItem('stadiumiq_hf_key', hfKey);
+      localStorage.setItem('stadiumiq_hf_model', hfModel);
     }
 
     saveSettings({
@@ -58,7 +75,13 @@ export default function SettingsModal() {
       cohereKeyVal: cohereKey,
       mistralKeyVal: mistralKey,
       mistralModelVal: mistralModel,
+      hfKeyVal: hfKey,
+      hfModelVal: hfModel,
     });
+
+    // Save football API key
+    saveFootballApiKey(fbKey);
+
     setSettingsOpen(false);
   };
 
@@ -68,9 +91,12 @@ export default function SettingsModal() {
       cohereKeyVal: provider === 'cohere' ? '' : cohereKey,
       mistralKeyVal: provider === 'mistral' ? '' : mistralKey,
       mistralModelVal: provider === 'mistral' ? 'mistral-small-latest' : mistralModel,
+      hfKeyVal: provider === 'huggingface' ? '' : hfKey,
+      hfModelVal: provider === 'huggingface' ? 'Qwen/Qwen2.5-72B-Instruct' : hfModel,
     });
     if (provider === 'cohere') setCohereKey('');
     if (provider === 'mistral') setMistralKey('');
+    if (provider === 'huggingface') setHfKey('');
     setTestStatus(null);
   };
 
@@ -136,6 +162,35 @@ export default function SettingsModal() {
         } else {
           setTestStatus({ success: false, message: `Failed: Unexpected response: ${reply}` });
         }
+      } else if (provider === 'huggingface') {
+        const hfEndpoint = import.meta.env.MODE === 'development'
+          ? '/hf-api/v1/chat/completions'
+          : 'https://api-inference.huggingface.co/v1/chat/completions';
+          
+        const res = await fetch(hfEndpoint, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${hfKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: hfModel || 'Qwen/Qwen2.5-72B-Instruct',
+            max_tokens: 50,
+            temperature: 0.1,
+            messages: [{ role: 'user', content: "Reply with just the word OK" }],
+          })
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err?.error?.message || err?.error || `HTTP ${res.status}`);
+        }
+        const data = await res.json();
+        const reply = data?.choices?.[0]?.message?.content || '';
+        if (reply.includes('OK') || reply.trim().length > 0) {
+          setTestStatus({ success: true, message: 'Connected — Hugging Face Serverless API responding' });
+        } else {
+          setTestStatus({ success: false, message: `Failed: Empty or invalid response` });
+        }
       }
     } catch (e) {
       setTestStatus({ success: false, message: `Failed: ${e.message}` });
@@ -145,7 +200,36 @@ export default function SettingsModal() {
   };
 
   const isCurrentConfigured = (provider === 'cohere' && Boolean(cohereKey)) || 
-                              (provider === 'mistral' && Boolean(mistralKey));
+                              (provider === 'mistral' && Boolean(mistralKey)) ||
+                              (provider === 'huggingface' && Boolean(hfKey));
+
+  // ── Football-Data.org key test ──────────────────────────────
+  const handleTestFbKey = async () => {
+    if (!fbKey.trim()) return;
+    setFbTesting(true);
+    setFbTestStatus(null);
+    try {
+      const endpoint = import.meta.env.MODE === 'development'
+        ? '/football-api/v4/competitions/WC'
+        : 'https://api.football-data.org/v4/competitions/WC';
+      const res = await fetch(endpoint, {
+        headers: { 'X-Auth-Token': fbKey.trim() },
+        signal: AbortSignal.timeout(8000),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setFbTestStatus({ success: true, message: `Connected ✅ — ${data.name || 'FIFA World Cup 2026'}` });
+      } else if (res.status === 403) {
+        setFbTestStatus({ success: false, message: 'Invalid API key — check your football-data.org token' });
+      } else {
+        setFbTestStatus({ success: false, message: `HTTP ${res.status} — ${res.statusText}` });
+      }
+    } catch (e) {
+      setFbTestStatus({ success: false, message: `Connection failed: ${e.message}` });
+    } finally {
+      setFbTesting(false);
+    }
+  };
 
   return (
     <AnimatePresence>
@@ -175,10 +259,11 @@ export default function SettingsModal() {
           <form onSubmit={handleSave} className="flex flex-col gap-4">
             {/* Provider Selector */}
             <div className="flex flex-col gap-2">
-              <label className="text-xs font-black uppercase tracking-wider text-gray-700 flex items-center gap-1.5">
+              <label htmlFor="ai-provider-select" className="text-xs font-black uppercase tracking-wider text-gray-700 flex items-center gap-1.5">
                 <Sliders size={14} className="text-blue-600" /> AI Provider
               </label>
               <select
+                id="ai-provider-select"
                 value={provider}
                 onChange={(e) => {
                   setProvider(e.target.value);
@@ -188,6 +273,7 @@ export default function SettingsModal() {
               >
                 <option value="cohere">Cohere (Recommended — 1000 free/month)</option>
                 <option value="mistral">Mistral AI (Free tier)</option>
+                <option value="huggingface">Hugging Face (Free Open-Source models)</option>
                 <option value="demo">Demo Mode (no API key needed)</option>
               </select>
             </div>
@@ -253,10 +339,11 @@ export default function SettingsModal() {
                 </div>
 
                 <div className="flex flex-col gap-2">
-                  <label className="text-xs font-black uppercase tracking-wider text-gray-700">
+                  <label htmlFor="mistral-model-select" className="text-xs font-black uppercase tracking-wider text-gray-700">
                     Model selector
                   </label>
                   <select
+                    id="mistral-model-select"
                     value={mistralModel}
                     onChange={(e) => setMistralModel(e.target.value)}
                     className="w-full border-2 border-gray-900 p-3 rounded-none text-base font-bold text-gray-900 focus:outline-none focus:border-blue-600 bg-white"
@@ -265,6 +352,52 @@ export default function SettingsModal() {
                       <option key={m.value} value={m.value}>{m.label}</option>
                     ))}
                   </select>
+                </div>
+              </>
+            )}
+
+            {provider === 'huggingface' && (
+              <>
+                <div className="flex flex-col gap-2">
+                  <label className="text-xs font-black uppercase tracking-wider text-gray-700 flex items-center gap-1.5">
+                    <Key size={14} className="text-blue-600" /> HUGGING FACE TOKEN
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="password"
+                      value={hfKey}
+                      onChange={(e) => setHfKey(e.target.value)}
+                      placeholder="Enter Hugging Face token..."
+                      className="w-full border-2 border-gray-900 p-3 rounded-none text-base font-bold text-gray-900 focus:outline-none focus:border-blue-600 bg-white"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleTest}
+                      disabled={!hfKey || isTesting}
+                      className="px-4 py-3 bg-blue-600 text-white font-black uppercase tracking-wider border-2 border-blue-600 hover:bg-blue-700 transition-colors disabled:opacity-50"
+                    >
+                      {isTesting ? '...' : 'Test'}
+                    </button>
+                  </div>
+                  <p className="text-[10px] text-gray-500 font-semibold leading-relaxed">
+                    Free token at huggingface.co/settings/tokens — Serverless Inference API
+                  </p>
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <label className="text-xs font-black uppercase tracking-wider text-gray-700">
+                    Open-Source Model ID
+                  </label>
+                  <input
+                    type="text"
+                    value={hfModel}
+                    onChange={(e) => setHfModel(e.target.value)}
+                    placeholder="Qwen/Qwen2.5-72B-Instruct"
+                    className="w-full border-2 border-gray-900 p-3 rounded-none text-base font-bold text-gray-900 focus:outline-none focus:border-blue-600 bg-white"
+                  />
+                  <p className="text-[10px] text-blue-600 font-semibold leading-relaxed">
+                    Popular options: Qwen/Qwen2.5-72B-Instruct, mistralai/Mistral-7B-Instruct-v0.3
+                  </p>
                 </div>
               </>
             )}
@@ -286,16 +419,24 @@ export default function SettingsModal() {
 
             {/* Connection Status Panel */}
             <div className={`p-4 border-2 flex items-start gap-3 ${
-              (provider === 'cohere' && ctxCohereKey) || (provider === 'mistral' && ctxMistralKey)
+              (provider === 'cohere' && ctxCohereKey) || 
+              (provider === 'mistral' && ctxMistralKey) ||
+              (provider === 'huggingface' && ctxHfKey)
                 ? 'bg-green-50 border-green-200 text-green-800'
                 : 'bg-amber-50 border-amber-200 text-amber-800'
             }`}>
-              {((provider === 'cohere' && ctxCohereKey) || (provider === 'mistral' && ctxMistralKey)) ? (
+              {((provider === 'cohere' && ctxCohereKey) || 
+                (provider === 'mistral' && ctxMistralKey) ||
+                (provider === 'huggingface' && ctxHfKey)) ? (
                 <>
                   <ShieldCheck size={20} className="text-green-600 shrink-0 mt-0.5" />
                   <div>
                     <p className="text-xs font-black uppercase tracking-wide">
-                      AI STATUS: CONNECTED — {provider === 'cohere' ? 'Cohere command-r-08-2024 active' : 'Mistral AI active'}
+                      AI STATUS: CONNECTED — {
+                        provider === 'cohere' ? 'Cohere command-r-08-2024 active' : 
+                        provider === 'mistral' ? `Mistral AI (${ctxMistralModel}) active` :
+                        `Hugging Face (${ctxHfModel || 'Qwen'}) active`
+                      }
                     </p>
                   </div>
                 </>
@@ -307,6 +448,46 @@ export default function SettingsModal() {
                   </div>
                 </>
               )}
+            </div>
+
+            {/* ── Football Data API Key Section ─────────────────── */}
+            <div className="border-t-2 border-gray-200 pt-4 flex flex-col gap-2">
+              <label className="text-xs font-black uppercase tracking-wider text-gray-700 flex items-center gap-1.5">
+                <Trophy size={14} className="text-gray-900 shrink-0" /> Football API Key <span className="text-[9px] text-green-600 font-bold normal-case ml-1">(football-data.org — free)</span>
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="password"
+                  value={fbKey}
+                  onChange={(e) => setFbKey(e.target.value)}
+                  placeholder="Your football-data.org token..."
+                  className="w-full border-2 border-gray-900 p-3 rounded-none text-sm font-bold text-gray-900 focus:outline-none focus:border-green-600 bg-white font-mono"
+                />
+                <button
+                  type="button"
+                  onClick={handleTestFbKey}
+                  disabled={!fbKey || fbTesting}
+                  className="px-4 py-3 bg-green-600 text-white font-black uppercase tracking-wider border-2 border-green-700 hover:bg-green-700 transition-colors disabled:opacity-50 cursor-pointer shrink-0"
+                >
+                  {fbTesting ? '...' : 'Test'}
+                </button>
+              </div>
+              {fbTestStatus && (
+                <div className={`p-2.5 border-2 ${fbTestStatus.success ? 'bg-green-50 border-green-200 text-green-800' : 'bg-red-50 border-red-200 text-red-800'}`}>
+                  <p className="text-xs font-bold">{fbTestStatus.success ? `✅ ${fbTestStatus.message}` : `❌ ${fbTestStatus.message}`}</p>
+                </div>
+              )}
+              <div className={`p-3 border-2 flex items-center gap-2 ${
+                ctxFootballKey ? 'bg-green-50 border-green-200 text-green-800' : 'bg-gray-50 border-gray-200 text-gray-600'
+              }`}>
+                {ctxFootballKey
+                  ? <><Wifi size={14} className="text-green-600 shrink-0" /><p className="text-xs font-black uppercase tracking-wide">Football API: LIVE — WC 2026 data active</p></>
+                  : <><WifiOff size={14} className="text-gray-400 shrink-0" /><p className="text-xs font-bold">No key saved — demo matches used in Live Match Center</p></>
+                }
+              </div>
+              <p className="text-[10px] text-gray-400 font-semibold">
+                Free at <a href="https://www.football-data.org/client/register" target="_blank" rel="noreferrer" className="text-blue-600 underline font-bold">football-data.org</a> · 10 req/min · No credit card required
+              </p>
             </div>
 
             <div className="flex justify-between items-center gap-4 mt-2">

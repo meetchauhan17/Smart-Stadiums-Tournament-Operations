@@ -59,7 +59,7 @@ function parseTone(raw) {
 }
 
 export default function Fan() {
-  const { currentVenue, currentMatchAtVenue, todaysMatches } = useStadium();
+  const { currentVenue, currentMatchAtVenue, todaysMatches, matchPhase } = useStadium();
   const [selectedLanguage, setSelectedLanguage] = useState('English');
   const [profile, setProfile] = useState({ name: 'Alex Mercer', section: 'Zone E', row: 'G', seat: '14', zone: 'E' });
   
@@ -85,14 +85,19 @@ export default function Fan() {
   const activeMatch = todaysMatches?.find(m => 
     m.venue === currentVenue.name || m.venue === currentVenue.city
   );
+  
+  const isMatchActive = matchPhase !== 'no-match' && matchPhase !== 'post-match-done';
+
   const matchInfoStr = activeMatch 
     ? `${activeMatch.homeTeam.name} vs ${activeMatch.awayTeam.name} (${activeMatch.status})` 
-    : `${currentMatchAtVenue.homeTeam.name} vs ${currentMatchAtVenue.awayTeam.name}`;
+    : isMatchActive 
+    ? `${currentMatchAtVenue.homeTeam.name} vs ${currentMatchAtVenue.awayTeam.name}`
+    : 'No Active Match Today';
 
   const fanSystemPrompt = `You are a friendly FIFA World Cup 2026 Fan Assistant at ${currentVenue.name}.
-Current Match: ${matchInfoStr}.
+${isMatchActive ? `Current Match: ${matchInfoStr}.` : 'No match is currently scheduled here today. Seating areas and food stalls are closed.'}
 Language rule: ALWAYS respond in ${selectedLanguage}.
-You help fans with seating, directions, food, services, and general match info. Keep responses under 100 words.`;
+You help fans with seating, directions, food, services, and general info. ${isMatchActive ? '' : 'Inform them politely that the venue is currently quiet/closed today and offer stadium tour info.'} Keep responses under 100 words.`;
 
   const { messages, sendMessage, isLoading } = useAI(fanSystemPrompt);
   const [chatInput, setChatInput] = useState('');
@@ -104,10 +109,16 @@ You help fans with seating, directions, food, services, and general match info. 
 
   useEffect(() => {
     const t = setInterval(() => {
-      setFacilities(prev => prev.map(f => ({ ...f, wait: Math.max(0, f.wait + Math.floor((Math.random() - 0.5) * 4)) })));
+      setFacilities(prev => prev.map(f => {
+        if (!isMatchActive) {
+          // Off-match baseline: zero or one minute queue wait
+          return { ...f, wait: Math.random() > 0.8 ? 1 : 0 };
+        }
+        return { ...f, wait: Math.max(0, f.wait + Math.floor((Math.random() - 0.5) * 4)) };
+      }));
     }, 6000);
     return () => clearInterval(t);
-  }, []);
+  }, [isMatchActive]);
 
   const generateDirections = async (destination) => {
     if (!destination) return;
@@ -157,16 +168,16 @@ You help fans with seating, directions, food, services, and general match info. 
 
   return (
     <PageTransition>
-      <div className="pt-20 bg-gray-50 min-h-screen">
+      <div className="pt-28 bg-gray-50 min-h-screen">
         
         {/* HEADER (bg-blue-600, p-8) */}
         <div className="bg-blue-600 text-white p-8 border-b-2 border-gray-900">
           <div className="max-w-screen-2xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="flex flex-col gap-2">
-              <h1 className="text-5xl font-black uppercase tracking-tight">
+              <h1 className="text-3xl md:text-5xl font-black uppercase tracking-tight">
                 FAN HUB
               </h1>
-              <p className="text-blue-200 text-xl font-semibold">
+              <p className="text-blue-200 text-base md:text-xl font-semibold">
                 {currentVenue.name}
               </p>
             </div>
@@ -237,6 +248,21 @@ You help fans with seating, directions, food, services, and general match info. 
           </div>
         </div>
 
+        {/* Off-Match Alert Banner */}
+        {!isMatchActive && (
+          <div className="bg-amber-50 border-b border-amber-200 py-3.5 px-6">
+            <div className="max-w-screen-2xl mx-auto flex items-start gap-2.5">
+              <Info size={16} className="text-amber-600 shrink-0 mt-0.5" />
+              <div>
+                <h4 className="text-xs font-black text-amber-800 uppercase tracking-wider">OFF-MATCH PERIOD</h4>
+                <p className="text-xs text-amber-700 mt-0.5">
+                  There are no live World Cup matches at <strong>{currentVenue.name}</strong> right now. Facilities wait times are idle and AI Assistant mode has been set to Stadium Tours / General Inquiries.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* CONTENT PANELS */}
         <div className="max-w-screen-2xl mx-auto">
           <AnimatePresence mode="wait">
@@ -271,8 +297,9 @@ You help fans with seating, directions, food, services, and general match info. 
 
                   {/* Your Zone select dropdown */}
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">YOUR ZONE</label>
+                    <label htmlFor="fan-zone-select" className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">YOUR ZONE</label>
                     <select
+                      id="fan-zone-select"
                       value={profile.section.replace('Zone ', '')}
                       onChange={(e) => {
                         const val = validateInput(e.target.value, 'zone');
@@ -297,8 +324,9 @@ You help fans with seating, directions, food, services, and general match info. 
 
                   <div className="flex flex-col gap-4">
                     <div className="flex flex-col gap-2">
-                      <span className="text-sm uppercase tracking-widest font-bold text-gray-500 mb-2">WHERE TO?</span>
+                      <label htmlFor="fan-destination-select" className="text-sm uppercase tracking-widest font-bold text-gray-500 mb-2">WHERE TO?</label>
                       <select
+                        id="fan-destination-select"
                         value={navDestination}
                         onChange={(e) => setNavDestination(e.target.value)}
                         className="border-2 border-gray-900 p-4 rounded-none w-full text-lg font-bold bg-white text-gray-900"

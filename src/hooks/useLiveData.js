@@ -45,6 +45,7 @@ export function useLiveData() {
   const {
     isLiveMode,
     matchDayMode,
+    matchPhase,
     crowdDensityMap,
     activeAlerts,
     staffOnDuty,
@@ -95,6 +96,14 @@ export function useLiveData() {
     let timerId;
 
     const triggerNextAlertCycle = () => {
+      // Gate incident alerts: No alerts if there is no match or the match is concluded
+      const isMatchActive = matchPhase !== 'no-match' && matchPhase !== 'post-match-done';
+      if (!isMatchActive) {
+        // Try again in 30 seconds to see if a match starts
+        timerId = setTimeout(triggerNextAlertCycle, 30000);
+        return;
+      }
+
       // 30% chance of generating a new alert (higher in match day mode)
       const triggerChance = matchDayMode ? 0.45 : 0.3;
       if (Math.random() < triggerChance) {
@@ -174,7 +183,7 @@ export function useLiveData() {
       clearTimeout(timerId);
       Object.values(autoResolveTimeouts.current).forEach(clearTimeout);
     };
-  }, [isLiveMode, matchDayMode, setActiveAlerts, setNotifications]);
+  }, [isLiveMode, matchDayMode, matchPhase, setActiveAlerts, setNotifications]);
 
   // ═══════════════════════════════════════════════════════════════════
   //  3. STAFF STATUS SIMULATION
@@ -185,19 +194,27 @@ export function useLiveData() {
     const staffInterval = matchDayMode ? 6000 : 30000;
 
     const interval = setInterval(() => {
-      const prev = staffRef.current;
-      const maxOnBreak = Math.floor(prev.length * 0.15);
-      const currentOnBreak = prev.filter((s) => s.status === 'break').length;
+      const allStaff = staffRef.current;
+      // Filter out off-shift staff members — we only simulate active / on-break members
+      const activeStaffList = allStaff.filter(s => s.status !== 'off-shift' && s.status !== 'standby');
+      if (activeStaffList.length === 0) return;
 
-      const randIdx = Math.floor(Math.random() * prev.length);
-      const targetStaff = prev[randIdx];
+      const maxOnBreak = Math.floor(activeStaffList.length * 0.25);
+      const currentOnBreak = activeStaffList.filter((s) => s.status === 'break').length;
 
-      const next = [...prev];
+      const randIdx = Math.floor(Math.random() * activeStaffList.length);
+      const targetStaff = activeStaffList[randIdx];
+
+      // Find the index in the original full staff array
+      const fullIdx = allStaff.findIndex(s => s.id === targetStaff.id);
+      if (fullIdx === -1) return;
+
+      const next = [...allStaff];
       let updatedName = "";
       let updatedStatus = "";
 
       if (targetStaff.status === 'break') {
-        next[randIdx] = {
+        next[fullIdx] = {
           ...targetStaff,
           status: 'active',
           lastUpdate: new Date().toISOString(),
@@ -205,7 +222,7 @@ export function useLiveData() {
         updatedName = targetStaff.name;
         updatedStatus = 'Active';
       } else if (targetStaff.status === 'active' && currentOnBreak < maxOnBreak) {
-        next[randIdx] = {
+        next[fullIdx] = {
           ...targetStaff,
           status: 'break',
           lastUpdate: new Date().toISOString(),
@@ -234,10 +251,12 @@ export function useLiveData() {
     const interval = setInterval(() => {
       const now = new Date();
       const hour = now.getHours();
+      const isMatchActive = matchPhase !== 'no-match' && matchPhase !== 'post-match-done';
 
       setSustainabilityMetrics((prev) => {
         const next = { ...prev };
 
+        // 1. Solar generated depends on sun/hour, not matches
         let solarFactor = 0;
         if (hour >= 6 && hour < 18) {
           solarFactor = Math.sin(((hour - 6) / 12) * Math.PI);
@@ -247,20 +266,32 @@ export function useLiveData() {
         const nextSolar = Math.max(0, Math.round(maxSolarCapacity * solarFactor + solarFluctuation));
         next.solarGenerated = { ...next.solarGenerated, value: nextSolar };
 
-        const energyDelta = Math.floor((Math.random() - 0.2) * 50);
-        const nextEnergy = Math.max(1000, next.energyUsed.value + energyDelta);
-        next.energyUsed = { ...next.energyUsed, value: nextEnergy };
+        // 2. Energy used scales significantly if a match is active vs empty stadium
+        if (isMatchActive) {
+          const energyDelta = Math.floor((Math.random() - 0.2) * 50);
+          next.energyUsed = { ...next.energyUsed, value: Math.max(1000, next.energyUsed.value + energyDelta) };
+        } else {
+          // Idle baseline power consumption (under 150 kWh baseline fluctuate slightly)
+          const baseEnergy = 120 + Math.floor((Math.random() - 0.5) * 10);
+          next.energyUsed = { ...next.energyUsed, value: baseEnergy };
+        }
 
-        const waterDelta = Math.floor(Math.random() * 200) + 100;
-        const nextWater = next.waterSaved.value + waterDelta;
-        next.waterSaved = { ...next.waterSaved, value: nextWater };
+        // 3. Water saved / consumed scales similarly
+        if (isMatchActive) {
+          const waterDelta = Math.floor(Math.random() * 200) + 100;
+          next.waterSaved = { ...next.waterSaved, value: next.waterSaved.value + waterDelta };
+        } else {
+          // Off-match baseline: small baseline maintenance water use
+          const waterDelta = Math.floor(Math.random() * 5);
+          next.waterSaved = { ...next.waterSaved, value: next.waterSaved.value + waterDelta };
+        }
 
         return next;
       });
     }, sustainabilityInterval);
 
     return () => clearInterval(interval);
-  }, [isLiveMode, matchDayMode, setSustainabilityMetrics]);
+  }, [isLiveMode, matchDayMode, matchPhase, setSustainabilityMetrics]);
 
   // ═══════════════════════════════════════════════════════════════════
   //  5. FAN SATISFACTION SIMULATION
@@ -271,6 +302,13 @@ export function useLiveData() {
     const fanInterval = matchDayMode ? 20000 : 120000;
 
     const interval = setInterval(() => {
+      // If no match is happening, fan satisfaction score remains stable/idle at baseline
+      const isMatchActive = matchPhase !== 'no-match' && matchPhase !== 'post-match-done';
+      if (!isMatchActive) {
+        setFanSatisfactionScore(92); // baseline satisfaction when empty
+        return;
+      }
+
       const criticalCount = activeAlerts.filter(a => a.severity === 'critical' && !a.resolved).length;
       
       setFanSatisfactionScore((prev) => {
@@ -288,7 +326,7 @@ export function useLiveData() {
     }, fanInterval);
 
     return () => clearInterval(interval);
-  }, [isLiveMode, matchDayMode, activeAlerts, setFanSatisfactionScore]);
+  }, [isLiveMode, matchDayMode, matchPhase, activeAlerts, setFanSatisfactionScore]);
 
   // ═══════════════════════════════════════════════════════════════════
   //  6. WEATHER CONDITIONS SIMULATION (Every 5 minutes)
@@ -301,20 +339,25 @@ export function useLiveData() {
     const interval = setInterval(() => {
       setWeatherData((prev) => {
         const next = { ...prev };
-        
-        const tempDelta = (Math.random() - 0.5) * 2;
-        const nextTemp = parseFloat((next.temp.value + tempDelta).toFixed(1));
-        
-        const windDelta = Math.floor((Math.random() - 0.5) * 4);
-        const nextWind = Math.max(0, Math.min(70, next.windSpeed.value + windDelta));
 
-        return {
-          ...next,
-          temp: { ...next.temp, value: nextTemp },
-          windSpeed: { ...next.windSpeed, value: nextWind }
-        };
+        // Safely read temp — real API returns a plain number, mock returns { value, unit }
+        const currentTemp = typeof next.temp === 'number' ? next.temp : (next.temp?.value ?? 22);
+        const currentWind = typeof next.windSpeed === 'number' ? next.windSpeed : (next.windSpeed?.value ?? 15);
+
+        const tempDelta = (Math.random() - 0.5) * 2;
+        const nextTemp  = parseFloat((currentTemp + tempDelta).toFixed(1));
+
+        const windDelta = Math.floor((Math.random() - 0.5) * 4);
+        const nextWind  = Math.max(0, Math.min(70, currentWind + windDelta));
+
+        // Preserve the original shape (object or flat number)
+        const tempOut  = typeof next.temp === 'number'      ? nextTemp : { ...next.temp,      value: nextTemp };
+        const windOut  = typeof next.windSpeed === 'number'  ? nextWind : { ...next.windSpeed,  value: nextWind };
+
+        return { ...next, temp: tempOut, windSpeed: windOut };
       });
     }, weatherInterval);
+
 
     return () => clearInterval(interval);
   }, [isLiveMode, matchDayMode, setWeatherData]);

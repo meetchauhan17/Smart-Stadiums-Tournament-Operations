@@ -147,11 +147,11 @@ function PlatformModules() {
               <Link
                 key={idx}
                 to={mod.to}
-                className={`group flex flex-col justify-between p-10 min-h-[320px] transition-all duration-150 cursor-pointer border-collapse border-gray-900 ${bgClass} ${mod.borderHover} hover:border-gray-900`}
-                style={{
-                  borderRightWidth: isOddCol ? '0px' : '2px',
-                  borderBottomWidth: idx < 2 ? '2px' : '0px',
-                }}
+                className={`group flex flex-col justify-between p-10 min-h-[320px] transition-all duration-150 cursor-pointer border-gray-900 ${bgClass} ${mod.borderHover} hover:border-gray-900 border-b-2 last:border-b-0 ${
+                  idx < 2 ? 'md:border-b-2' : 'md:border-b-0'
+                } ${
+                  idx % 2 === 0 ? 'md:border-r-2' : 'md:border-r-0'
+                }`}
               >
                 <div className="flex flex-col gap-6">
                   {/* Icon circle */}

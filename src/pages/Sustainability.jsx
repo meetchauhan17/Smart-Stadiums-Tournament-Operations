@@ -5,8 +5,10 @@ import {
   Tooltip, Legend, ResponsiveContainer, ComposedChart, Area
 } from 'recharts';
 import { Leaf, Sun, Droplets, Recycle, Wind, Check, Copy, RefreshCw, Award, TreePine } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { useStadium } from '../context/StadiumContext';
 import { callAI, buildSustainabilitySystemPrompt } from '../utils/aiHelper';
+import { AchievementIcon } from '../components/AchievementIcon';
 
 // ─── Flat Tooltip ───
 const CustomTooltip = ({ active, payload, label }) => {
@@ -28,14 +30,14 @@ const CustomTooltip = ({ active, payload, label }) => {
 };
 
 const ACHIEVEMENTS = [
-  { id: 'zero-plastic',  icon: '🚫', label: 'Zero Plastic Match',        earned: true,  desc: 'Single-use plastics eliminated' },
-  { id: 'solar-day',     icon: '☀️',  label: '100% Solar Hour',           earned: true,  desc: '1 full hour on solar alone' },
-  { id: 'top-recycler',  icon: '♻️',  label: 'Top Recycling Rate',        earned: true,  desc: '>80% waste diverted' },
-  { id: 'green-commute', icon: '🚆',  label: 'Green Commute Champion',    earned: true,  desc: '>60% via public transit' },
-  { id: 'carbon-neg',    icon: '🌍',  label: 'Carbon Negative Match',     earned: false, desc: 'Offset > Footprint' },
-  { id: 'zero-waste',    icon: '🏆',  label: 'Zero Waste Stadium',        earned: false, desc: '<1% landfill diversion' },
-  { id: 'rain-harvest',  icon: '💧',  label: 'Rainwater Harvest Active',  earned: true,  desc: '12,000L collected today' },
-  { id: 'ev-fleet',      icon: '⚡',  label: 'Full EV Fleet Day',        earned: false, desc: '100% EV operational vehicles' },
+  { id: 'zero-plastic',  label: 'Zero Plastic Match',        earned: true,  desc: 'Single-use plastics eliminated' },
+  { id: 'solar-day',     label: '100% Solar Hour',           earned: true,  desc: '1 full hour on solar alone' },
+  { id: 'top-recycler',  label: 'Top Recycling Rate',        earned: true,  desc: '>80% waste diverted' },
+  { id: 'green-commute', label: 'Green Commute Champion',    earned: true,  desc: '>60% via public transit' },
+  { id: 'carbon-neg',    label: 'Carbon Negative Match',     earned: false, desc: 'Offset > Footprint' },
+  { id: 'zero-waste',    label: 'Zero Waste Stadium',        earned: false, desc: '<1% landfill diversion' },
+  { id: 'rain-harvest',  label: 'Rainwater Harvest Active',  earned: true,  desc: '12,000L collected today' },
+  { id: 'ev-fleet',      label: 'Full EV Fleet Day',         earned: false, desc: '100% EV operational vehicles' },
 ];
 
 const VENUE_LEADERBOARD = [
@@ -82,11 +84,11 @@ Return JSON only: {"performance":"Summary paragraph of current state","opportuni
   return (
     <div className="bg-gray-100 min-h-screen pb-12">
       {/* HEADER */}
-      <div className="bg-emerald-600 p-8 pt-32">
+      <div className="bg-emerald-600 p-8 pt-36">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
-            <h1 className="text-5xl font-black text-white uppercase tracking-tight">Sustainability</h1>
-            <p className="text-emerald-100 text-lg mt-1 font-medium">{currentVenue.name} Green Operations Dashboard</p>
+            <h1 className="text-3xl md:text-5xl font-black text-white uppercase tracking-tight">Sustainability</h1>
+            <p className="text-emerald-100 text-sm md:text-lg mt-1 font-medium">{currentVenue.name} Green Operations Dashboard</p>
           </div>
           {airQuality && (
             <div className="bg-white text-emerald-700 font-bold px-4 py-2 rounded-sm border-2 border-emerald-800 shadow-[4px_4px_0px_#065f46]">
@@ -246,21 +248,32 @@ Return JSON only: {"performance":"Summary paragraph of current state","opportuni
           <h2 className="text-xl font-black text-gray-900 uppercase tracking-widest mb-6">Green Stadium Achievements</h2>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {ACHIEVEMENTS.map(a => (
-              <div 
-                key={a.id} 
+              <motion.div
+                key={a.id}
+                whileHover={{ scale: 1.03 }}
+                transition={{ type: 'spring', stiffness: 300 }}
                 className={`p-4 border-2 transition-all ${
-                  a.earned 
-                    ? 'bg-emerald-50 border-emerald-600' 
+                  a.earned
+                    ? 'bg-emerald-50 border-emerald-600'
                     : 'bg-gray-100 border-gray-300 opacity-60 grayscale'
                 }`}
               >
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-3xl">{a.icon}</span>
-                  {a.earned && <Check size={20} className="text-emerald-600" />}
+                  {/* Animated widget icon — replaces emoji */}
+                  <AchievementIcon achievementId={a.id} earned={a.earned} size={24} />
+                  {a.earned && (
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ type: 'spring', stiffness: 400, delay: 0.2 }}
+                    >
+                      <Check size={20} className="text-emerald-600" />
+                    </motion.div>
+                  )}
                 </div>
                 <h3 className="font-bold text-gray-900 leading-tight mb-1">{a.label}</h3>
                 <p className="text-xs text-gray-600 font-medium leading-snug">{a.desc}</p>
-              </div>
+              </motion.div>
             ))}
           </div>
         </div>
