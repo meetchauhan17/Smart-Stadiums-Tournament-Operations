@@ -59,6 +59,15 @@ const LOCAL_LANGS = [
   { code: 'fr', name: 'French' },
 ];
 
+/**
+ * Staff Page Component.
+ * Intended for venue staff on duty. Allows choosing shift roles, managing
+ * shift statuses, viewing tasks assigned to the role, and looking up
+ * language cards with live translation assistance.
+ *
+ * @component
+ * @returns {React.ReactElement} The rendered Staff workspace dashboard
+ */
 export default function Staff() {
   const { staffOnDuty, reassignStaff, updateStaffStatus, todaysMatches } = useStadium();
 

@@ -46,6 +46,14 @@ const VENUE_LEADERBOARD = [
   { name: 'AT&T Stadium',    score: 82 },
 ];
 
+/**
+ * Sustainability Page Component.
+ * Monitors real-time environmental metrics (energy, water, carbon footprint),
+ * schedules waste pickups, and provides GenAI-powered sustainability reports.
+ *
+ * @component
+ * @returns {React.ReactElement} The rendered Sustainability dashboard tab
+ */
 export default function Sustainability() {
   const { sustainabilityMetrics, sustainabilityHistory, currentVenue, airQuality } = useStadium();
   const [aiReport,   setAiReport]   = useState(null);

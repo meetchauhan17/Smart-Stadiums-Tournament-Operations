@@ -382,6 +382,15 @@ function StandingsTable({ standings }) {
 }
 
 // ─── Main Page ────────────────────────────────────────────────────
+/**
+ * LiveMatches Page Component.
+ * Real-time matches feed and tournament statistics tracker.
+ * Fetches match dates, details, current scores, group tables standings, and match
+ * events timeline from live football APIs or robust mock fallbacks.
+ *
+ * @component
+ * @returns {React.ReactElement} The rendered Live Matches dashboard tab
+ */
 export default function LiveMatches() {
   const { footballApiKey, currentVenue } = useStadium();
   const {

@@ -33,6 +33,15 @@ const CustomTooltip = ({ active, payload, label }) => {
   return null;
 };
 
+/**
+ * Operations Page Component.
+ * The central command-and-control operations center dashboard.
+ * Visualizes crowd density heatmap zones, active system alerts, staff deployments,
+ * currency conversions, and features a GenAI Operational Assistant.
+ *
+ * @component
+ * @returns {React.ReactElement} The rendered Operations command tab
+ */
 export default function Operations() {
   const {
     currentVenue, currentOccupancy, occupancyPercent, venueCapacity,

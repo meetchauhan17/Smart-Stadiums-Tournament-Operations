@@ -309,6 +309,15 @@ function Footer() {
 // ═══════════════════════════════════════════════════════════════════
 //  PAGE EXPORT
 // ═══════════════════════════════════════════════════════════════════
+/**
+ * Landing Page Component.
+ * The primary public-facing portal homepage for StadiumIQ 2026.
+ * Showcases features, current tournament facts, real-time weather integration,
+ * quick stats overview, and venue quick selection.
+ *
+ * @component
+ * @returns {React.ReactElement} The rendered Landing portal page
+ */
 export default function Landing() {
   return (
     <PageTransition>

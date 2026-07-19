@@ -58,6 +58,15 @@ function parseTone(raw) {
   return { tone: null, text: raw };
 }
 
+/**
+ * Fan Page Component.
+ * Tailored hub for stadium spectators and fans attending matches.
+ * Provides custom GenAI-enabled navigation directions, multilingual voice translation card support,
+ * current seat profile lookup, and real-time live atmosphere chat interface.
+ *
+ * @component
+ * @returns {React.ReactElement} The rendered Fan dashboard tab
+ */
 export default function Fan() {
   const { currentVenue, currentMatchAtVenue, todaysMatches, matchPhase } = useStadium();
   const [selectedLanguage, setSelectedLanguage] = useState('English');
