@@ -572,6 +572,16 @@ export function StadiumProvider({ children }) {
         activeMatch = upcomingMatches[0];
       }
     }
+
+    // 3. If no LIVE or upcoming match, find the most recently finished match today
+    if (!activeMatch) {
+      const finishedMatches = todaysMatches
+        .filter(m => m.status === 'FINISHED')
+        .sort((a, b) => new Date(b.utcDate).getTime() - new Date(a.utcDate).getTime());
+      if (finishedMatches.length > 0) {
+        activeMatch = finishedMatches[0];
+      }
+    }
     
     if (activeMatch && activeMatch.id !== lastAutoSelectedMatchIdRef.current) {
       const matchedVenueId = findVenueIdForMatch(activeMatch);
