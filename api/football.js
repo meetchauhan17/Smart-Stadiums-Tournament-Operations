@@ -1,3 +1,12 @@
+function getRawBody(req) {
+  return new Promise((resolve, reject) => {
+    let data = '';
+    req.on('data', (chunk) => { data += chunk.toString(); });
+    req.on('end', () => resolve(data));
+    req.on('error', reject);
+  });
+}
+
 export default async function handler(req, res) {
   // CORS Headers
   res.setHeader('Access-Control-Allow-Credentials', true);
@@ -13,26 +22,37 @@ export default async function handler(req, res) {
     return;
   }
 
-  // Parse path parameter
-  // Vercel serverless functions parse query strings automatically into req.query
-  const { path } = req.query;
-  if (!path) {
+  // Use WHATWG URL API (no deprecated url.parse) to read query params
+  const baseUrl = `https://placeholder${req.url}`;
+  const urlObj = new URL(baseUrl);
+  const pathParam = urlObj.searchParams.get('path');
+
+  if (!pathParam) {
     res.status(400).json({ error: 'Missing path parameter' });
     return;
   }
 
   // Extract auth token (prefer header from user settings modal, fallback to Env Variable)
-  const token = req.headers['x-auth-token'] || process.env.VITE_FOOTBALL_API_KEY;
+  const token = req.headers['x-auth-token'] || process.env.VITE_FOOTBALL_API_KEY || '';
 
-  // Clean path to ensure correct URL building
-  const cleanPath = path.startsWith('/') ? path : `/${path}`;
-  const targetUrl = `https://api.football-data.org/v4${cleanPath}`;
+  // Build full query string to forward (everything after 'path=...' excluded, forward rest)
+  // We need to forward additional params like ?status=LIVE etc.
+  // Reconstruct the sub-path including any extra query params encoded within it
+  const cleanPath = pathParam.startsWith('/') ? pathParam : `/${pathParam}`;
+
+  // Forward any extra search params (e.g. ?status=LIVE) that were part of the path value
+  const extraParams = new URLSearchParams();
+  urlObj.searchParams.forEach((val, key) => {
+    if (key !== 'path') extraParams.append(key, val);
+  });
+  const extraStr = extraParams.toString();
+  const targetUrl = `https://api.football-data.org/v4${cleanPath}${extraStr ? `?${extraStr}` : ''}`;
 
   try {
     const fbResponse = await fetch(targetUrl, {
       headers: {
-        'X-Auth-Token': token || '',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        'X-Auth-Token': token,
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
       }
     });
 

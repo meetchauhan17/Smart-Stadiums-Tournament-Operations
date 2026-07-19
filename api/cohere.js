@@ -1,3 +1,16 @@
+/**
+ * Reads the raw request body as a string from an IncomingMessage stream.
+ * Vercel serverless functions do NOT auto-parse req.body, so we must do it.
+ */
+function getRawBody(req) {
+  return new Promise((resolve, reject) => {
+    let data = '';
+    req.on('data', (chunk) => { data += chunk.toString(); });
+    req.on('end', () => resolve(data));
+    req.on('error', reject);
+  });
+}
+
 export default async function handler(req, res) {
   // CORS Headers
   res.setHeader('Access-Control-Allow-Credentials', true);
@@ -13,21 +26,18 @@ export default async function handler(req, res) {
     return;
   }
 
-  // Extract auth token — prefer header from client, fallback to Vercel env var
+  // Extract auth token — prefer Authorization header from client, fallback to Vercel env var
   const authHeader = req.headers['authorization'] || '';
   const token = authHeader.startsWith('Bearer ')
     ? authHeader.slice(7)
     : (process.env.VITE_COHERE_API_KEY || '');
 
-  // Extract the sub-path: /api/cohere/v2/chat → /v2/chat
   const { path } = req.query;
   const cleanPath = path ? (path.startsWith('/') ? path : `/${path}`) : '/v2/chat';
   const targetUrl = `https://api.cohere.com${cleanPath}`;
 
   try {
-    const body = req.method !== 'GET' && req.method !== 'HEAD'
-      ? JSON.stringify(req.body)
-      : undefined;
+    const rawBody = await getRawBody(req);
 
     const upstream = await fetch(targetUrl, {
       method: req.method,
@@ -36,7 +46,7 @@ export default async function handler(req, res) {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
       },
-      ...(body ? { body } : {}),
+      ...(rawBody ? { body: rawBody } : {}),
     });
 
     const responseText = await upstream.text();

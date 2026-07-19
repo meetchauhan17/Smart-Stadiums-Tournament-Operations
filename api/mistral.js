@@ -1,5 +1,13 @@
+function getRawBody(req) {
+  return new Promise((resolve, reject) => {
+    let data = '';
+    req.on('data', (chunk) => { data += chunk.toString(); });
+    req.on('end', () => resolve(data));
+    req.on('error', reject);
+  });
+}
+
 export default async function handler(req, res) {
-  // CORS Headers
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
@@ -13,7 +21,6 @@ export default async function handler(req, res) {
     return;
   }
 
-  // Extract auth token — prefer header from client, fallback to Vercel env var
   const authHeader = req.headers['authorization'] || '';
   const token = authHeader.startsWith('Bearer ')
     ? authHeader.slice(7)
@@ -24,9 +31,7 @@ export default async function handler(req, res) {
   const targetUrl = `https://api.mistral.ai${cleanPath}`;
 
   try {
-    const body = req.method !== 'GET' && req.method !== 'HEAD'
-      ? JSON.stringify(req.body)
-      : undefined;
+    const rawBody = await getRawBody(req);
 
     const upstream = await fetch(targetUrl, {
       method: req.method,
@@ -35,7 +40,7 @@ export default async function handler(req, res) {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
       },
-      ...(body ? { body } : {}),
+      ...(rawBody ? { body: rawBody } : {}),
     });
 
     const responseText = await upstream.text();

@@ -104,6 +104,7 @@ export default defineConfig({
       ignored: ['**/node_modules/**', '**/.git/**']
     },
     proxy: {
+      // Legacy paths kept for backward compatibility during transition
       '/hf-api': {
         target: 'https://api-inference.huggingface.co',
         changeOrigin: true,
@@ -120,6 +121,34 @@ export default defineConfig({
         target: 'https://api.cohere.com',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/cohere-api/, ''),
+        secure: true,
+      },
+      // New serverless-function-style paths (used in production on Vercel)
+      '/api/cohere': {
+        target: 'https://api.cohere.com',
+        changeOrigin: true,
+        rewrite: (path) => {
+          const url = new URL(path, 'http://localhost');
+          return url.searchParams.get('path') || '/v2/chat';
+        },
+        secure: true,
+      },
+      '/api/mistral': {
+        target: 'https://api.mistral.ai',
+        changeOrigin: true,
+        rewrite: (path) => {
+          const url = new URL(path, 'http://localhost');
+          return url.searchParams.get('path') || '/v1/chat/completions';
+        },
+        secure: true,
+      },
+      '/api/huggingface': {
+        target: 'https://api-inference.huggingface.co',
+        changeOrigin: true,
+        rewrite: (path) => {
+          const url = new URL(path, 'http://localhost');
+          return url.searchParams.get('path') || '/v1/chat/completions';
+        },
         secure: true,
       },
     },
