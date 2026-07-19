@@ -1,7 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ShieldCheck, ShieldAlert, Cpu, Sliders, Wifi, WifiOff, CheckCircle2, XCircle } from 'lucide-react';
 import { useStadium } from '../context/StadiumContext';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 const PROVIDERS = [
   { value: 'cohere',      label: 'Cohere',        sub: '1000 free/month',         envKey: 'VITE_COHERE_API_KEY' },
@@ -25,11 +25,11 @@ export default function SettingsModal() {
   const [provider, setProvider] = useState(ctxAiProvider || 'cohere');
 
   // Re-sync when modal opens
-  const [prevOpen, setPrevOpen] = useState(settingsOpen);
-  if (settingsOpen !== prevOpen) {
-    setPrevOpen(settingsOpen);
-    if (settingsOpen) setProvider(ctxAiProvider || 'cohere');
-  }
+  useEffect(() => {
+    if (settingsOpen) {
+      setProvider(ctxAiProvider || 'cohere');
+    }
+  }, [settingsOpen, ctxAiProvider]);
 
   if (!settingsOpen) return null;
 
