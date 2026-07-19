@@ -12,7 +12,7 @@
 
 *A state-of-the-art, real-time AI co-pilot designed to orchestrate 80,000+ spectators and 10,000+ tournament stewards across 10 official FIFA World Cup 2026 venues.*
 
-[Live Preview (Vercel)](https://smart-stadiums-tournament-operation-three.vercel.app/)
+[Live Preview (Vercel)](https://smart-stadiums-tournament-operation-nu.vercel.app/)
 
 </div>
 
