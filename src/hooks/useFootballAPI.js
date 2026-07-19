@@ -6,6 +6,7 @@ import {
   fetchWCStandings,
   FALLBACK_MATCHES,
   TEAM_FLAG_EMOJI,
+  getFbKey,
 } from '../utils/realApis';
 
 // ─── Simulated match events pool (used when free API tier doesn't
