@@ -76,7 +76,7 @@ export default function App() {
   return (
     <ToastProvider>
       <StadiumProvider>
-        <BrowserRouter>
+        <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
           <AppContent />
         </BrowserRouter>
       </StadiumProvider>
