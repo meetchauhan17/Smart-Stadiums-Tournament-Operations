@@ -86,13 +86,19 @@ export function useFootballAPI() {
 
   // ── Fetch all today's matches ──────────────────────────────────
   const loadMatches = useCallback(async () => {
+    const hasKey = !!getFbKey();
     try {
       const result = await fetchTodaysMatches();
       if (result && result.length > 0) {
         setMatches(result);
       } else {
-        // Fallback to beautiful mock matches if API returns no matches today
-        setMatches(FALLBACK_MATCHES);
+        // If an API key is connected, show the real (empty) schedule.
+        // Otherwise, fall back to simulated matches for the demo.
+        if (hasKey) {
+          setMatches([]);
+        } else {
+          setMatches(FALLBACK_MATCHES);
+        }
       }
       setLastUpdated(new Date());
       setError(null);
