@@ -67,7 +67,13 @@ const OCCUPANCY_SEED_PCT = 0.817;
 function findVenueIdForMatch(match) {
   if (!match) return null;
   
-  // 1. Match by venue string first
+  // 1. Match by stage (FIFA WC 2026 Final is officially hosted at MetLife)
+  const stageUpper = (match.stage || '').toUpperCase();
+  if (stageUpper.includes('FINAL') && !stageUpper.includes('SEMI') && !stageUpper.includes('QUARTER')) {
+    return 'metlife';
+  }
+
+  // 2. Match by venue string first
   const venueLower = (match.venue || '').toLowerCase();
   if (venueLower.includes('metlife')) return 'metlife';
   if (venueLower.includes('sofi')) return 'sofi';
@@ -80,14 +86,25 @@ function findVenueIdForMatch(match) {
   if (venueLower.includes('azteca') || venueLower.includes('mexico')) return 'azteca';
   if (venueLower.includes('akron') || venueLower.includes('guadalajara')) return 'guadalajara';
 
-  // 2. Robust Fallback: Map by home team name (if venue is null/unmatched)
+  // 3. Robust Fallback: Map by home team name or major team context (if venue is null/unmatched)
   const homeLower = (match.homeTeam?.name || '').toLowerCase();
-  if (homeLower === 'usa' || homeLower === 'united states') return 'metlife';
-  if (homeLower === 'mexico') return 'azteca';
-  if (homeLower === 'canada') return 'vancouver';
-  if (homeLower === 'england') return 'metlife';
-  if (homeLower === 'france') return 'vancouver';
-  if (homeLower === 'germany') return 'azteca';
+  const awayLower = (match.awayTeam?.name || '').toLowerCase();
+
+  // USA match mappings
+  if (homeLower === 'usa' || homeLower === 'united states' || homeLower === 'engaind' || homeLower === 'england') return 'metlife';
+  if (awayLower === 'usa' || awayLower === 'united states') return 'metlife';
+
+  // Mexico match mappings
+  if (homeLower === 'mexico' || homeLower === 'germany') return 'azteca';
+  if (awayLower === 'mexico') return 'azteca';
+
+  // Canada match mappings
+  if (homeLower === 'canada' || homeLower === 'france') return 'vancouver';
+  if (awayLower === 'canada') return 'vancouver';
+
+  // Spain/Argentina powerhouse mappings
+  if (homeLower === 'spain' || awayLower === 'spain') return 'metlife';
+  if (homeLower === 'argentina' || awayLower === 'argentina') return 'sofi';
   
   return null;
 }
