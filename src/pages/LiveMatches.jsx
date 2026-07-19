@@ -236,9 +236,11 @@ function CrowdPanel({ match, atmosphere, matchMinute }) {
 
 // ─── Standings Table ──────────────────────────────────────────────
 function StandingsTable({ standings }) {
-  const [expanded, setExpanded] = useState(null);
+  // Filter to only include 'TOTAL' standing tables to avoid Home/Away duplicates
+  const overallStandings = standings?.filter(s => !s.type || s.type === 'TOTAL') || [];
+  const [selectedGroupIdx, setSelectedGroupIdx] = useState(0);
 
-  if (!standings?.length) {
+  if (!overallStandings?.length) {
     return (
       <div className="text-center py-8 text-gray-400">
         <Trophy className="mx-auto mb-2 opacity-30" size={28} />
@@ -248,58 +250,133 @@ function StandingsTable({ standings }) {
     );
   }
 
+  // Ensure index is valid
+  const activeIdx = selectedGroupIdx < overallStandings.length ? selectedGroupIdx : 0;
+  const activeGroup = overallStandings[activeIdx];
+
+  const getGroupName = (group, idx) => {
+    if (group.group) {
+      // "GROUP_A" -> "Group A", "GROUP_L" -> "Group L"
+      return group.group.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    }
+    if (group.stage && group.stage !== 'ALL') {
+      return group.stage.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    }
+    return `Group ${idx + 1}`;
+  };
+
   return (
-    <div className="flex flex-col gap-3">
-      {standings.map((group, gi) => (
-        <div key={gi} className="border border-gray-200">
-          <button
-            onClick={() => setExpanded(expanded === gi ? null : gi)}
-            className="w-full flex items-center justify-between px-4 py-2.5 bg-gray-900 text-white text-[10px] font-black uppercase tracking-widest cursor-pointer"
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      
+      {/* Left Pane: Group Selectors */}
+      <div className="flex flex-col gap-2 max-h-[500px] overflow-y-auto pr-1">
+        <span className="text-[9px] font-black tracking-widest text-gray-400 uppercase mb-1">
+          Select Group Table
+        </span>
+        {overallStandings.map((group, gi) => {
+          const isSelected = activeIdx === gi;
+          return (
+            <button
+              key={gi}
+              type="button"
+              onClick={() => setSelectedGroupIdx(gi)}
+              className={`w-full flex items-center justify-between px-4 py-3 border-2 transition-all cursor-pointer text-left
+                ${isSelected
+                  ? 'border-blue-600 bg-blue-50 text-blue-900 font-black shadow-[3px_3px_0px_#2563EB]'
+                  : 'border-gray-300 bg-white text-gray-700 hover:border-gray-500 hover:bg-gray-50'
+                }`}
+            >
+              <div className="flex items-center gap-2">
+                <Trophy size={12} className={isSelected ? 'text-blue-600' : 'text-gray-400'} />
+                <span className="text-xs uppercase tracking-wider">{getGroupName(group, gi)}</span>
+              </div>
+              <span className="text-[10px] text-gray-400 font-bold">
+                {group.table?.length || 0} teams
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Right Pane: Selected Group Standings View */}
+      <div className="lg:col-span-2 flex flex-col gap-4">
+        {activeGroup && (
+          <motion.div
+            key={activeIdx}
+            initial={{ opacity: 0, x: 10 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="bg-white border-2 border-gray-900 shadow-[6px_6px_0px_#111827]"
           >
-            <span>{group.stage || `Group ${gi + 1}`}</span>
-            {expanded === gi ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
-          </button>
-          <AnimatePresence>
-            {expanded === gi && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                className="overflow-hidden"
-              >
-                <table className="w-full text-xs">
-                  <thead>
-                    <tr className="bg-gray-50 border-b border-gray-200">
-                      <th className="text-left px-3 py-2 text-[9px] font-black text-gray-700 uppercase">#</th>
-                      <th className="text-left px-3 py-2 text-[9px] font-black text-gray-700 uppercase">Team</th>
-                      <th className="px-2 py-2 text-[9px] font-black text-gray-700 uppercase">P</th>
-                      <th className="px-2 py-2 text-[9px] font-black text-gray-700 uppercase">W</th>
-                      <th className="px-2 py-2 text-[9px] font-black text-gray-700 uppercase">D</th>
-                      <th className="px-2 py-2 text-[9px] font-black text-gray-700 uppercase">L</th>
-                      <th className="px-2 py-2 text-[9px] font-black text-gray-700 uppercase">GD</th>
-                      <th className="px-2 py-2 text-[9px] font-black text-gray-700 uppercase font-extrabold text-gray-900">Pts</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {(group.table || []).map((row, ri) => (
-                      <tr key={ri} className={`border-b border-gray-100 ${ri < 2 ? 'bg-green-50' : ''}`}>
-                        <td className="px-3 py-2 font-black text-gray-700">{row.position}</td>
-                        <td className="px-3 py-2 font-bold text-gray-900 max-w-[100px] truncate">{row.team?.shortName || row.team?.name}</td>
-                        <td className="px-2 py-2 text-center text-gray-600">{row.playedGames}</td>
-                        <td className="px-2 py-2 text-center text-green-600 font-bold">{row.won}</td>
-                        <td className="px-2 py-2 text-center text-amber-600">{row.draw}</td>
-                        <td className="px-2 py-2 text-center text-red-600">{row.lost}</td>
-                        <td className="px-2 py-2 text-center text-gray-600">{row.goalDifference > 0 ? `+${row.goalDifference}` : row.goalDifference}</td>
-                        <td className="px-2 py-2 text-center font-black text-gray-900">{row.points}</td>
+            {/* Header */}
+            <div className="bg-gray-900 text-white px-4 py-3 flex items-center justify-between border-b-2 border-gray-900">
+              <span className="text-xs font-black uppercase tracking-wider">
+                {getGroupName(activeGroup, activeIdx)} Standings Table
+              </span>
+              <span className="text-[9px] text-green-400 font-black uppercase tracking-widest">
+                Top 2 Qualify
+              </span>
+            </div>
+
+            {/* Table */}
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="bg-gray-50 border-b border-gray-200 text-left">
+                    <th className="px-4 py-3 text-[9px] font-black text-gray-500 uppercase w-12 text-center">Pos</th>
+                    <th className="px-4 py-3 text-[9px] font-black text-gray-500 uppercase">Team</th>
+                    <th className="px-3 py-3 text-[9px] font-black text-gray-500 uppercase text-center w-10">P</th>
+                    <th className="px-3 py-3 text-[9px] font-black text-gray-500 uppercase text-center w-10">W</th>
+                    <th className="px-3 py-3 text-[9px] font-black text-gray-500 uppercase text-center w-10">D</th>
+                    <th className="px-3 py-3 text-[9px] font-black text-gray-500 uppercase text-center w-10">L</th>
+                    <th className="px-3 py-3 text-[9px] font-black text-gray-500 uppercase text-center w-12">GD</th>
+                    <th className="px-4 py-3 text-[9px] font-black text-gray-900 uppercase text-center font-extrabold w-12 bg-gray-50 border-l border-gray-200">Pts</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(activeGroup.table || []).map((row, ri) => {
+                    const isQualifying = ri < 2;
+                    return (
+                      <tr
+                        key={ri}
+                        className={`border-b border-gray-100 transition-colors hover:bg-gray-50/50
+                          ${isQualifying ? 'bg-green-50/40' : ''}`}
+                      >
+                        <td className="px-4 py-2.5 text-center font-black text-gray-700 border-r border-gray-100">
+                          {isQualifying ? (
+                            <span className="inline-flex items-center justify-center w-5 h-5 bg-green-600 text-white rounded-full text-[10px]">
+                              {row.position}
+                            </span>
+                          ) : (
+                            row.position
+                          )}
+                        </td>
+                        <td className="px-4 py-2.5 font-bold text-gray-900">
+                          <span className="flex items-center gap-2">
+                            {row.team?.name}
+                          </span>
+                        </td>
+                        <td className="px-3 py-2.5 text-center text-gray-600 font-semibold">{row.playedGames}</td>
+                        <td className="px-3 py-2.5 text-center text-green-600 font-bold">{row.won}</td>
+                        <td className="px-3 py-2.5 text-center text-amber-600 font-medium">{row.draw}</td>
+                        <td className="px-3 py-2.5 text-center text-red-500 font-medium">{row.lost}</td>
+                        <td className={`px-3 py-2.5 text-center font-bold
+                          ${row.goalDifference > 0 ? 'text-green-600' : row.goalDifference < 0 ? 'text-red-500' : 'text-gray-500'}`}
+                        >
+                          {row.goalDifference > 0 ? `+${row.goalDifference}` : row.goalDifference}
+                        </td>
+                        <td className="px-4 py-2.5 text-center font-black text-gray-900 bg-gray-50/40 border-l border-gray-200">
+                          {row.points}
+                        </td>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-      ))}
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </motion.div>
+        )}
+      </div>
+
     </div>
   );
 }
@@ -696,7 +773,7 @@ export default function LiveMatches() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0 }}
-                className="max-w-3xl"
+                className="w-full"
               >
                 <div className="bg-white border-2 border-gray-200">
                   <div className="border-b-2 border-gray-900 px-4 py-3 bg-gray-900 text-white flex items-center justify-between">
