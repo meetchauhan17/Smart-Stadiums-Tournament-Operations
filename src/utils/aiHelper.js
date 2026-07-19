@@ -30,7 +30,7 @@ export async function callAI(params) {
       
       const cohereEndpoint = import.meta.env.MODE === 'test'
         ? 'https://api.cohere.com/v2/chat'
-        : '/cohere-api/v2/chat';
+        : '/api/cohere?path=/v2/chat';
 
       const res = await fetch(cohereEndpoint, {
         method: 'POST',
@@ -63,7 +63,7 @@ export async function callAI(params) {
       
       const mistralEndpoint = import.meta.env.MODE === 'test'
         ? 'https://api.mistral.ai/v1/chat/completions'
-        : '/mistral-api/v1/chat/completions';
+        : '/api/mistral?path=/v1/chat/completions';
 
       const res = await fetch(mistralEndpoint, {
         method: 'POST',
@@ -95,7 +95,7 @@ export async function callAI(params) {
 
       const hfEndpoint = import.meta.env.MODE === 'test'
         ? 'https://api-inference.huggingface.co/v1/chat/completions'
-        : '/hf-api/v1/chat/completions';
+        : '/api/huggingface?path=/v1/chat/completions';
 
       const res = await fetch(hfEndpoint, {
         method: 'POST',

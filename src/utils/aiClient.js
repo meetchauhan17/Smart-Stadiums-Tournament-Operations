@@ -81,7 +81,7 @@ async function _fetchCohere(systemPrompt, userMessage, maxTokens = 500) {
   try {
     const cohereEndpoint = import.meta.env.MODE === 'test'
       ? 'https://api.cohere.com/v2/chat'
-      : '/cohere-api/v2/chat';
+      : '/api/cohere?path=/v2/chat';
 
     const res = await fetch(
       cohereEndpoint,
