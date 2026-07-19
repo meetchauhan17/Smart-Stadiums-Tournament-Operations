@@ -40,6 +40,28 @@ Managing global tournament venues presents massive coordination friction. **Stad
 
 ---
 
+## 🌟 Recent Engineering Upgrades (July 2026)
+
+To elevate the application's reliability, visual excellence, and real-time synchronization, we implemented several major engineering improvements:
+
+### 1. Robust Serverless API Proxy Layer (`/api/*`)
+*   **Modular Edge Functions**: Re-engineered key serverless proxies (`/api/cohere.js`, `/api/mistral.js`, `/api/huggingface.js`, and `/api/football.js`) to work flawlessly on Vercel.
+*   **WHATWG URL Parsing & Request Body Streaming**: Fixed a critical hang on Vercel caused by reading request body streams manually. Migrated proxy functions to Vercel's auto-parsed `req.body` and implemented WHATWG `new URL()` parameter extraction to handle complex query strings (such as `?status=LIVE,SCHEDULED,PAUSED,TIMED`).
+
+### 2. Standings Page Redesign & Split-Pane Dashboard
+*   **Desktop Split-Pane Layout**: Eliminated awkward empty whitespace on the right side of the Standings tab by implementing a grid-based dashboard split layout (Left Pane: Group Selector; Right Pane: Detailed Standings Card).
+*   **API Normalization & Key Filtering**: Filtered out redundant home/away tables (showing only overall `TOTAL` tables), fixed standard group name formatting (e.g. `GROUP_A` $\rightarrow$ `Group A`), and highlighted qualifying teams dynamically.
+
+### 3. Smart Match-Aware Venue Auto-Selection
+*   **Dynamic Synchronization**: The command center automatically updates the active venue view to follow the match schedule: prioritizing active `LIVE` matches, then the closest upcoming `SCHEDULED` matches, and falling back to the most recently `FINISHED` matches.
+*   **Team-Level Fallbacks**: Enhanced `findVenueIdForMatch` to match venues using the **Home/Away team's country name** (e.g., Spain $\rightarrow$ MetLife; Argentina $\rightarrow$ SoFi) and match stage (mapping the **FINAL** directly to MetLife Stadium), making auto-selection bulletproof even if the raw API payload lacks specific venue string coordinates.
+
+### 4. Cache-Control Security & Service Worker Upgrade
+*   **Network-First Strategy**: Upgraded the service worker (`stadiumiq-v2`) to prioritize network-first retrieval for HTML documents, resolving cache-lock issues where users saw a blank screen on build updates.
+*   **Strict Headers**: Configured custom HTTP response headers in `vercel.json` to prevent caching of dynamic `/api/*` endpoints and `/index.html`, while maximizing cache duration for static assets.
+
+---
+
 ## ✨ Visual Experience & Micro-Animations
 
 In place of static text details, StadiumIQ features custom vector components and CSS/Framer-Motion animations to create a premium, interactive interface:
