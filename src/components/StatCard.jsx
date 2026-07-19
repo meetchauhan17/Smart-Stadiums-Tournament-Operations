@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import PropTypes from 'prop-types';
 
 // ─── Count-up hook ──────────────────────────────────────────────────
 function useCountUp(target, duration = 1200) {
@@ -156,3 +157,34 @@ export default function StatCard({
     </motion.div>
   );
 }
+
+StatCard.propTypes = {
+  /** Metric label shown above the value */
+  title:      PropTypes.string.isRequired,
+  /** Numeric or string value to display (numbers animate with count-up) */
+  value:      PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
+  /** Optional unit appended to the value (e.g. '%', 'MWh') */
+  unit:       PropTypes.string,
+  /** Trend direction controlling icon and color */
+  trend:      PropTypes.oneOf(['up', 'down', 'neutral']),
+  /** Percentage change shown in the trend badge */
+  trendValue: PropTypes.number,
+  /** Comparison period label (e.g. 'vs last match') */
+  trendLabel: PropTypes.string,
+  /** Lucide icon component rendered in the accent tile */
+  icon:       PropTypes.elementType,
+  /** Accent color key from the internal COLOR_MAP */
+  color:      PropTypes.oneOf(['cyan', 'emerald', 'amber', 'red', 'purple', 'indigo', 'orange']),
+  /** Whether to show a pulsing dot on the title row */
+  pulse:      PropTypes.bool,
+  /** Framer Motion entry animation delay in seconds */
+  delay:      PropTypes.number,
+  /** Optional secondary label below the title */
+  subtitle:   PropTypes.string,
+  /** Click handler — makes the card interactive */
+  onClick:    PropTypes.func,
+  /** Additional CSS class names */
+  className:  PropTypes.string,
+  /** Optional child content rendered in a bottom slot */
+  children:   PropTypes.node,
+};

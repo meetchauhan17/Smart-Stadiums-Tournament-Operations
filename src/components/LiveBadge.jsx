@@ -1,3 +1,5 @@
+import PropTypes from 'prop-types';
+
 /**
  * LiveBadge — Pulsing status indicator (Flat Design)
  *
@@ -86,3 +88,14 @@ export default function LiveBadge({ status = 'live', label, size = 'md', classNa
     </span>
   );
 }
+
+LiveBadge.propTypes = {
+  /** Current operational status determining color and animation */
+  status:    PropTypes.oneOf(['live', 'offline', 'paused', 'alert']),
+  /** Override the default status label text */
+  label:     PropTypes.string,
+  /** Size preset controlling dot size and padding */
+  size:      PropTypes.oneOf(['sm', 'md', 'lg']),
+  /** Additional CSS class names */
+  className: PropTypes.string,
+};

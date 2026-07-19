@@ -1,3 +1,13 @@
+import PropTypes from 'prop-types';
+
+/**
+ * LoadingSpinner — Full-page animated loading indicator with stadium icon.
+ *
+ * @component
+ * @param {Object}  props
+ * @param {'sm'|'md'|'lg'} props.size - Controls spinner ring diameter
+ * @param {string}  props.text        - Label displayed below the spinner
+ */
 export default function LoadingSpinner({ size = 'md', text = 'Loading Stadium Systems...' }) {
   const sizes = {
     sm: 'w-6 h-6 border-[2px]',
@@ -35,3 +45,10 @@ export default function LoadingSpinner({ size = 'md', text = 'Loading Stadium Sy
     </div>
   );
 }
+
+LoadingSpinner.propTypes = {
+  /** Spinner ring size preset */
+  size: PropTypes.oneOf(['sm', 'md', 'lg']),
+  /** Loading label displayed below the animated ring */
+  text: PropTypes.string,
+};

@@ -1,5 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import { ChevronRight, Home } from 'lucide-react';
+import PropTypes from 'prop-types';
 
 export default function PageHeader({ title, subtitle, icon: Icon, actions }) {
   const location = useLocation();
@@ -65,3 +66,14 @@ export default function PageHeader({ title, subtitle, icon: Icon, actions }) {
     </div>
   );
 }
+
+PageHeader.propTypes = {
+  /** Page heading text displayed as an h1 */
+  title:    PropTypes.string.isRequired,
+  /** Optional descriptive subtitle rendered below the title */
+  subtitle: PropTypes.string,
+  /** Lucide icon component rendered in the left accent block */
+  icon:     PropTypes.elementType,
+  /** Right-side action slot (buttons, badges, etc.) */
+  actions:  PropTypes.node,
+};

@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion';
+import PropTypes from 'prop-types';
 
 /**
  * GlowButton — Redesigned as a premium Flat Design button (no shadows, glows, or vignettes)
@@ -66,3 +67,20 @@ export default function GlowButton({
     </motion.button>
   );
 }
+
+GlowButton.propTypes = {
+  /** Visual style variant */
+  variant:   PropTypes.oneOf(['primary', 'outline', 'danger', 'success', 'warning']),
+  /** Size preset */
+  size:      PropTypes.oneOf(['sm', 'md', 'lg']),
+  /** Click handler */
+  onClick:   PropTypes.func,
+  /** Disables interaction and dims the button */
+  disabled:  PropTypes.bool,
+  /** Additional CSS class names */
+  className: PropTypes.string,
+  /** Button content */
+  children:  PropTypes.node.isRequired,
+  /** HTML button type attribute */
+  type:      PropTypes.oneOf(['button', 'submit', 'reset']),
+};
