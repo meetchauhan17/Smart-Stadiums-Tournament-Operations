@@ -66,6 +66,8 @@ const OCCUPANCY_SEED_PCT = 0.817;
 // ─── Helpers ──────────────────────────────────────────────────────
 function findVenueIdForMatch(match) {
   if (!match) return null;
+  
+  // 1. Match by venue string first
   const venueLower = (match.venue || '').toLowerCase();
   if (venueLower.includes('metlife')) return 'metlife';
   if (venueLower.includes('sofi')) return 'sofi';
@@ -77,6 +79,16 @@ function findVenueIdForMatch(match) {
   if (venueLower.includes('bc place') || venueLower.includes('vancouver')) return 'vancouver';
   if (venueLower.includes('azteca') || venueLower.includes('mexico')) return 'azteca';
   if (venueLower.includes('akron') || venueLower.includes('guadalajara')) return 'guadalajara';
+
+  // 2. Robust Fallback: Map by home team name (if venue is null/unmatched)
+  const homeLower = (match.homeTeam?.name || '').toLowerCase();
+  if (homeLower === 'usa' || homeLower === 'united states') return 'metlife';
+  if (homeLower === 'mexico') return 'azteca';
+  if (homeLower === 'canada') return 'vancouver';
+  if (homeLower === 'england') return 'metlife';
+  if (homeLower === 'france') return 'vancouver';
+  if (homeLower === 'germany') return 'azteca';
+  
   return null;
 }
 const pickRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];
