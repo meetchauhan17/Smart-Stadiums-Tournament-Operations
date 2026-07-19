@@ -11,6 +11,7 @@
  *  • Output Escaping    — Manual escaping utility prevents XSS vectors during rendering.
  *  • Offline Retries    — Automatic single fallback retry on transient network errors.
  */
+import { logger } from './logger';
 
 // Providers and Models configured locally via Settings
 const RATE_LIMIT   = 10;
@@ -211,7 +212,7 @@ async function _wrap(fn, fallback) {
     // Escape the output content to prevent XSS vulnerability before rendering
     return { success: true, data: text, isMock: false };
   } catch (err) {
-    console.warn('[StadiumIQ AI]', err.message);
+    logger.warn('AI fetch error:', err.message);
     return { success: false, data: fallback(), error: err.message, isMock: true };
   }
 }

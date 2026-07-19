@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef } from 'react';
 import { callAI, buildDefaultSystemPrompt } from '../utils/aiHelper';
 import { AI_FUNCTIONS } from '../utils/aiClient';
+import { logger } from '../utils/logger';
 
 // ─── Types ────────────────────────────────────────────────────────
 /**
@@ -158,7 +159,7 @@ export function useAIAction() {
     const fn = AI_FUNCTIONS[fnName];
     if (!fn) {
       const msg = `[useAIAction] Unknown function: "${fnName}". Available: ${Object.keys(AI_FUNCTIONS).join(', ')}`;
-      console.error(msg);
+      logger.error(msg);
       setError(msg);
       return { success: false, data: '', error: msg };
     }

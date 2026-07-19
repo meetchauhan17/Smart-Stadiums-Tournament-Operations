@@ -1,4 +1,5 @@
 // ─── AI Helper — Cohere and Mistral fetch utilities ───────────────────────
+import { logger } from './logger';
 
 // ─── Env-first key reader ─────────────────────────────────────────────────
 // Priority: .env (VITE_*) → localStorage → fallback
@@ -129,7 +130,7 @@ export async function callAI(params) {
     return resultText;
 
   } catch (error) {
-    console.error('[StadiumIQ AI] Error:', error);
+    logger.error('AI provider error:', error);
     const mock = getMockResponse(prompt);
     simulateMockStream(mock, onStream);
     return mock;
