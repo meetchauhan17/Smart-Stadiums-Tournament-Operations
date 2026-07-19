@@ -429,13 +429,17 @@ async function fbFetch(path, signal) {
 
 /** Normalize a football-data.org match object into the app's shape */
 function normalizeMatch(m) {
+  const status = m.status === 'IN_PLAY' || m.status === 'PAUSED'
+    ? 'LIVE'
+    : (m.status === 'TIMED' ? 'SCHEDULED' : m.status);
+
   return {
     id: m.id,
     homeTeam: { id: m.homeTeam?.id, name: m.homeTeam?.shortName || m.homeTeam?.name || 'TBD' },
     awayTeam: { id: m.awayTeam?.id, name: m.awayTeam?.shortName || m.awayTeam?.name || 'TBD' },
     utcDate: m.utcDate,
     venue: m.venue || m.homeTeam?.venue || 'FIFA WC 2026 Venue',
-    status: m.status === 'IN_PLAY' || m.status === 'PAUSED' ? 'LIVE' : m.status,
+    status,
     minute: m.minute || null,
     score: m.score || null,
     stage: m.stage || '',
@@ -448,7 +452,7 @@ function normalizeMatch(m) {
 export async function fetchTodaysMatches(signal) {
   const key = getFbKey();
   if (key) {
-    const data = await fbFetch('/competitions/WC/matches?status=LIVE,SCHEDULED,PAUSED', signal);
+    const data = await fbFetch('/competitions/WC/matches?status=LIVE,SCHEDULED,PAUSED,TIMED', signal);
     if (data?.matches?.length) {
       return data.matches.map(normalizeMatch);
     }
