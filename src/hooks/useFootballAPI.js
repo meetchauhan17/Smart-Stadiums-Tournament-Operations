@@ -88,7 +88,12 @@ export function useFootballAPI() {
   const loadMatches = useCallback(async () => {
     try {
       const result = await fetchTodaysMatches();
-      setMatches(result);
+      if (result && result.length > 0) {
+        setMatches(result);
+      } else {
+        // Fallback to beautiful mock matches if API returns no matches today
+        setMatches(FALLBACK_MATCHES);
+      }
       setLastUpdated(new Date());
       setError(null);
     } catch (err) {
